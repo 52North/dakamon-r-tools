@@ -1,0 +1,10 @@
+ID;Name;super_FoI;Strasse;PLZ;Ort;lat;lon;Bundesland;Regierungsbezirk;Landkreis;AGS;angeschlossene_Haushalte;Ausbaugröße;Typ;Baujahr;Fracht;Ansprechpartner;Beckenvolumen;TW;RW;JAM;JSM;angeschlossene_Gesamtfläche;angeschlossene_versiegelte_Fläche;TW_Zufluss;RW_Zufluss;TW_Aufenthaltszeit;RW_Aufenthaltszeit;Abfiltrierbare_Stoffe ;BSB_5_Anzahl;BSB_5_Konzentration;CSB;TOC;DOC;NH4-N;NO2-N;NO3-N;N_ges;P_ges;N_mineral
+UoM;;;;;;;;;;;;;EGW;;;;;m3;m3/Tag;m3/Tag ;m³;m³;ha;ha;m³/h;m³/h;h;h;mg/l;n;mg/l;mg/l;mg/l;mg/l;mg/l;mg/l;mg/l;mg/l;mg/l;mg/l
+KA_Heilbronn;Kläranlage Heilbronn;;Austraße 201;74076;Heilbronn;49.18063;9.2169058;Baden-Württemberg;Stuttgart;Heilbronn;08 1 21 000 ;60000;500000;;;;;90000;;;;;100000;80000;15;40;50;25;;;;;;;;;;;;
+KA_HN_Vorklärung;Vorklärung KA Heilbronn;KA_Heilbronn;;;;49.18063;9.2169058;Baden-Württemberg;Stuttgart;Heilbronn;08 1 21 000 ;60000;500000;;;;;15000;;;;;;;2;10;10;5;;10;15;15;15;15;15;15;15;15;15;
+KA_HN_Belebung;Belebung KA Heilbronn;KA_Heilbronn;;;;49.18063;9.2169058;Baden-Württemberg;Stuttgart;Heilbronn;08 1 21 000 ;60000;500000;;;;;45000;;;;;;;10;20;30;15;;;;;;;;;;;;
+KA_HN_Nachklärung;Nachklärung KA Heilbronn;KA_Heilbronn;;;;49.18063;9.2169058;Baden-Württemberg;Stuttgart;Heilbronn;08 1 21 000 ;60000;500000;;;;;30000;;;;;;;3;10;10;5;;10;15;15;15;15;15;15;15;;15;15
+KW_Karlsruhe;Klärwerk Karlsruhe;;An der Wässerung 2;76187;Karlsruhe;49.18063;9.2169058;Baden-Württemberg;Karlsruhe;Karlsruhe;08 2 12 000 ;60000;500000;;;;;90000;;;;;100000;80000;15;40;50;25;;;;;;;;;;;;
+KW_KA_Vorklärung;Vorklärung KW Karlsruhe;KW_Karlsruhe;;;;49.18063;9.2169058;Baden-Württemberg;Karlsruhe;Karlsruhe;08 2 12 000 ;60000;500000;;;;;15000;;;;;;;2;10;10;5;;10;15;15;15;15;15;15;15;15;15;
+KW_KA_Belebung;Belebung KW Karlsruhe;KW_Karlsruhe;;;;49.18063;9.2169058;Baden-Württemberg;Karlsruhe;Karlsruhe;08 2 12 000 ;60000;500000;;;;;45000;;;;;;;10;20;30;15;;;;;;;;;;;;
+KW_KA_Nachklärung;Nachklärung KW Karlsruhe;KW_Karlsruhe;;;;49.18063;9.2169058;Baden-Württemberg;Karlsruhe;Karlsruhe;08 2 12 000 ;60000;500000;;;;;30000;;;;;;;3;10;10;5;;10;15;15;15;15;15;15;15;;15;15
