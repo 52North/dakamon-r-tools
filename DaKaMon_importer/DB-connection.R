@@ -88,7 +88,7 @@ if (any(par_foi)) {
                           </ifoi:featureMember>
                       </ifoi:InsertFeatureOfInterest>")
     
-    insMsg <- rawToChar(httr::POST("http://localhost:8081/52n-sos-webapp/service", 
+    insMsg <- rawToChar(httr::POST("http://localhost:8080/52n-sos-webapp/service", 
                                    body = insReq, verbose(), content_type_xml(), accept_xml())$content)
     message(insMsg)
   }
@@ -128,43 +128,52 @@ for (foi in which(!par_foi)) {# foi <- 6
                           </ifoi:featureMember>
                       </ifoi:InsertFeatureOfInterest>")
   
-  insMsg <- rawToChar(httr::POST("http://localhost:8081/52n-sos-webapp/service", 
+  insMsg <- rawToChar(httr::POST("http://localhost:8080/52n-sos-webapp/service", 
                                  body = insReq, verbose(), content_type_xml(), accept_xml())$content)
   message(insMsg)
 }
-###
-regCols <- dbGetQuery(db, paste0("SELECT dede FROM foidatametadata"))[,1]
-misCols <- which(sapply(foi_header, function(x) is.na(match(x, regCols))))
+
 
 # pre-process: add new units
-regUoMs <- dbGetQuery(db, paste0("SELECT unit FROM unit"))[,1]
+regUoMs <- dbGetQuery(db, paste0("SELECT unit FROM unit"))
 unqUoMs <- unique(foi_uom[-1])
-misUoMs <- unqUoMs[which(sapply(unqUoMs, function(x) is.na(match(x, regUoMs))) & nchar(unqUoMs) > 0)]
+if (nrow(regUoMs) > 0) {
+  regUoMs <- regUoMs[,1]
+  misUoMs <- unqUoMs[which(sapply(unqUoMs, function(x) is.na(match(x, regUoMs))) & nchar(unqUoMs) > 0)]
+} else {
+  misUoMs <- unqUoMs
+}
 
 for (uom in misUoMs) {
   dbSendQuery(db, paste0("INSERT INTO unit (unitid, unit) VALUES (nextval('unitid_seq'), '", uom, "');"))
 }
 
-for (i in 1:length(misCols)) {
-  colId <- sprintf("col%03d", i + length(regCols) )
-  dbColumn(db, "foidata", colId, "add", 
-           coltype = switch(class(foi_data[,misCols[i]]),
-                            integer = "numeric",
-                            numeric = "numeric",
-                            character = "character varying(255)"))
-  
-  # look-up UoM id
-  unitId <- NULL
-  if (nchar(foi_uom[misCols[i]]) > 0) {
-    unitId <- dbGetQuery(db, paste0("SELECT unitid FROM unit WHERE unit = '", foi_uom[misCols[i]], "'"))[1,1]
-  }
-  
-  if (is.null(unitId)) {
-    dbSendQuery(db, paste0("INSERT INTO foidatametadata (columnid, dede)
-                VALUES ('", paste(colId, foi_header[misCols[i]], sep="', '"),"')"))
-  } else {
-    dbSendQuery(db, paste0("INSERT INTO foidatametadata (columnid, dede, uom)
-                VALUES ('", paste(colId, foi_header[misCols[i]], unitId, sep="', '"),"')"))
+### add new columns
+regCols <- dbGetQuery(db, paste0("SELECT dede FROM foidatametadata"))[,1]
+misCols <- which(sapply(foi_header, function(x) is.na(match(x, regCols))))
+
+if (length(misCols > 0)) { 
+  for (i in 1:length(misCols)) {
+    colId <- sprintf("col%03d", i + length(regCols) )
+    dbColumn(db, "foidata", colId, "add", 
+             coltype = switch(class(foi_data[,misCols[i]]),
+                              integer = "numeric",
+                              numeric = "numeric",
+                              character = "character varying(255)"))
+    
+    # look-up UoM id
+    unitId <- NULL
+    if (nchar(foi_uom[misCols[i]]) > 0) {
+      unitId <- dbGetQuery(db, paste0("SELECT unitid FROM unit WHERE unit = '", foi_uom[misCols[i]], "'"))[1,1]
+    }
+    
+    if (is.null(unitId)) {
+      dbSendQuery(db, paste0("INSERT INTO foidatametadata (columnid, dede)
+                  VALUES ('", paste(colId, foi_header[misCols[i]], sep="', '"),"')"))
+    } else {
+      dbSendQuery(db, paste0("INSERT INTO foidatametadata (columnid, dede, uom)
+                  VALUES ('", paste(colId, foi_header[misCols[i]], unitId, sep="', '"),"')"))
+    }
   }
 }
 
@@ -174,15 +183,29 @@ for (i in 1:nrow(foi_data)) {
   if (all(!nonEmpty)) next;
 
   # map csv-header to DB header via foidatametadata
-  foi_db_col_ids <- dbGetQuery(db, paste0("SELECT columnid, dede FROM foidatametadata WHERE dede IN ('", paste(foi_header[nonEmpty], collapse="', '"),"')"))
+  foi_db_col_ids <- dbGetQuery(db, paste0("SELECT columnid, dede FROM foidatametadata WHERE dede IN ('", 
+                                          paste(foi_header[nonEmpty], collapse="', '"),"')"))
   
   # mind the ordering
   foi_db_col_ids <- foi_db_col_ids[match(foi_header[nonEmpty], foi_db_col_ids$dede), "columnid"]
   
   # find the FoI idntifier
-  foi_db_id <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier ='", foi_data$ID[i],"'"))
-  dbSendQuery(db, paste0("INSERT INTO foidata ( featureofinterestid, ", paste(foi_db_col_ids, collapse=", "), ") ",
-                         "VALUES ('", foi_db_id, "', '", paste(foi_data[i, nonEmpty], collapse="', '"), "')"))
+  foi_db_id <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier ='", 
+                                     foi_data$ID[i],"'"))
+  
+  # check whether the FoI has already some data
+  if (nrow(dbGetQuery(db, paste0("SELECT id FROM foidata WHERE featureofinterestid = ", foi_db_id))) > 0) {
+    if(overwriteDB()) {
+      dbSendQuery(db, paste0("UPDATE foidata SET ", 
+                             paste(foi_db_col_ids, foi_data[i, nonEmpty], sep = " = '", collapse = "', "),
+                             "' WHERE featureofinterestid = ", foi_db_id, ";"))
+    } else {
+      next()
+    }
+  } else {
+    dbSendQuery(db, paste0("INSERT INTO foidata ( featureofinterestid, ", paste(foi_db_col_ids, collapse=", "), ") ",
+                           "VALUES ('", foi_db_id, "', '", paste(foi_data[i, nonEmpty], collapse="', '"), "')"))
+  }
 }
 
 # restrictions on CSV:

@@ -74,9 +74,8 @@ server <- function(input, output) {
                                          options = list(paging=FALSE, bFilter=FALSE))
   
   output$tableFoI <- DT::renderDataTable(inCSVFoI()[inclRowFoI(), inclColFoI(), drop=F],
-                                         filter="top",
                                          options = list(paging=FALSE,
-                                                        dom = 'Bfrtip'))
+                                                        bFilter=FALSE))
   
   # data tab logic:
   # toAdd: validate UoM?
