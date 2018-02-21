@@ -153,7 +153,7 @@ regCols <- dbGetQuery(db, paste0("SELECT dede FROM foidatametadata"))[,1]
 misCols <- which(sapply(foi_header, function(x) is.na(match(x, regCols))))
 
 if (length(misCols > 0)) { 
-  for (i in 1:length(misCols)) {
+  for (i in 1:length(misCols)) { # i <- 14
     colId <- sprintf("col%03d", i + length(regCols) )
     dbColumn(db, "foidata", colId, "add", 
              coltype = switch(class(foi_data[,misCols[i]]),

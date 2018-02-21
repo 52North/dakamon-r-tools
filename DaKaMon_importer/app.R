@@ -21,6 +21,8 @@ ui <- fluidPage(
                             textInput("exclColFoI", "Exclude columns:"),
                             checkboxInput("owFoI", "Overwrite FoI?", FALSE), 
                             uiOutput("foiValidationOut"),
+                            uiOutput("DBConsistencyTxtOut"),
+                            uiOutput("DBConsistencyActionOut"),
                             width = 2),
                mainPanel(dataTableOutput('tableHeadFoI'),
                          dataTableOutput('tableFoI')))),
@@ -53,7 +55,7 @@ server <- function(input, output) {
   inCSVFoI <- reactive({
     inFile <- input$csvFileFoI
     if (is.null(inFile)) return(NULL)
-    read.csv(inFile$datapath, header = TRUE, sep = input$sepFoI, dec = input$decFoI)
+    read.csv(inFile$datapath, header = TRUE, sep = input$sepFoI, dec = input$decFoI, stringsAsFactors = FALSE)
   })
   
   inclRowFoI <- reactive({
@@ -74,7 +76,11 @@ server <- function(input, output) {
     !c(1:ncol(inCSVFoI())) %in% exclNum[!is.na(exclNum)]
   })
   
+  vali <- reactiveValues(csv=FALSE)
+  
   ## validation of csv
+  # look for Name, ID, lat, lon and super_FoI,
+  # check whether columns have unique names
   output$foiValidationOut <- renderUI({
     txt <- NULL
     foi_header <- colnames(inCSVFoI()[, inclColFoI(), drop=F])
@@ -91,11 +97,53 @@ server <- function(input, output) {
     comp_header <- outer(foi_header, foi_header, "==")
     if(any(comp_header[upper.tri(comp_header)]))
       txt <- paste(txt, "<li>Column names must be unique.</li>", sep="")
-    if (is.null(txt))
+    if (is.null(txt)) {
+      vali$csv <- TRUE
       return(actionButton("checkDB", "Check DB consistency!"))
+    }
     
+    vali$csv <- FALSE
     return(HTML(paste("<html><ls>", txt, "</ls></html")))
   })
+  
+  observeEvent(input$csvFileFoI, {
+    if(!vali$csv) {
+               output$DBConsistencyTxtOut <- renderUI(HTML(""))
+               output$DBConsistencyActionOut  <- renderUI(HTML(""))}})
+  
+  ## check DB consistency:
+  # find existing FoIs
+  # check Parameter and their UoMs
+  observeEvent(input$checkDB, {
+    txtInfo <- NULL
+    txtErr <- NULL
+    FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
+                                    paste(inCSVFoI()$ID[inclRowFoI()], collapse="', '"),"')"))
+    txtInfo <- paste("The following features are already in the DB:",
+                     paste0(FoIinDB$identifier, collapse=", "))
+  
+    foi_header <- colnames(inCSVFoI()[, inclColFoI(), drop=F])
+    colinDB <- dbGetQuery(db, paste0("SELECT columnid, dede, unit.unit FROM foidatametadata left outer join unit on (unit.unitid = uom) WHERE dede IN ('", 
+                                     paste(foi_header, collapse="', '"),"')"))
+    str(colinDB)
+    # uoms <- colinDB$uom[!is.na(colinDB$uom)]
+    # if (length(uoms) > 0) {
+    #   colinDB_UoMs <- dbGetQuery(db, paste0("SELECT unitid, unit FROM unit WHERE unitid IN ('", 
+    #                                         paste(uoms, collapse="', '"),"')"))
+    # }
+    # colinDB_UoMs
+    
+    txtInfo <- paste("The following features are already in the DB:",
+                     paste0(FoIinDB$identifier, collapse=", "))
+    
+    if (is.null(txtErr) && vali$csv) {
+      output$DBConsistencyTxtOut <- renderUI(HTML(paste0("<html><div style=\"height:120px;width:120px;border:1px solid #ccc; overflow:auto\">", txtInfo, "</div></html")))
+      output$DBConsistencyActionOut <- renderUI(actionButton("storeDB", "Store in DB!"))
+    } else {
+      output$DBConsistencyTxtOut <- renderUI(HTML(paste0("<html>", txtInfo, "</html")))
+      output$DBConsistencyActionOut <- renderUI(actionButton("storeDB", "Store in DB!"))
+    }
+    }, ignoreInit=TRUE)
   
   # foi_uom <- inCSVFoI()[c(input$UoMFoI), inclColFoI()]
   # foi_data <- read.csv("Daten/FoI_sample.csv", sep = ";", header = FALSE, skip = 2, stringsAsFactors = FALSE)
@@ -108,15 +156,25 @@ server <- function(input, output) {
   # 
   # colnames(foi_data) <- foi_header
 
-  output$tableHeadFoI <- DT::renderDataTable(inCSVFoI()[c(input$UoMFoI), inclColFoI(), drop=F],
-                                             options = list(paging=FALSE, bFilter=FALSE))
+  # output$tableHeadFoI <- DT::renderDataTable(inCSVFoI()[c(input$UoMFoI), inclColFoI(), drop=F],
+  #                                            options = list(paging=FALSE, bFilter=FALSE))
   
-  output$tableFoI <- DT::renderDataTable(inCSVFoI()[inclRowFoI(), inclColFoI(), drop=F],
-                                         options = list(paging=FALSE, bFilter=FALSE))
+  output$tableFoI <- DT::renderDataTable({
+    showTab <- inCSVFoI()[inclRowFoI(), inclColFoI(), drop=F]
+    if (!is.na(input$UoMFoI)  && ! is.null(input$UoMFoI)) {
+      showUoM <- as.character(inCSVFoI()[c(input$UoMFoI), inclColFoI()])
+      showUoM <- sapply(showUoM, function(x) {
+        if (nchar(x) > 0 && x != "NA") {
+          paste("[",x,"]", sep="")
+        } else {
+          ""
+        }})
+      if (!is.null(inCSVFoI()))              
+        colnames(showTab) <- paste(colnames(showTab), showUoM)
+    }
+    showTab}, options = list(paging=FALSE, bFilter=FALSE))
   
-  
-  
-  # 
+
   # data tab logic:
   # toAdd: validate UoM?
   # add Button "check DB consistency" -> list known vs new variables; matching vs non-matching uom ( -> hottable to fix?) -> manually update csv file
