@@ -103,7 +103,7 @@ server <- function(input, output) {
     }
     
     vali$csv <- FALSE
-    return(HTML(paste("<html><ls>", txt, "</ls></html")))
+    return(HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", txt, "</ul></div></html")))
   })
   
   observeEvent(input$csvFileFoI, {
@@ -119,13 +119,21 @@ server <- function(input, output) {
     txtErr <- NULL
     FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
                                     paste(inCSVFoI()$ID[inclRowFoI()], collapse="', '"),"')"))
-    txtInfo <- paste("The following features are already in the DB:",
-                     paste0(FoIinDB$identifier, collapse=", "))
+    txtInfo <- paste("The following features are already in the DB: <ul><li>",
+                     paste0(FoIinDB$identifier, collapse="</li><li>"))
+    vali$foiInDB <- FoIinDB$identifier
   
     foi_header <- colnames(inCSVFoI()[, inclColFoI(), drop=F])
     colinDB <- dbGetQuery(db, paste0("SELECT columnid, dede, unit.unit FROM foidatametadata left outer join unit on (unit.unitid = uom) WHERE dede IN ('", 
                                      paste(foi_header, collapse="', '"),"')"))
-    str(colinDB)
+    colinDB$unit[is.na(colinDB$unit)] <- ""
+    
+    foi_uom <- as.character(inCSVFoI()[c(input$UoMFoI), inclColFoI()])
+    foi_uom[foi_uom == "NA"] <- ""
+    compUoM <- foi_uom[match(colinDB$dede, foi_header)] == colinDB$unit
+    
+    vali$uomMissMatchCols <- colinDB$dede[which(compUoM)]
+    
     # uoms <- colinDB$uom[!is.na(colinDB$uom)]
     # if (length(uoms) > 0) {
     #   colinDB_UoMs <- dbGetQuery(db, paste0("SELECT unitid, unit FROM unit WHERE unitid IN ('", 
@@ -133,11 +141,8 @@ server <- function(input, output) {
     # }
     # colinDB_UoMs
     
-    txtInfo <- paste("The following features are already in the DB:",
-                     paste0(FoIinDB$identifier, collapse=", "))
-    
     if (is.null(txtErr) && vali$csv) {
-      output$DBConsistencyTxtOut <- renderUI(HTML(paste0("<html><div style=\"height:120px;width:120px;border:1px solid #ccc; overflow:auto\">", txtInfo, "</div></html")))
+      output$DBConsistencyTxtOut <- renderUI(HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", txtInfo, "</li></ul></div></html")))
       output$DBConsistencyActionOut <- renderUI(actionButton("storeDB", "Store in DB!"))
     } else {
       output$DBConsistencyTxtOut <- renderUI(HTML(paste0("<html>", txtInfo, "</html")))
@@ -145,7 +150,8 @@ server <- function(input, output) {
     }
     }, ignoreInit=TRUE)
   
-  # foi_uom <- inCSVFoI()[c(input$UoMFoI), inclColFoI()]
+  
+  
   # foi_data <- read.csv("Daten/FoI_sample.csv", sep = ";", header = FALSE, skip = 2, stringsAsFactors = FALSE)
   # 
   # foi_empty_cols <- apply(foi_data, 2, function(x) all(is.na(x)))
@@ -160,19 +166,32 @@ server <- function(input, output) {
   #                                            options = list(paging=FALSE, bFilter=FALSE))
   
   output$tableFoI <- DT::renderDataTable({
+    print(vali$foiInDB)
+    if (!is.null(inCSVFoI())) {
     showTab <- inCSVFoI()[inclRowFoI(), inclColFoI(), drop=F]
     if (!is.na(input$UoMFoI)  && ! is.null(input$UoMFoI)) {
       showUoM <- as.character(inCSVFoI()[c(input$UoMFoI), inclColFoI()])
       showUoM <- sapply(showUoM, function(x) {
         if (nchar(x) > 0 && x != "NA") {
-          paste("[",x,"]", sep="")
+          paste0(" [",x,"]")
         } else {
           ""
         }})
       if (!is.null(inCSVFoI()))              
-        colnames(showTab) <- paste(colnames(showTab), showUoM)
+        colnames(showTab) <- paste0(colnames(showTab), showUoM)
     }
-    showTab}, options = list(paging=FALSE, bFilter=FALSE))
+    if(!is.null(vali$foiInDB)) {
+      datatable(showTab,  options = list(paging=FALSE, bFilter=FALSE))  %>% formatStyle("ID",
+                                                                                        target="row",
+                                                                                        backgroundColor=styleEqual(vali$foiInDB, rep("yellow", length(vali$foiInDB))))
+      } else {
+        datatable(showTab,  options = list(paging=FALSE, bFilter=FALSE))
+      }  }} )
+    
+  
+
+  
+
   
 
   # data tab logic:
