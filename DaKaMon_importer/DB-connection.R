@@ -4,10 +4,16 @@
 library("rpostgis")
 library("httr")
 
-db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5433")
+db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
 db
 
-overwriteDB <- function() FALSE
+# overwriteDB <- function() FALSE
+
+############################################
+##############                ##############
+############## Initial set-up ##############
+##############                ##############
+############################################
 
 ## use separate table to store FoI attributes, as well as a separate table to store column headers and UoM
 # dbSendQuery(db, "DROP TABLE foidata;")
@@ -28,7 +34,12 @@ dbSendQuery(db,
 dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('ID', 'ID')")
 dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('Name', 'Name')")
 
-# read dummy data
+##########################################
+##############              ##############
+##############  dummy data  ##############
+##############              ##############
+##########################################
+
 foi_df <- read.csv("Daten/FoI_sample.csv", sep = ";", header = FALSE, stringsAsFactors = FALSE)
 foi_header <- foi_df[1,]
 if (!("Name" %in% foi_header))
@@ -49,8 +60,12 @@ foi_data <- foi_data[,!foi_empty_cols]
 
 colnames(foi_data) <- foi_header
 
-###
-# Insert Feautres
+###############################################
+##############                   ##############
+##############  Insert Feautres  ##############
+##############                   ##############
+###############################################
+
 # any parent features that need to be inserted before? Those with empty or missing super_FoI column
 par_foi <- is.na(foi_data$super_FoI) | nchar(foi_data$super_FoI) == 0
 
@@ -153,7 +168,7 @@ regCols <- dbGetQuery(db, paste0("SELECT dede FROM foidatametadata"))[,1]
 misCols <- which(sapply(foi_header, function(x) is.na(match(x, regCols))))
 
 if (length(misCols > 0)) { 
-  for (i in 1:length(misCols)) { # i <- 14
+  for (i in 1:length(misCols)) {
     colId <- sprintf("col%03d", i + length(regCols) )
     dbColumn(db, "foidata", colId, "add", 
              coltype = switch(class(foi_data[,misCols[i]]),
