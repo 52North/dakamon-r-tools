@@ -1,0 +1,15 @@
+ID;ProbenStart;ProbenEnde;AnalyseZeit;TS;Ton;Schluff;T+U;fS;mS;gS;fG;mG;Humus;Nges;CaCO3;T+U_CaCO3;fS_CaCO3;mS_CaCO3;gS_CaCO3;fG_CaCO3;pHCaCl2;pHCAL;Tongehalt;KAK ;FeO;PO;pHCAL;P2O5;K2O;Mg;SO4;Schüttdichte;Dichte gestampft;Schluff+Ton;H2O;Nitratgehalt
+UoM;;;;%FS;;;%;%;%;%;%;%;%;%;%;%;%;%;%;%;;;%;mval/100g;mg/g;mg/g;;mg/100g;mg/100g;mg/100g;mg/kg;gTS/ml;gTS/ml;%;%;kgN/ha
+BG;;;;;;;;;;;;;;;;;;;;;;;;;;;;1;;;;;;;;
+KA_HN_Nachklaerung;;;07/02/2017;;;;;;;;;;;;0.11;;;;;;;4.15;33.6;;;;;13.1;;;;;;;;
+KA_HN_Vorklaerung;;;07/02/2017;;;;;;;;;;;;0.07;;;;;;;4.12;36;;;;;2.04;;;;;;;;
+KA_HN_Belebung;;;07/02/2017;;;;;;;;;;;;0.15;;;;;;;4.14;20.4;;;;;6.42;;;;;;;;
+KA_HN_Nachklaerung;;;07/02/2017;;;;;;;;;;;;0.17;;;;;;;4.12;23.6;;;;;1.1;;;;;;;;
+KA_HN_Vorklaerung;;;07/02/2017;;;;;;;;;;;;0.16;;;;;;;4.14;19;;;;;5.7;;;;;;;;
+KA_HN_Belebung;;;07/02/2017;;;;;;;;;;;;0.09;;;;;;;4.1;20.4;;;;;0.93;;;;;;;;
+KA_HN_Nachklaerung;;;07/02/2017;;;;;;;;;;;;0.13;;;;;;;4.14;19.2;;;;;12.6;;;;;;;;
+KA_HN_Vorklaerung;;;07/02/2017;;;;;;;;;;;;0.19;;;;;;;4.12;22.4;;;;;4.62;;;;;;;;
+KA_HN_Belebung;;;07/02/2017;;;;;;;;;;;;0.19;;;;;;;4.14;17.2;;;;;16.7;;;;;;;;
+KA_HN_Nachklaerung;;;07/02/2017;;;;;;;;;;;;0.17;;;;;;;4.1;31;;;;;3.98;;;;;;;;
+KA_HN_Vorklaerung;;;07/02/2017;;;;;;;;;;;;0.17;;;;;;;4.13;24;;;;;5.54;;;;;;;;
+KA_HN_Belebung;;;07/02/2017;;;;;;;;;;;;0.15;;;;;;;4.11;29.6;;;;;1.49;;;;;;;;
