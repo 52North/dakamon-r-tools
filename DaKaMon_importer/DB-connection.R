@@ -34,6 +34,17 @@ dbSendQuery(db,
 dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('ID', 'ID')")
 dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('Name', 'Name')")
 
+# insert table 'observablepropertyrelation' - analogously table 'featurerelation'
+# dbSendQuery(db, "DROP TABLE observablepropertyrealtion")
+dbSendQuery(db, "CREATE TABLE observablepropertyrealtion (
+                 parentobservablepropertyid bigint NOT NULL,
+                 childobservablepropertyid bigint NOT NULL,
+                 CONSTRAINT observablepropertyrealtion_pkey PRIMARY KEY (childobservablepropertyid, parentobservablepropertyid),
+                 CONSTRAINT observablepropertychildfk FOREIGN KEY (childobservablepropertyid)
+                    REFERENCES observableproperty (observablepropertyid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION,
+                 CONSTRAINT observablepropertyparentfk FOREIGN KEY (parentobservablepropertyid)
+                    REFERENCES observableproperty (observablepropertyid) MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION)")
+
 ##########################################
 ##############              ##############
 ##############  dummy data  ##############

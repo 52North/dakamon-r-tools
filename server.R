@@ -6,8 +6,12 @@ library(rpostgis)
 library(httr)
 library(rjson)
 
+
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
-verbose <- FALSE
+verbose <- TRUE
+BGencode <- -9999
+BGchar <- "< BG"
+
 
 ## tools
 SOSinsFoI <- function(gmlId, name, lat, lon, super_FoI="unknown") {
@@ -43,6 +47,46 @@ SOSreqFoI <- function(gmlId) {
           service=\"SOS\" version=\"2.0.0\" xsi:schemaLocation=\"http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd\">
           <sos:featureOfInterest>", gmlId, "</sos:featureOfInterest></sos:GetFeatureOfInterest>")
 }
+
+SOSreqObs <- function(FoI="http://www.52north.org/test/featureOfInterest/9",
+                      obsProp="http://www.52north.org/test/observableProperty/9_3",
+                      phenTime="2012-07-31T17:45:15+00:00") {
+  options(digits.secs = 3)
+  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+          <sos:GetObservation
+              xmlns:sos=\"http://www.opengis.net/sos/2.0\"
+              xmlns:fes=\"http://www.opengis.net/fes/2.0\"
+              xmlns:gml=\"http://www.opengis.net/gml/3.2\"
+              xmlns:swe=\"http://www.opengis.net/swe/2.0\"
+              xmlns:xlink=\"http://www.w3.org/1999/xlink\"
+              xmlns:swes=\"http://www.opengis.net/swes/2.0\"
+              xmlns:sosrf=\"http://www.opengis.net/sosrf/1.0\"
+              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" service=\"SOS\" version=\"2.0.0\" xsi:schemaLocation=\"http://www.opengis.net/sos/2.0 http://schemas.opengis.net/sos/2.0/sos.xsd\">
+              <sos:observedProperty>", obsProp, "</sos:observedProperty>
+              <sos:temporalFilter>
+                <fes:TEquals><fes:ValueReference>phenomenonTime</fes:ValueReference>
+                  <gml:TimeInstant gml:id=\"ti_1\">
+                    <gml:timePosition>", phenTime, "</gml:timePosition>
+                  </gml:TimeInstant>
+                </fes:TEquals>
+              </sos:temporalFilter>
+              <sos:featureOfInterest>", FoI, "</sos:featureOfInterest>    
+          </sos:GetObservation>")
+}
+# 
+# cat(SOSreqObs())
+# 
+# reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
+#                                body = SOSreqObs(),
+#                                content_type_xml(), accept_json())$content)
+# length(fromJSON(reqMsg)$observation)
+# 
+# 
+# numTime <- as.numeric(Sys.time())
+# 
+# 
+# as.character(as.POSIXct(numTime+1e-3, origin = "1970-01-01", tz="GMT"))
+
 ## /tools
 
 server <- function(input, output) {
