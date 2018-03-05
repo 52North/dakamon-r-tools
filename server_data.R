@@ -4,10 +4,185 @@
 ###################################          ###################################
 ################################################################################
 
+## tools
+confInit <- function(url=SOSWebApp, csvPath="~/GitRepos/dakamon_r-tools/Daten/KA2017_03938_BG.csv") {
+  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+         <SosImportConfiguration xsi:schemaLocation=\"https://raw.githubusercontent.com/52North/sos-importer/master/bindings/src/main/resources/import-configuration.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
+         <DataFile referenceIsARegularExpression=\"false\">
+         <LocalFile>
+         <Path>", csvPath, "</Path>
+         <Encoding>UTF-8</Encoding>
+         </LocalFile>
+         </DataFile>
+         <SosMetadata>
+         <URL>", url, "service</URL>
+         <Offering generate=\"true\"/>
+         <Version>2.0.0</Version>
+         <Binding>POX</Binding>
+         <!-- <Importer>org.n52.sos.importer.feeder.importer.SingleObservationImporter</Importer> -->
+         <Importer>org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter</Importer>
+         </SosMetadata>")
+}
+
+confCsvMetaInit <- function() {
+  paste0("<CsvMetadata>
+         <ColumnAssignments>
+         <Column>
+         <Number>0</Number>
+         <Type>FOI</Type>
+         </Column>
+         <Column>
+         <Number>1</Number>
+         <Type>OM_PARAMETER</Type>
+         <Metadata>
+         <Key>TYPE</Key>
+         <Value>TEXT</Value>
+         </Metadata>
+         <Metadata>
+         <Key>NAME</Key>
+         <Value>Proben-Nummer</Value>
+         </Metadata>
+         </Column>
+         <Column>
+         <Number>2</Number>
+         <Type>DATE_TIME</Type>
+         <Metadata>
+         <Key>PARSE_PATTERN</Key>
+         <Value>M/d/yyyy</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TYPE</Key>
+         <Value>COMBINATION</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TIME_ZONE</Key>
+         <Value>0</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TIME_HOUR</Key>
+         <Value>12</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TIME_MINUTE</Key>
+         <Value>0</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TIME_SECOND</Key>
+         <Value>0</Value>
+         </Metadata>
+         <Metadata>
+         <Key>GROUP</Key>
+         <Value>1</Value>
+         </Metadata>
+         </Column>")
+}
+
+confColumnDef <- function(colId=3, colRClass="numeric", 
+                          obsPropTempRef="property0815",
+                          sensorTempRef="sensor965319032",
+                          uomTempRef="uom18471521",
+                          BGlabel="Bestimmungsgrenze",
+                          BGvalue=0.05) {
+  paste0("<Column>
+         <Number>", colId, "</Number>
+         <Type>MEASURED_VALUE</Type>
+         <Metadata>
+         <Key>TYPE</Key>
+         <Value>", switch(colRClass, numeric="NUMERIC", integer="NUMERIC", character="TEXT", factor="TEXT", message("unknown type in column definition")), "</Value>
+         </Metadata>
+         <RelatedObservedProperty>
+         <IdRef>", obsPropTempRef, "</IdRef>
+         </RelatedObservedProperty>
+         <RelatedSensor>
+         <IdRef>", sensorTempRef, "</IdRef>
+         </RelatedSensor>
+         <RelatedUnitOfMeasurement>
+         <IdRef>", uomTempRef, "</IdRef>
+         </RelatedUnitOfMeasurement>
+         <RelatedReferenceValue>
+         <Label>", BGlabel, "</Label>
+         <Value>", BGvalue, "</Value>
+         </RelatedReferenceValue>
+         </Column>")
+}
+
+confCsvMetaClose <- function(decSep, skipRows, comInd="#",
+                             colSep, txtInd="\"", header=FALSE,
+                             obsCol="org.n52.sos.importer.feeder.collector.DefaultCsvCollector") {
+  paste0("</ColumnAssignments>
+         <DecimalSeparator>", decSep, "</DecimalSeparator>
+         <FirstLineWithData>", skipRows, "</FirstLineWithData>
+         <Parameter>
+         <CommentIndicator>", comInd, "</CommentIndicator>
+         <ColumnSeparator>", colSep, "</ColumnSeparator>
+         <TextIndicator>", txtInd, "</TextIndicator>
+         </Parameter>
+         <UseHeader>", ifelse(header,"true", "false"), "</UseHeader>
+         <ObservationCollector>", obsCol, "</ObservationCollector>
+         </CsvMetadata>")
+}
+
+confAddMetaInit <- function() {
+  paste0("<AdditionalMetadata>
+         <Metadata>
+         <Key>HUNK_SIZE</Key>
+         <Value>5</Value>
+         </Metadata>
+         <Metadata>
+         <Key>TIMEOUT_BUFFER</Key>
+         <Value>50000</Value>
+         </Metadata>")
+}
+
+confSensorDef <- function(sensorTempRef="sensor965319032",
+                          obsPropName="Ammonium") {
+  paste0("<Sensor>
+    <GeneratedResource>
+      <ID>", sensorTempRef, "</ID>
+      <Number>0</Number>
+      <URI useAsPrefix=\"true\">", obsPropName, "_</URI>
+      <ConcatString>_</ConcatString>
+    </GeneratedResource>
+  </Sensor>
+")
+}
+
+confObsPropDef <- function(obsPropTempRef="property0815",
+                           obsPropName="Ammonium"){
+  paste0("<ObservedProperty>
+    <ManualResource>
+      <ID>", obsPropTempRef, "</ID>
+      <URI>", obsPropName, "</URI>
+      <Name>", obsPropName, "</Name>
+    </ManualResource>
+  </ObservedProperty>")
+}
+
+confUomDef <- function(uomTempRef="uom18471521",
+                       uomName="mg/l",
+                       uomURI="mg/l") {
+  paste0("<UnitOfMeasurement>
+      <ManualResource>
+        <ID>", uomTempRef, "</ID>
+        <URI>", uomURI, "</URI>
+        <Name>", uomName, "</Name>
+      </ManualResource>
+    </UnitOfMeasurement>")
+}
+
+confAddMetaClose <- function() {
+  "</AdditionalMetadata>
+</SosImportConfiguration>"
+}
+
+## /tools
+
+# reactive variables
 inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
 CheckDBData <- reactiveValues(checked = FALSE)
-feederPath <- "~/GitRepos/dakamon_r-tools/52n-sos-importer-feeder-bin.jar"
+
+rowSkip <- reactive(max(as.numeric(c(input$dataStgr, input$dataBG, input$dataUoM))))
 
 ## data logic
 # toAdd: validate UoM?
@@ -62,8 +237,6 @@ observeEvent(input$dataStgr, {
     colnames(inCSVData$df) <- inCSVData$headAsChar
   }
 })
-
-rowSkip <- reactive(max(as.numeric(c(input$dataStgr, input$dataBG, input$dataUoM))))
 
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
@@ -147,13 +320,58 @@ output$dataValidationOut <- renderUI({
 # check for identical BG:
 #   missmatch -> no upload!
 
-# observeEvent(input$dataCheckDB, {
-  # loop over columns, querry data for each FoI and Date, store presence/absence per column and row
+observeEvent(input$dataCheckDB, {
+# loop over columns, querry data for each FoI and Date, store presence/absence per column and row
+
+  # 2017-11-14T12:00:00+00:004-tert.-OktylphenolElze_Ablauf_RW1
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
   
-  # datatable()
+  progress$set(message = "Checking DB!", value = 0)
   
+  nRowDf <- nrow(inCSVData$df)
+  nColDf <- ncol(inCSVData$df)
   
-  #   if (nrow(DatainDB) > 0) {
+  for (colDf in 4:nColDf) { # colDf <- 4
+    colVec <- rep(0, nRowDf)
+    
+    progress$inc(1/nColDf, paste(detail="Column", colDf))
+    
+    for (i in 1:nRowDf) { # i <- 2
+      phenTime <- paste0(as.character(as.Date(inCSVData$df[i, "Datum"], format = "%m/%e/%Y")), stndTime)
+
+      # request observations from SOS
+      insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
+                                     body =   SOSreqObs(FoI=inCSVData$df$ID[i],
+                                                        obsProp=inCSVData$headAsChar[colDf],
+                                                        phenTime=phenTime),
+                                     content_type_xml(), accept_json())$content) 
+      
+      # querry UoM
+      curDBUoM <- dbGetQuery(db, paste0("SELECT unit 
+      FROM unit AS u
+      LEFT OUTER JOIN series AS s ON (u.unitid = s.unitid)
+      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df$ID[i], "'"))
+      
+      # querry BG
+      
+      # querry Stoffgruppe
+      
+      
+      if (is.null(fromJSON(insMsg)$exceptions))
+        colVec[i] <- 1
+      if (length(curDBUoM$unit) > 0) {
+        if (inCSVData$UoMs[colDf] != curDBUoM$unit)
+          colVec[i] <- 2
+      }
+    }
+    
+    inCSVData$obsInDB <- cbind(inCSVData$obsInDB, colVec)
+  }
+
+    # if (nrow(DatainDB) > 0) {
 #     CheckDBData$txtInfo <- paste("The following features are already in the DB: <ul><li>",
 #                              paste0(DatainDB$identifier, collapse="</li><li>"))
 #   } else {
@@ -187,10 +405,10 @@ output$dataValidationOut <- renderUI({
 #         )
 #     }
 #   }
-#   
-#   CheckDBData$checked <- TRUE
-# }, ignoreInit=TRUE)
-# 
+
+  CheckDBData$checked <- TRUE
+}, ignoreInit=TRUE)
+
 # output$DBConsistencyTxtOut <- renderUI({
 #   if (CheckDBData$checked) {
 #     if (!is.null(CheckDBData$txtInfo)) {
@@ -206,15 +424,15 @@ output$dataValidationOut <- renderUI({
 # })
 
 output$dataDBConsistencyActionOut <- renderUI({
-  # if (CheckDBData$checked) {
+  if (CheckDBData$checked) {
   #   if (is.null(CheckDBData$txtErr)) {
-  #     if (is.null(CheckDBData$txtInfo) || input$datadataowData) {
+      if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
         actionButton("dataStoreDB", "Store in DB!")
-  #     }
+      }
   #   }
-  # } else {
-  #   HTML("")
-  # }
+  } else {
+    HTML("")
+  }
 })
 
 #####################
@@ -270,27 +488,25 @@ output$tableData <- DT::renderDataTable({
                                        scrollX=TRUE, sort=FALSE),
                         escape=FALSE)
 
-    # # if DB consistency has been checked, apply colors
-    # if (CheckDBData$checked) {
-    #   rowClrs <- rep("white", nrow(showTab))
-    # 
-    #   if (!is.null(CheckDBData$txtInfo)) {
-    #     rowClrs[which(showTab$ID %in% CheckDBData$DataInDB)] <- "yellow"
-    #     for (col in c(1, which(inCSVData$headAsChar %in% CheckDBData$colInDB$dede))) {
-    #       if (col %in% CheckDBData$uomMissMatchCols) next;
-    #       showDT <- formatStyle(showDT, col, "ID",
-    #                             backgroundColor = styleEqual(showTab$ID, rowClrs))
-    #     }
-    #   }
-    # 
-    #   if (!is.null(CheckDBData$txtErr)) {
-    #     rowClrs <- rep("red", nrow(showTab))
-    #     for (col in CheckDBData$uomMissMatchCols) {
-    #       showDT <- formatStyle(showDT, col, "ID",
-    #                             backgroundColor = styleEqual(showTab$ID, rowClrs))
-    #     }
-    #   }
-    # }
+    # if DB consistency has been checked, apply colors
+    if (CheckDBData$checked) {
+      if (any(inCSVData$obsInDB > 0)) {
+        for (colDf in 4:ncol(inCSVData$df)) {
+          rowClrs <- c("white", "yellow", "red")[inCSVData$obsInDB[,colDf-3]+1]
+
+          showDT <- formatStyle(showDT, colDf, "ID",
+                                backgroundColor = styleEqual(showTab$ID, rowClrs))
+        }
+      }
+
+      # if (!is.null(CheckDBData$txtErr)) {
+      #   rowClrs <- rep("red", nrow(showTab))
+      #   for (col in CheckDBData$uomMissMatchCols) {
+      #     showDT <- formatStyle(showDT, col, "ID",
+      #                           backgroundColor = styleEqual(showTab$ID, rowClrs))
+      #   }
+      # }
+    }
     showDT
   }
 })
@@ -302,360 +518,119 @@ output$tableData <- DT::renderDataTable({
 # paste text blocks per column in parallel for 
 # clean and write csv-file for SOS importer
 # run: java -jar 52n-sos-importer-feeder-bin.jar -c lab_config.xml
-# 
-
-
-## tools
-confInit <- function(url=SOSWebApp, csvPath="~/GitRepos/dakamon_r-tools/Daten/KA2017_03938_BG.csv") {
-paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-  <SosImportConfiguration xsi:schemaLocation=\"https://raw.githubusercontent.com/52North/sos-importer/master/bindings/src/main/resources/import-configuration.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
-  <DataFile referenceIsARegularExpression=\"false\">
-  <LocalFile>
-  <Path>", csvPath, "</Path>
-  <Encoding>UTF-8</Encoding>
-  </LocalFile>
-  </DataFile>
-  <SosMetadata>
-  <URL>", url, "service</URL>
-  <Offering generate=\"true\"/>
-  <Version>2.0.0</Version>
-  <Binding>POX</Binding>
-  <!-- <Importer>org.n52.sos.importer.feeder.importer.SingleObservationImporter</Importer> -->
-  <Importer>org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter</Importer>
-  </SosMetadata>")
-}
-
-confCsvMetaInit <- function() {
-  paste0("<CsvMetadata>
-  <ColumnAssignments>
-    <Column>
-      <Number>0</Number>
-      <Type>FOI</Type>
-    </Column>
-    <Column>
-      <Number>1</Number>
-      <Type>OM_PARAMETER</Type>
-      <Metadata>
-        <Key>TYPE</Key>
-        <Value>TEXT</Value>
-      </Metadata>
-      <Metadata>
-        <Key>NAME</Key>
-        <Value>Proben-Nummer</Value>
-      </Metadata>
-    </Column>
-    <Column>
-      <Number>2</Number>
-      <Type>DATE_TIME</Type>
-      <Metadata>
-        <Key>PARSE_PATTERN</Key>
-        <Value>M/d/yyyy</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TYPE</Key>
-        <Value>COMBINATION</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TIME_ZONE</Key>
-        <Value>0</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TIME_HOUR</Key>
-        <Value>12</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TIME_MINUTE</Key>
-        <Value>0</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TIME_SECOND</Key>
-        <Value>0</Value>
-      </Metadata>
-      <Metadata>
-        <Key>GROUP</Key>
-        <Value>1</Value>
-      </Metadata>
-    </Column>")
-}
-
-confColumnDef <- function(colId=3, colRClass="numeric", 
-                          obsPropTempRef="property0815",
-                          sensorTempRef="sensor965319032",
-                          uomTempRef="uom18471521",
-                          BGlabel="Bestimmungsgrenze",
-                          BGvalue=0.05) {
-  paste0("<Column>
-  <Number>", colId, "</Number>
-  <Type>MEASURED_VALUE</Type>
-  <Metadata>
-    <Key>TYPE</Key>
-    <Value>", switch(colRClass, numeric="NUMERIC", integer="NUMERIC", character="TEXT", factor="TEXT", message("unknown type in column definition")), "</Value>
-  </Metadata>
-  <RelatedObservedProperty>
-    <IdRef>", obsPropTempRef, "</IdRef>
-  </RelatedObservedProperty>
-  <RelatedSensor>
-    <IdRef>", sensorTempRef, "</IdRef>
-  </RelatedSensor>
-  <RelatedUnitOfMeasurement>
-    <IdRef>", uomTempRef, "</IdRef>
-  </RelatedUnitOfMeasurement>
-  <RelatedReferenceValue>
-    <Label>", BGlabel, "</Label>
-    <Value>", BGvalue, "</Value>
-  </RelatedReferenceValue>
-</Column>")
-}
-  
-confCsvMetaClose <- function(decSep, skipRows, comInd="#",
-                             colSep, txtInd="\"", header=FALSE,
-                             obsCol="org.n52.sos.importer.feeder.collector.DefaultCsvCollector") {
-  paste0("</ColumnAssignments>
-  <DecimalSeparator>", decSep, "</DecimalSeparator>
-  <FirstLineWithData>", skipRows+1, "</FirstLineWithData>
-  <Parameter>
-    <CommentIndicator>", comInd, "</CommentIndicator>
-    <ColumnSeparator>", colSep, "</ColumnSeparator>
-    <TextIndicator>", txtInd, "</TextIndicator>
-  </Parameter>
-  <UseHeader>", ifelse(header,"true", "false"), "</UseHeader>
-  <ObservationCollector>", obsCol, "</ObservationCollector>
-</CsvMetadata>")
-}
-
-confAddMetaInit <- function() {
-  paste0("<AdditionalMetadata>
-    <Metadata>
-      <Key>HUNK_SIZE</Key>
-      <Value>5</Value>
-    </Metadata>
-    <Metadata>
-      <Key>TIMEOUT_BUFFER</Key>
-    <Value>50000</Value>
-    </Metadata>")
-}
-
-confSensorDef <- function(sensorTempRef="sensor965319032",
-                          obsPropName="Ammonium") {
-  paste0("<Sensor>
-    <GeneratedResource>
-      <ID>", sensorTempRef, "</ID>
-      <Number>0</Number>
-      <URI useAsPrefix=\"true\">", obsPropName, "_</URI>
-      <ConcatString>_</ConcatString>
-    </GeneratedResource>
-  </Sensor>
-")
-}
-
-confObsPropDef <- function(obsPropTempRef="property0815",
-                        obsPropName="Ammonium"){
-  paste0("<ObservedProperty>
-    <ManualResource>
-      <ID>", obsPropTempRef, "</ID>
-      <URI>", obsPropName, "</URI>
-      <Name>", obsPropName, "</Name>
-    </ManualResource>
-  </ObservedProperty>")
-}
-
-confUomDef <- function(uomTempRef="uom18471521",
-                    uomName="mg/l",
-                    uomURI="mg/l") {
-  paste0("<UnitOfMeasurement>
-      <ManualResource>
-        <ID>", uomTempRef, "</ID>
-        <URI>", uomURI, "</URI>
-        <Name>", uomName, "</Name>
-      </ManualResource>
-    </UnitOfMeasurement>")
-}
-  
-confAddMetaClose <- function() {
-  "</AdditionalMetadata>
-</SosImportConfiguration>"
-}
-## /tools
-
-
-
-############
+# store Stoffgruppen
 
 observeEvent(input$dataStoreDB, {
-  feedTab <- inCSVData$df
-  
-  confColTxt <- NULL
-  confSensorTxt <- NULL
-  confObsPropTxt <- NULL
-  confUomTxt <- NULL
-  
-  for (i in 4:ncol(feedTab)) {
-    colVec <- feedTab[,i]
-    if (any(colVec == input$dataBGchar, na.rm = TRUE)) 
-      colVec[colVec == input$dataBGchar]  <- BGencode
-    colVecNum <- as.numeric(colVec)
-    if (any(!is.na(colVecNum))) {
-      colVec <- colVecNum
-      feedTab[,i] <- colVec
-    }
+  if (!is.null(inCSVData$df)) {
+    feedTab <- inCSVData$df
+    
+    confColTxt <- NULL
+    confSensorTxt <- NULL
+    confObsPropTxt <- NULL
+    confUomTxt <- NULL
+    
+    for (i in 4:ncol(feedTab)) {
+      colVec <- feedTab[,i]
+      if (any(colVec == input$dataBGchar, na.rm = TRUE)) 
+        colVec[colVec == input$dataBGchar]  <- BGencode
+      colVecNum <- as.numeric(colVec)
+      if (any(!is.na(colVecNum))) {
+        colVec <- colVecNum
+        feedTab[,i] <- colVec
+      }
       
+      
+      confColTxt <- paste(confColTxt, 
+                          confColumnDef(colId = i-1, colRClass = class(colVec), 
+                                        obsPropTempRef = paste0("obsProp",i), 
+                                        uomTempRef = paste0("uom",i), 
+                                        sensorTempRef = paste0("sensor",i), 
+                                        BGlabel = "Bestimmungsgrenze", BGvalue = inCSVData$bg[i]), 
+                          sep="\n")
+      
+      obsPropName <- inCSVData$headAsChar[i] # gsub(",", "_", inCSVData$headAsChar[i])
+      
+      confSensorTxt <- paste(confSensorTxt,
+                             confSensorDef(sensorTempRef = paste0("sensor",i),
+                                           obsPropName = obsPropName), 
+                             sep="\n")
+      
+      confObsPropTxt <- paste(confObsPropTxt, 
+                              confObsPropDef(obsPropTempRef = paste0("obsProp",i),
+                                             obsPropName = obsPropName),
+                              sep="\n")
+      
+      confUomTxt <-paste(confUomTxt,
+                         confUomDef(uomTempRef = paste0("uom",i), 
+                                    uomName = inCSVData$UoMs[i], 
+                                    uomURI = inCSVData$UoMs[i]),
+                         sep="\n")
+    }
     
-    confColTxt <- paste(confColTxt, 
-                        confColumnDef(colId = i-1, colRClass = class(colVec), 
-                                      obsPropTempRef = paste0("obsProp",i), 
-                                      uomTempRef = paste0("uom",i), 
-                                      sensorTempRef = paste0("sensor",i), 
-                                      BGlabel = "Bestimmungsgrenze", BGvalue = inCSVData$bg[i]), 
-                        sep="\n")
+    feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
+    cat(feedCSV)
+    write.table(feedTab, feedCSV, sep = input$dataSep, dec = input$dataDec, row.names = FALSE, col.names=FALSE, fileEncoding="UTF-8")
     
-    obsPropName <- gsub(",", "_", inCSVData$headAsChar[i])
+    feedConf <- tempfile(pattern = "feedConf", fileext = ".xml")
     
-    confSensorTxt <- paste(confSensorTxt,
-                           confSensorDef(sensorTempRef = paste0("sensor",i),
-                                         obsPropName = obsPropName), 
-                           sep="\n")
+    writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
+                     confCsvMetaInit(),
+                     confColTxt,
+                     confCsvMetaClose(decSep = input$dataDec, 
+                                      skipRows = 0,
+                                      colSep = input$dataSep),
+                     confAddMetaInit(),
+                     confSensorTxt,
+                     confObsPropTxt,
+                     confUomTxt,
+                     confAddMetaClose(),
+                     sep="\n"), feedConf)
     
-    confObsPropTxt <- paste(confObsPropTxt, 
-                            confObsPropDef(obsPropTempRef = paste0("obsProp",i),
-                                           obsPropName = obsPropName),
-                            sep="\n")
+    # system(paste0("java -jar ", feederPath, " -c ", feedConf))
     
-    confUomTxt <-paste(confUomTxt,
-                       confUomDef(uomTempRef = paste0("uom",i), 
-                                  uomName = inCSVData$UoMs[i], 
-                                  uomURI = inCSVData$UoMs[i]),
-                       sep="\n")
+    # remove xxx.counter after insertion into DB? remove tmp files?
+    
+    ## add Stoffgruppe and link observablepropertyrelation
+    # remove missing or "NA"
+    inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- NA
+    
+    # fill relation observablepropertyrelation tabl
+    for (colDf in 4:ncol(inCSVData$df)) { # colDf <- 9
+
+      # find observablepropertyids
+      opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
+      # check for opIdOehn being mentioned in relation
+      opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
+      
+      if (is.na(inCSVData$stgr[colDf])) {
+        if (input$dataOW & nrow(opIdsRel) == 1) {
+          dbSendQuery(db, paste0("DELETE FROM observablepropertyrelation WHERE childobservablepropertyid = '", opIdPhen$observablepropertyid,  "'")) 
+        }
+        next;
+      }
+      
+      opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
+      
+      if (nrow(opIdsRel) == 0) {
+        if (nrow(opIdStgr) == 0) {
+          dbSendQuery(db, paste0("INSERT INTO observableproperty (observablepropertyid, identifier, name, description, disabled, hiddenchild) 
+                              VALUES (nextval('observablepropertyid_seq'), '", inCSVData$stgr[colDf], "Stgr', '", inCSVData$stgr[colDf], "', 'Stoffgruppe', 'F', 'F');"))
+          opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
+        }
+        dbSendQuery(db, paste0("INSERT INTO observablepropertyrelation (parentobservablepropertyid, childobservablepropertyid) VALUES ('", opIdStgr$observablepropertyid, "', '", opIdPhen$observablepropertyid, "')"))
+      } else {
+        if (input$dataOW) {
+          if (nrow(opIdStgr) == 0) {
+            dbSendQuery(db, paste0("INSERT INTO observableproperty (observablepropertyid, identifier, name, description, disabled, hiddenchild) 
+                              VALUES (nextval('observablepropertyid_seq'), '", inCSVData$stgr[colDf], "Stgr', '", inCSVData$stgr[colDf], "', 'Stoffgruppe', 'F', 'F');"))
+            opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
+          }
+          
+          if (opIdsRel$parentobservablepropertyid != opIdStgr$observablepropertyid)
+            dbSendQuery(db, paste0("UPDATE observablepropertyrelation SET parentobservablepropertyid = ", opIdStgr$observablepropertyid, 
+                                   " WHERE parentobservablepropertyid = '", opIdsRel$parentobservablepropertyid,"' AND childobservablepropertyid = '", opIdPhen$observablepropertyid,"'"))
+        }
+      }
+    }
   }
-  
-  feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
-  cat(feedCSV)
-  write.table(feedTab, feedCSV, sep = input$dataSep, dec = input$dataDec, row.names = FALSE, col.names=FALSE, fileEncoding="UTF-8")
-  
-  feedConf <- tempfile(pattern = "feedConf", fileext = ".xml")
-  
-  writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
-                   confCsvMetaInit(),
-                   confColTxt,
-                   confCsvMetaClose(decSep = input$dataDec, 
-                                    skipRows = 0,
-                                    colSep = input$dataSep),
-                   confAddMetaInit(),
-                   confSensorTxt,
-                   confObsPropTxt,
-                   confUomTxt,
-                   confAddMetaClose(),
-                   sep="\n"), feedConf)
-
-  system(paste0("java -jar ", feederPath, " -c ", feedConf))
-  
-  # remove xxx.counter after insertion into DB
-  
-  })
-
-##########################
-## check DB consistency ##
-##########################
-
-# find existing Datas
-# check Parameter and their UoMs
-
-# } else {
-#   dataIds <- inCSVData$df$ID
-#   
-#   # fetch registered FoIs from DB and compare them with IDs in data csv-file
-#   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
-#                                    paste(dataIds, collapse="', '"),"')"))
-#   missingFoIinDB <- which(!dataIds %in% FoIinDB$identifier)
-#   if (length(missingFoIinDB) > 0) {
-#     txt <- paste(txt, "<li>The following features are NOT in the DB: <ul><li>",
-#                  paste0(dataIds, collapse="</li><li>"), "</li></ul></li>")
-#     valiData$idsPresent <- FALSE
-#   }
-# }
-
-
-
-# 
-# 
-#   # showModal(modalDialog(
-#   #   title = "Upload completed.",
-#   #   "Time series upload completed.",
-#   #   easyClose = TRUE,
-#   #   footer = NULL
-#   # ))
-# })
-
-  
-  # # pre-process: add new units
-  # regUoMs <- dbGetQuery(db, paste0("SELECT unit FROM unit"))
-  # unqUoMs <- unique(Data_uom[-1])
-  # if (nrow(regUoMs) > 0) {
-  #   regUoMs <- regUoMs[,1]
-  #   misUoMs <- unqUoMs[which(sapply(unqUoMs, function(x) is.na(match(x, regUoMs))) & nchar(unqUoMs) > 0)]
-  # } else {
-  #   misUoMs <- unqUoMs
-  # }
-  # 
-  # for (uom in misUoMs) {
-  #   dbSendQuery(db, paste0("INSERT INTO unit (unitid, unit) VALUES (nextval('unitid_seq'), '", uom, "');"))
-  # }
-  # 
-  # ### add new columns
-  # regCols <- dbGetQuery(db, paste0("SELECT dede FROM Datadatametadata"))[,1]
-  # misCols <- which(sapply(Data_header, function(x) is.na(match(x, regCols))))
-  # 
-  # if (length(misCols > 0)) { 
-  #   for (i in 1:length(misCols)) {# i <- 1
-  #     colId <- sprintf("col%03d", i + length(regCols))
-  #     dbColumn(db, "Datadata", colId, "add", 
-  #              coltype = switch(class(Data_data[,misCols[i]]),
-  #                               integer = "numeric",
-  #                               numeric = "numeric",
-  #                               character = "character varying(255)"))
-  #     
-  #     # look-up UoM id
-  #     unitId <- NULL
-  #     if (nchar(Data_uom[misCols[i]]) > 0) {
-  #       unitId <- dbGetQuery(db, paste0("SELECT unitid FROM unit WHERE unit = '", Data_uom[misCols[i]], "'"))[1,1]
-  #     }
-  #     
-  #     if (is.null(unitId)) {
-  #       dbSendQuery(db, paste0("INSERT INTO Datadatametadata (columnid, dede)
-  #                              VALUES ('", paste(colId, Data_header[misCols[i]], sep="', '"),"')"))
-  #     } else {
-  #       dbSendQuery(db, paste0("INSERT INTO Datadatametadata (columnid, dede, uom)
-  #                              VALUES ('", paste(colId, Data_header[misCols[i]], unitId, sep="', '"),"')"))
-  #     }
-  #     }
-  #   }
-  # 
-  # # feed data row-wise
-  # for (i in 1:nrow(Data_data)) {
-  #   nonEmpty <- which(!is.na(Data_data[i,]))
-  #   if (all(!nonEmpty)) next;
-  #   
-  #   # map csv-header to DB header via Datadatametadata
-  #   Data_db_col_ids <- dbGetQuery(db, paste0("SELECT columnid, dede FROM Datadatametadata WHERE dede IN ('", 
-  #                                           paste(Data_header[nonEmpty], collapse="', '"),"')"))
-  #   
-  #   # mind the ordering
-  #   Data_db_col_ids <- Data_db_col_ids[match(Data_header[nonEmpty], Data_db_col_ids$dede), "columnid"]
-  #   
-  #   # find the Data idntifier
-  #   Data_db_id <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier ='", 
-  #                                      Data_data$ID[i],"'"))
-  #   
-  #   # check whether the Data has already some data
-  #   if (nrow(dbGetQuery(db, paste0("SELECT id FROM Datadata WHERE featureofinterestid = ", Data_db_id))) > 0) {
-  #     if(input$datadataowData) {
-  #       dbSendQuery(db, paste0("UPDATE Datadata SET ", 
-  #                              paste(Data_db_col_ids, Data_data[i, nonEmpty], sep = " = '", collapse = "', "),
-  #                              "' WHERE featureofinterestid = ", Data_db_id, ";"))
-  #     } else {
-  #       next()
-  #     }
-  #   } else {
-  #     dbSendQuery(db, paste0("INSERT INTO Datadata ( featureofinterestid, ", paste(Data_db_col_ids, collapse=", "), ") ",
-  #                            "VALUES ('", Data_db_id, "', '", paste(Data_data[i, nonEmpty], collapse="', '"), "')"))
-  #   }
-  # }
+}, ignoreInit=TRUE)

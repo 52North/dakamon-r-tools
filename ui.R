@@ -9,7 +9,7 @@ library("httr")
 
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
-BGencode <- -9999
+BGencode <- 0
 BGchar <- "< BG"
 
 ui <- fluidPage(

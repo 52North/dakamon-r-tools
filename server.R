@@ -9,8 +9,10 @@ library(rjson)
 
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
-BGencode <- -9999
+BGencode <- 0
 BGchar <- "< BG"
+feederPath <- "~/GitRepos/dakamon_r-tools/52n-sos-importer-feeder-bin.jar"
+stndTime <- "T12:00:00+00:00"
 
 
 ## tools
@@ -73,6 +75,9 @@ SOSreqObs <- function(FoI="http://www.52north.org/test/featureOfInterest/9",
               <sos:featureOfInterest>", FoI, "</sos:featureOfInterest>    
           </sos:GetObservation>")
 }
+
+
+  
 # 
 # cat(SOSreqObs())
 # 
