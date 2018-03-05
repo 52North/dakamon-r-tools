@@ -321,8 +321,23 @@ output$dataValidationOut <- renderUI({
 #   missmatch -> no upload!
 
 observeEvent(input$dataCheckDB, {
-# loop over columns, querry data for each FoI and Date, store presence/absence per column and row
+  # check whether all FoIs are already in the DB
+  FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
+                                   paste(inCSVData$df$ID, collapse="', '"),"')"))
+  foiInCSV <- inCSVData$df$ID
 
+  missFoI <- foiInCSV[!(foiInCSV %in% FoIinDB$identifier)]
+  
+  if (length(missFoI) > 0) {
+    CheckDBData$txtErr <- paste("The following features are not yet in the DB: <ul><li>",
+                             paste0(missFoI, collapse="</li><li>"))
+  } else {
+    checkDB$txtErr <- NULL
+  }
+  
+  # loop over columns, querry data for each FoI and Date, store presence/absence per column and row
+  inCSVData$obsInDB <- NULL
+  
   # 2017-11-14T12:00:00+00:004-tert.-OktylphenolElze_Ablauf_RW1
   progress <- shiny::Progress$new()
   on.exit(progress$close())
@@ -425,11 +440,18 @@ observeEvent(input$dataCheckDB, {
 
 output$dataDBConsistencyActionOut <- renderUI({
   if (CheckDBData$checked) {
-  #   if (is.null(CheckDBData$txtErr)) {
+    if (!is.null(CheckDBData$txtErr)) {
+      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", CheckDBData$txtErr, "</li></ul></div></html")))
+    }
+     if (all(inCSVData$obsInDB < 2)) {
       if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
         actionButton("dataStoreDB", "Store in DB!")
+      } else {
+        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Some observations are already in the DB (see yellow cells). Check the box above to overwrite the data in the data base.</div></html>")
       }
-  #   }
+     } else {
+       HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Detection limit and/or unit of measurement differ in csv and data base (see red cells).</div></html>")
+    }
   } else {
     HTML("")
   }
@@ -491,6 +513,7 @@ output$tableData <- DT::renderDataTable({
     # if DB consistency has been checked, apply colors
     if (CheckDBData$checked) {
       if (any(inCSVData$obsInDB > 0)) {
+        cat(inCSVData$obsInDB, "\n")
         for (colDf in 4:ncol(inCSVData$df)) {
           rowClrs <- c("white", "yellow", "red")[inCSVData$obsInDB[,colDf-3]+1]
 
