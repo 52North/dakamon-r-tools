@@ -7,8 +7,6 @@ library("httr")
 db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
 db
 
-ls(db)
-
 # overwriteDB <- function() FALSE
 
 ############################################
@@ -33,8 +31,8 @@ dbSendQuery(db,
    dede character varying(255) NOT NULL,
    uom bigint);")
 
-dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('ID', 'ID')")
-dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('Name', 'Name')")
+dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('id', 'ID')")
+dbSendQuery(db, "INSERT INTO foidatametadata VALUES ('name', 'Name')")
 
 # insert table 'observablepropertyrelation' - analogously table 'featurerelation'
 # dbSendQuery(db, "DROP TABLE observablepropertyrelation")

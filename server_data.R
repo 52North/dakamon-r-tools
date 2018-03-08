@@ -117,7 +117,6 @@ confCsvMetaClose <- function(decSep, skipRows, comInd="#",
          <ColumnSeparator>", colSep, "</ColumnSeparator>
          <TextIndicator>", txtInd, "</TextIndicator>
          </Parameter>
-         <UseHeader>", ifelse(header,"true", "false"), "</UseHeader>
          <ObservationCollector>", obsCol, "</ObservationCollector>
          </CsvMetadata>")
 }
@@ -133,6 +132,14 @@ confAddMetaInit <- function() {
          <Value>50000</Value>
          </Metadata>")
 }
+
+
+# ``` <ManualResource>
+#   <ID>sensor965319032</ID>
+#   <URI>{foi-uri}-{property-uri}</URI>
+#   <Name>{property-name} at {foi-name}</Name>
+#   </ManualResource>
+#   ```
 
 confSensorDef <- function(sensorTempRef="sensor965319032",
                           obsPropName="Ammonium") {
@@ -347,20 +354,34 @@ observeEvent(input$dataCheckDB, {
   nRowDf <- nrow(inCSVData$df)
   nColDf <- ncol(inCSVData$df)
   
-  for (colDf in 4:nColDf) { # colDf <- 4
+  obsIdsInDB <- NULL
+  
+  for (colDf in 4:nColDf) { # colDf <- 9
     colVec <- rep(0, nRowDf)
     
     progress$inc(1/nColDf, paste(detail="Column", colDf))
     
+    # querry Stoffgruppe
+    opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE identifier = '", inCSVData$headAsChar[colDf], "'"))
+    if (nrow(opIdPhen) == 1) {
+      # check for opIdPhen being mentioned in observablepropertyrelation
+      opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
+      if (nrow(opIdsRel) == 1) {
+        stgrInDB <- dbGetQuery(db, paste0("SELECT name FROM observableproperty WHERE observablepropertyid = ", opIdsRel$parentobservablepropertyid))$name
+      } else {
+        stgrInDB <- ""
+      }
+    }
+    
     for (i in 1:nRowDf) { # i <- 2
       phenTime <- paste0(as.character(as.Date(inCSVData$df[i, "Datum"], format = "%m/%e/%Y")), stndTime)
-
+      
       # request observations from SOS
-      insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                     body =   SOSreqObs(FoI=inCSVData$df$ID[i],
+      insMsg <- fromJSON(rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
+                                     body = SOSreqObs(FoI=inCSVData$df$ID[i],
                                                         obsProp=inCSVData$headAsChar[colDf],
                                                         phenTime=phenTime),
-                                     content_type_xml(), accept_json())$content) 
+                                     content_type_xml(), accept_json())$content))
       
       # querry UoM
       curDBUoM <- dbGetQuery(db, paste0("SELECT unit 
@@ -371,55 +392,28 @@ observeEvent(input$dataCheckDB, {
       WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df$ID[i], "'"))
       
       # querry BG
+      # TODO
       
-      # querry Stoffgruppe
-      
-      
-      if (is.null(fromJSON(insMsg)$exceptions))
-        colVec[i] <- 1
-      if (length(curDBUoM$unit) > 0) {
-        if (inCSVData$UoMs[colDf] != curDBUoM$unit)
-          colVec[i] <- 2
+      if (is.null(insMsg$exceptions)) {
+        if (length(insMsg$observations) > 0) {
+          colVec[i] <- 1
+          obsIdsInDB <- c(obsIdsInDB, insMsg$observations[[1]]$identifier$value)
+          
+          if (length(curDBUoM$unit) > 0) {
+            if (inCSVData$UoMs[colDf] != curDBUoM$unit)
+              colVec[i] <- 2
+          }
+          
+          inCSVData$stgr[colDf][is.na(inCSVData$stgr[colDf]) || inCSVData$stgr[colDf] == "NA"] <- ""
+          if (inCSVData$stgr[colDf] != stgrInDB)
+            colVec[i] <- 3
+        }
       }
     }
     
     inCSVData$obsInDB <- cbind(inCSVData$obsInDB, colVec)
   }
-
-    # if (nrow(DatainDB) > 0) {
-#     CheckDBData$txtInfo <- paste("The following features are already in the DB: <ul><li>",
-#                              paste0(DatainDB$identifier, collapse="</li><li>"))
-#   } else {
-#     CheckDBData$txtInfo <- NULL
-#   }
-#   
-#   CheckDBData$DataInDB <- DatainDB$identifier
-#   
-#   # find columns already in DB: colInDB with columnid, dede and its unit from the unit table
-#   CheckDBData$colInDB <- dbGetQuery(db, paste0("SELECT columnid, dede, unit.unit FROM Datadatametadata left outer join unit on (unit.unitid = uom) WHERE dede IN ('", 
-#                                            paste(inCSVData$headAsChar, collapse="', '"),"')"))
-#   
-#   # replace NA UoM with ""
-#   if (nrow(CheckDBData$colInDB) > 0 ) {
-#     CheckDBData$colInDB$unit[is.na(CheckDBData$colInDB$unit)] <- ""
-#     
-#     # compare UoMs from the csv with the DB for overlapping columns
-#     compUoM <- inCSVData$UoMs[match(CheckDBData$colInDB$dede, inCSVData$headAsChar)] == CheckDBData$colInDB$unit
-#     CheckDBData$uomMissMatchCols <-which(!compUoM)
-#     
-#     CheckDBData$txtErr <- NULL
-#     if (length(CheckDBData$uomMissMatchCols) > 0) {
-#       CheckDBData$txtErr <-
-#         paste(
-#           "The following columns have non-matching units of measurement: <ul><li>",
-#           paste0(
-#             paste0(CheckDBData$colInDB$dede[CheckDBData$uomMissMatchCols], ": [",
-#                    CheckDBData$colInDB$unit[CheckDBData$uomMissMatchCols], "] "),
-#             collapse = "</li><li>"
-#           )
-#         )
-#     }
-#   }
+  inCSVData$obsIdsInDB <- obsIdsInDB
 
   CheckDBData$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -450,7 +444,11 @@ output$dataDBConsistencyActionOut <- renderUI({
         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Some observations are already in the DB (see yellow cells). Check the box above to overwrite the data in the data base.</div></html>")
       }
      } else {
-       HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Detection limit and/or unit of measurement differ in csv and data base (see red cells).</div></html>")
+       if (any( inCSVData$obsInDB == 3)) {
+         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Group of elements differ in csv and data base (see blue cells).</div></html>")
+       } else {
+        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Detection limit and/or unit of measurement differ in csv and data base (see red cells).</div></html>")
+       }
     }
   } else {
     HTML("")
@@ -515,20 +513,12 @@ output$tableData <- DT::renderDataTable({
       if (any(inCSVData$obsInDB > 0)) {
         cat(inCSVData$obsInDB, "\n")
         for (colDf in 4:ncol(inCSVData$df)) {
-          rowClrs <- c("white", "yellow", "red")[inCSVData$obsInDB[,colDf-3]+1]
+          rowClrs <- c("white", "yellow", "red", "blue")[inCSVData$obsInDB[,colDf-3]+1]
 
           showDT <- formatStyle(showDT, colDf, "ID",
                                 backgroundColor = styleEqual(showTab$ID, rowClrs))
         }
       }
-
-      # if (!is.null(CheckDBData$txtErr)) {
-      #   rowClrs <- rep("red", nrow(showTab))
-      #   for (col in CheckDBData$uomMissMatchCols) {
-      #     showDT <- formatStyle(showDT, col, "ID",
-      #                           backgroundColor = styleEqual(showTab$ID, rowClrs))
-      #   }
-      # }
     }
     showDT
   }
@@ -545,6 +535,14 @@ output$tableData <- DT::renderDataTable({
 
 observeEvent(input$dataStoreDB, {
   if (!is.null(inCSVData$df)) {
+    if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
+      for (id in inCSVData$obsIdsInDB) {
+        httr::POST(paste0(SOSWebApp, "service"), 
+                   body = SOSdelObsByID(id),
+                   content_type_xml(), accept_json())
+      }
+    } 
+    
     feedTab <- inCSVData$df
     
     confColTxt <- NULL
@@ -592,7 +590,7 @@ observeEvent(input$dataStoreDB, {
     
     feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
     cat(feedCSV)
-    write.table(feedTab, feedCSV, sep = input$dataSep, dec = input$dataDec, row.names = FALSE, col.names=FALSE, fileEncoding="UTF-8")
+    write.table(feedTab, feedCSV, sep = input$dataSep, dec = input$dataDec, row.names = FALSE, col.names=TRUE, fileEncoding="UTF-8")
     
     feedConf <- tempfile(pattern = "feedConf", fileext = ".xml")
     
@@ -609,19 +607,23 @@ observeEvent(input$dataStoreDB, {
                      confAddMetaClose(),
                      sep="\n"), feedConf)
     
-    # system(paste0("java -jar ", feederPath, " -c ", feedConf))
+    system(paste0("java -jar ", feederPath, " -c ", feedConf))
     
     # remove xxx.counter after insertion into DB? remove tmp files?
     
     ## add Stoffgruppe and link observablepropertyrelation
     # remove missing or "NA"
     inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- NA
-    
-    # fill relation observablepropertyrelation tabl
-    for (colDf in 4:ncol(inCSVData$df)) { # colDf <- 9
+
+    # fill observablepropertyrelation table
+    for (colDf in 4:ncol(inCSVData$df)) { # colDf <- 4
 
       # find observablepropertyids
       opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
+      if (nrow(opIdPhen) == 0) {
+        message(paste0("The following observable property is missing in the DB: ",  inCSVData$headAsChar[colDf]))
+        next;
+      }
       # check for opIdOehn being mentioned in relation
       opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
       

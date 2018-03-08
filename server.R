@@ -11,7 +11,7 @@ SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
 BGencode <- 0
 BGchar <- "< BG"
-feederPath <- "~/GitRepos/dakamon_r-tools/52n-sos-importer-feeder-bin.jar"
+feederPath <- "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar"
 stndTime <- "T12:00:00+00:00"
 
 
@@ -76,7 +76,13 @@ SOSreqObs <- function(FoI="http://www.52north.org/test/featureOfInterest/9",
           </sos:GetObservation>")
 }
 
-
+SOSdelObsByID <- function(obsId) {
+  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+           <sosdo:DeleteObservation
+         xmlns:sosdo=\"http://www.opengis.net/sosdo/1.0\" version=\"2.0.0\" service=\"SOS\">
+           <sosdo:observation>", obsId, "</sosdo:observation>
+           </sosdo:DeleteObservation>")
+}
   
 # 
 # cat(SOSreqObs())

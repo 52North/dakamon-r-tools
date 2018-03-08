@@ -1,0 +1,11 @@
+ID;Proben-Nr;Datum;Ammonium;Nitrat;Acenaphthen;Acenaphthylen;Anthracen;Benzo(a)anthracen;Benzo(a)pyren;Benzo(b)fluoranthen;Benzo(ghi)perylen;Benzo(k)fluoranthen;Chrysen;Dibenz(ah)anthracen
+BG;;;0.05;0.5;0.001;0.001;0.001;0.001;0.0005;0.001;0.0005;0.001;0.001;0.001
+UoM;;;mg/L;mg/L;µg/L;µg/L;µg/L;µg/L;µg/L;µg/L;µg/L;µg/L;µg/L;µg/L
+Stoffgruppe;;;;A;B;C;A;A;C;C;C;C;D;E
+Reichenbach_Ablauf;2017021012;12/7/2017;1.3;26.6;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG
+Wevelinghoven_Ablauf-RW;2017021013;12/3/2017;0.41;60.6;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG
+Waldangelbachtal_Ablauf_RW;2017021014;11/21/2017;0.15;19.2;< BG;0.0011;< BG;< BG;< BG;< BG;< BG;< BG;0.0011;< BG
+Bondorf-Hailfingen_Ablauf_RW;2017021015;12/8/2017;< BG;16.9;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG
+Elze_Ablauf_RW;2017021016;11/14/2017;0.24;13;< BG;0.0023;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG
+Eutin_Ablauf;2017021017;12/4/2017;;;0.002;0.0039;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG
+Lamspringe_Ablauf_RW;2017021018;11/19/2017;0.43;14.5;0.0012;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG;< BG

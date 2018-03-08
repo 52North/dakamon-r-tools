@@ -17,25 +17,25 @@ checkDB <- reactiveValues(checked = FALSE)
 # toAdd: validate UoM?
 # add Button "check DB consistency" -> list known vs new variables; matching vs non-matching uom ( -> hottable to fix?) -> manually update csv file
 
-inclRowFoI <- reactive({
-  if (is.null(inCSVFoI$df)) 
-    return(numeric())
-  exclText <- input$exclRowFoI 
-  if (is.null(exclText))
-    return(1:ncol(inCSVFoI$df))
-  exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
-  !c(1:nrow(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
-})
-
-inclColFoI <- reactive({
-  if (is.null(inCSVFoI$df))
-    return(numeric())
-  exclText <- input$exclColFoI
-  if (is.null(exclText))
-    return(1:ncol(inCSVFoI$df))
-  exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
-  !c(1:ncol(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
-})
+# inclRowFoI <- reactive({
+#   if (is.null(inCSVFoI$df)) 
+#     return(numeric())
+#   exclText <- input$exclRowFoI 
+#   if (is.null(exclText))
+#     return(1:ncol(inCSVFoI$df))
+#   exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
+#   !c(1:nrow(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
+# })
+# 
+# inclColFoI <- reactive({
+#   if (is.null(inCSVFoI$df))
+#     return(numeric())
+#   exclText <- input$exclColFoI
+#   if (is.null(exclText))
+#     return(1:ncol(inCSVFoI$df))
+#   exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
+#   !c(1:ncol(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
+# })
 
 observeEvent(input$csvFileFoI, {
   vali$validated <- FALSE
@@ -108,7 +108,7 @@ output$foiValidationOut <- renderUI({
 
 observeEvent(input$checkDB, {
   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
-                                   paste(inCSVFoI$df$ID[inclRowFoI()], collapse="', '"),"')"))
+                                   paste(inCSVFoI$df$ID, collapse="', '"),"')")) ## [inclRowFoI()]
   if (nrow(FoIinDB) > 0) {
     checkDB$txtInfo <- paste("The following features are already in the DB: <ul><li>",
                              paste0(FoIinDB$identifier, collapse="</li><li>"))
@@ -149,7 +149,7 @@ observeEvent(input$checkDB, {
 
 output$DBConsistencyTxtOut <- renderUI({
   if (checkDB$checked) {
-    if (!is.null(checkDB$txtInfo)) {
+    if (!is.null(checkDB$txtInfo) | !is.null(checkDB$txtErr)) {
       if (!is.null(checkDB$txtErr)) {
         HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDB$txtErr, "</li></ul></div></html"))
       } else {
@@ -175,7 +175,7 @@ output$DBConsistencyActionOut <- renderUI({
 
 output$tableFoI <- DT::renderDataTable({
   if (!is.null(inCSVFoI$df)) {
-    showTab <- inCSVFoI$df[inclRowFoI(), inclColFoI(), drop=F]
+    showTab <- inCSVFoI$df # [inclRowFoI(), inclColFoI(), drop=F]
     
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
     
@@ -230,9 +230,9 @@ output$tableFoI <- DT::renderDataTable({
 ###############################################
 
 observeEvent(input$storeDB, {
-  foi_data <- inCSVFoI$df[inclRowFoI(), inclColFoI(), drop=F]
-  foi_header <- inCSVFoI$headAsChar[inclColFoI()]
-  foi_uom <- inCSVFoI$UoMs[inclColFoI()]
+  foi_data <- inCSVFoI$df ## [inclRowFoI(), inclColFoI(), drop=F]
+  foi_header <- inCSVFoI$headAsChar ## [inclColFoI()]
+  foi_uom <- inCSVFoI$UoMs ## [inclColFoI()]
   
   foi_empty_cols <- apply(foi_data, 2, function(x) all(is.na(x)))
   
