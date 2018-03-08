@@ -11,6 +11,7 @@ SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
 BGencode <- 0
 BGchar <- "< BG"
+BGlabel <- "Bestimmungsgrenze" # label in DB
 feederPath <- "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar"
 stndTime <- "T12:00:00+00:00"
 adminConf <- authenticate("a","a")
@@ -19,7 +20,9 @@ reqColFoI <- list(id="ID", # also checks whether it is unique
                   super_FoI="Stammanlage",
                   lat="lat",
                   lon="lon")
-
+reqColData <- list(id="ID", 
+                   probeId = "Proben-Nr",
+                   date="Datum")
 
 ## tools
 SOSinsFoI <- function(gmlId, name, lat, lon, super_FoI="unknown") {
