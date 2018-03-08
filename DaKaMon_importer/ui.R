@@ -21,15 +21,13 @@ ui <- fluidPage(
   #############
   
   tabsetPanel(
-    tabPanel("FoI generation",
+    tabPanel("Basic data upload",
              sidebarLayout(
                sidebarPanel(fluidRow(column(6, textInput("sepFoI", "Column separator:", value = ";", width = "80%")),
                                      column(6, textInput("decFoI", "Decimal separator:", value = ".", width = "80%"))),
                             fileInput("csvFileFoI", "Select a FoI file for upload."),
-                            selectInput("UoMFoI", "Unit of measurement row:", choices = c(1:20), selected = "1"),
-                            # textInput("exclRowFoI", "Exclude rows:"),
-                            # textInput("exclColFoI", "Exclude columns:"),
-                            checkboxInput("owFoI", "Overwrite FoI?", FALSE), 
+                        #    selectInput("UoMFoI", "Unit of measurement row:", choices = c(1:20), selected = "1"),
+                            checkboxInput("owFoI", "Overwrite ALL data?", FALSE), 
                             uiOutput("foiValidationOut"),
                             uiOutput("DBConsistencyTxtOut"),
                             uiOutput("DBConsistencyActionOut"), # DBConsistencyActionOut
@@ -42,16 +40,16 @@ ui <- fluidPage(
     ###  Data  ###
     ##############
 
-    tabPanel("Data upload",
+    tabPanel("Time series data upload",
              sidebarLayout(
                sidebarPanel(fluidRow(column(6, textInput("dataSep", "Column separator:", value = ";", width = "80%")),
                                      column(6, textInput("dataDec", "Decimal separator:", value = ".", width = "80%"))),
                             fileInput("dataCsvFile", "Select a data file for upload."),
-                            selectInput("dataUoM", "Unit of measurement row:", choices = c(1:20), selected = "1"),
-                            selectInput("dataBG", "Detection threshold row:", choices = c(1:20), selected = "2"),
+                            selectInput("dataBG", "Detection threshold row:", choices = c(1:20), selected = "1"),
+                            selectInput("dataUoM", "Unit of measurement row:", choices = c(1:20), selected = "2"),
                             selectInput("dataStgr", "Element group row:", choices = c(1:20), selected = "3"),
                             textInput("dataBGchar", "Detection limit character:", value = BGchar),
-                            checkboxInput("dataOW", "Overwrite Data?", FALSE), 
+                            checkboxInput("dataOW", "Overwrite ALL data?", FALSE), 
                             uiOutput("dataValidationOut"),
                             uiOutput("dataDBConsistencyTxtOut"),
                             uiOutput("dataDBConsistencyActionOut"),

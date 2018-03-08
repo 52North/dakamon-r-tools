@@ -345,11 +345,11 @@ observeEvent(input$dataCheckDB, {
   # loop over columns, querry data for each FoI and Date, store presence/absence per column and row
   inCSVData$obsInDB <- NULL
   
-  # 2017-11-14T12:00:00+00:004-tert.-OktylphenolElze_Ablauf_RW1
   progress <- shiny::Progress$new()
   on.exit(progress$close())
   
   progress$set(message = "Checking DB!", value = 0)
+  progress$inc(1/nColDf, paste(detail="Column", colDf))
   
   nRowDf <- nrow(inCSVData$df)
   nColDf <- ncol(inCSVData$df)
@@ -658,4 +658,11 @@ observeEvent(input$dataStoreDB, {
       }
     }
   }
+  
+  showModal(modalDialog(
+    title = "Upload completed.",
+    "Feature of interest upload completed.",
+    easyClose = TRUE,
+    footer = NULL
+  ))
 }, ignoreInit=TRUE)
