@@ -40,6 +40,8 @@ RUN mkdir -pv /usr/local/52n &&\
     rm -rf /var/lib/apt/lists/* &&\
     rm -rf /opt/shiny-server/samples &&\
     rm -rfv /srv/shiny-server/*
+RUN R -e "install.packages(c('DT', 'rpostgis', 'httr', 'rjson', 'dyplr'), repos='https://cran.rstudio.com/')"
+
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar
 
 ADD DaKaMon_importer/*.* /srv/shiny-server/DaKaMon_importer/
