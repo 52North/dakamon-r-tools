@@ -1,7 +1,6 @@
 # server DaKaMon Import
 library(shiny)
 library(DT)
-
 library(rpostgis)
 library(httr)
 library(rjson)
@@ -93,22 +92,26 @@ SOSdelObsByID <- function(obsId) {
            </sosdo:DeleteObservation>")
 }
 
-SOScacheUpdate <- function(gmlId, wait=0.5, conf=adminConf, verbose=FALSE) {
+SOScacheUpdate <- function(gmlId=NULL, wait=0.5, conf=adminConf, verbose=FALSE) {
   POST(url = paste0(SOSWebApp, "admin/cache/reload"), 
        config=conf, body="a")
   
-  reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
-                                 body = SOSreqFoI(gmlId),
-                                 content_type_xml(), accept_json())$content)
-  
-  while (is.null(fromJSON(reqMsg)$exceptions)) {
-    if (verbose)
-      message(foi_data[sfoi,]$ID)
-    
-    Sys.sleep(wait)
+  if (!is.null(gmlId)) {
     reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
-                                   body = SOSreqFoI(gmlId), # foi_data[sfoi,]$ID
+                                   body = SOSreqFoI(gmlId),
                                    content_type_xml(), accept_json())$content)
+    
+    while (is.null(fromJSON(reqMsg)$exceptions)) {
+      if (verbose)
+        message(foi_data[sfoi,]$ID)
+      
+      Sys.sleep(wait)
+      reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                     body = SOSreqFoI(gmlId), # foi_data[sfoi,]$ID
+                                     content_type_xml(), accept_json())$content)
+    }
+  } else {
+    Sys.sleep(wait)
   }
 }
   
