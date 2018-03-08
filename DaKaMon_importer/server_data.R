@@ -363,13 +363,13 @@ observeEvent(input$dataCheckDB, {
   
   obsIdsInDB <- NULL
   
-  for (colDf in 4:nColDf) { # colDf <- 5
+  for (colDf in 4:nColDf) { # colDf <- 9
     colVec <- rep(0, nRowDf)
     
     progress$inc(1/(nColDf-3), paste(detail="Checking column", colDf))
     
     # querry Stoffgruppe
-    opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE identifier = '", inCSVData$headAsChar[colDf], "'"))
+    opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name, identifier FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
     if (nrow(opIdPhen) == 1) {
       # check for opIdPhen being mentioned in observablepropertyrelation
       opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
@@ -383,13 +383,10 @@ observeEvent(input$dataCheckDB, {
     for (i in 1:nRowDf) { # i <- 1
       phenTime <- paste0(as.character(as.Date(inCSVData$df[i, "Datum"], format = "%m/%e/%Y")), stndTime)
       
-      # request observations from SOS
-      
-      # dbGetQuery(db, paste0("SELECT observationid FROM observation WHERE observablepropertyid = ", opIdsRel$parentobservablepropertyid))$name
-      
+      # request obs from SOS
       insMsg <- fromJSON(rawToChar(POST(paste0(SOSWebApp, "service"), 
                                         body = SOSreqObs(FoI=inCSVData$df$ID[i],
-                                                         obsProp=inCSVData$headAsChar[colDf],
+                                                         obsProp=opIdPhen$identifier,
                                                          phenTime=phenTime),
                                         content_type_xml(), accept_json())$content))
       
@@ -399,10 +396,19 @@ observeEvent(input$dataCheckDB, {
       LEFT OUTER JOIN series AS s ON (u.unitid = s.unitid)
       LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
       LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df$ID[i], "'"))
+      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df[i, reqColData$id], "' AND s.firsttimestamp != '1970-01-01 00:00'"))
       
       # querry BG
-      # TODO
+      curDBBGid <- dbGetQuery(db, paste0("SELECT referenceseriesid 
+      FROM seriesreference AS sr
+      LEFT OUTER JOIN series AS s ON (sr.seriesid = s.seriesid)
+      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df[i, reqColData$id], "' AND s.firsttimestamp != '1970-01-01 00:00'"))
+
+      if (nrow(curDBBGid)==1) {
+        curDBBG <- dbGetQuery(db, paste0("SELECT firstnumericvalue FROM series WHERE seriesid = ", curDBBGid$referenceseriesid))
+      } 
       
       if (is.null(insMsg$exceptions)) {
         if (length(insMsg$observations) > 0) {
@@ -411,6 +417,11 @@ observeEvent(input$dataCheckDB, {
           
           if (length(curDBUoM$unit) > 0) {
             if (inCSVData$UoMs[colDf] != curDBUoM$unit)
+              colVec[i] <- 2
+          }
+          
+          if (length(curDBBG$firstnumericvalue) > 0) {
+            if (as.numeric(inCSVData$bg[colDf]) != curDBBG$firstnumericvalue)
               colVec[i] <- 2
           }
           
@@ -440,10 +451,14 @@ output$dataDBConsistencyActionOut <- renderUI({
         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Some observations are already in the DB (see yellow cells). Check the box above to overwrite the data in the data base.</div></html>")
       }
     } else {
-      if (any( inCSVData$obsInDB == 3)) {
-        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Group of elements differ in csv and data base (see blue cells).</div></html>")
-      } else {
+      if (any( inCSVData$obsInDB == 2)) {
         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Detection limit and/or unit of measurement differ in csv and data base (see red cells).</div></html>")
+      } else {
+        if (input$dataOW) {
+          actionButton("dataStoreDB", "Store in DB!")
+        } else {
+          HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Group of elements differ in csv and data base (see blue cells).</div></html>")
+        }
       }
     }
   } else {
@@ -532,6 +547,9 @@ output$tableData <- renderDataTable({
 
 observeEvent(input$dataStoreDB, {
   if (!is.null(inCSVData$df)) {
+    db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+    on.exit(dbDisconnect(db), add=T)
+    
     if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
       
       # delete observations already in the DB
@@ -655,7 +673,7 @@ observeEvent(input$dataStoreDB, {
         message(paste0("The following observable property is missing in the DB: ",  inCSVData$headAsChar[colDf]))
         next;
       }
-      # check for opIdOehn being mentioned in relation
+      # check for opIdPhen being mentioned in relation
       opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
       
       if (is.na(inCSVData$stgr[colDf])) {
@@ -688,6 +706,10 @@ observeEvent(input$dataStoreDB, {
         }
       }
     }
+    
+    dbSendQuery(db, "UPDATE series SET published = 'T'")
+    SOScacheUpdate(wait=1)
+    
     progress$close()
   }
   
