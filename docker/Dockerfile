@@ -1,29 +1,36 @@
+#
+#  build via
+#
+#    docker build -f docker/Dockerfile -t shiny-server:dakamon .
+#
+#  from repository root
 FROM rocker/shiny:latest
 MAINTAINER <a href="mailto:e.h.juerrens@52north.org">J&uuml;rrens, Eike Hinderk</a>
+
+ENV JAVA_HOME /usr/lib/jvm/default-java
+
+EXPOSE 3838
+
+ADD docker/shiny-server.sh /usr/bin/shiny-server.sh
 
 WORKDIR /tmp
 
 # install sos-importer
-RUN apt-get update &&\
+RUN chmod +x /usr/bin/shiny-server.sh &&\
+    apt-get update &&\
     apt-get --assume-yes upgrade &&\
     apt-get dist-upgrade --assume-yes &&\
-    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git &&\
-    git clone https://github.com/EHJ-52n/arctic-sea.git
-
-RUN cd arctic-sea &&\
+    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git
+RUN git clone https://github.com/EHJ-52n/arctic-sea.git &&\
+    cd arctic-sea &&\
     git fetch --all &&\
-    mvn install
-
-RUN git clone https://github.com/EHJ-52n/sos-importer.git
-
-ENV JAVA_HOME /usr/lib/jvm/default-java
-
-RUN echo "JAVA_HOME: $JAVA_HOME"
-
-RUN cd sos-importer &&\
-    mvn package -e -Pcheck &&\
-    mkdir -pv /usr/local/52n
-RUN mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/local/52n/ &&\
+    mvn install &&\
+    cd .. &&\
+    git clone https://github.com/EHJ-52n/sos-importer.git &&\
+    cd sos-importer &&\
+    mvn package -e -Pcheck
+RUN mkdir -pv /usr/local/52n &&\
+    mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/local/52n/ &&\
     rm -rf /tmp/sos-importer &&\
     apt-get purge git maven openjdk-8-jdk --assume-yes &&\
     apt-get install openjdk-8-jre --assume-yes --no-install-recommends &&\
@@ -35,11 +42,11 @@ RUN mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/loca
     rm -rfv /srv/shiny-server/*
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar
 
-EXPOSE 3838
+ADD DaKaMon_importer /srv/shiny-server/
 
-ADD shiny-server.sh /usr/bin/shiny-server.sh
+ADD DaKaMon_viewer /srv/shiny-server/
 
-RUN chmod +x /usr/bin/shiny-server.sh
+ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 USER shiny
 
