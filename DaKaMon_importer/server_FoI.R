@@ -1,6 +1,3 @@
-## server logic for the FoIs
-
-
 ###############################################################################
 ###################################         ###################################
 ###################################   FoI   ###################################
@@ -10,32 +7,6 @@
 inCSVFoI <- reactiveValues()
 vali <- reactiveValues(validated = FALSE)
 checkDB <- reactiveValues(checked = FALSE)
-
-## FoI logic
-# toAdd: validate FoIs IDs?
-# toAdd: restrict hierarchie?
-# toAdd: validate UoM?
-# add Button "check DB consistency" -> list known vs new variables; matching vs non-matching uom ( -> hottable to fix?) -> manually update csv file
-
-# inclRowFoI <- reactive({
-#   if (is.null(inCSVFoI$df)) 
-#     return(numeric())
-#   exclText <- input$exclRowFoI 
-#   if (is.null(exclText))
-#     return(1:ncol(inCSVFoI$df))
-#   exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
-#   !c(1:nrow(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
-# })
-# 
-# inclColFoI <- reactive({
-#   if (is.null(inCSVFoI$df))
-#     return(numeric())
-#   exclText <- input$exclColFoI
-#   if (is.null(exclText))
-#     return(1:ncol(inCSVFoI$df))
-#   exclNum <- as.numeric(strsplit(exclText, fixed = T, split=",")[[1]])
-#   !c(1:ncol(inCSVFoI$df)) %in% exclNum[!is.na(exclNum)]
-# })
 
 observeEvent(input$csvFileFoI, {
   vali$validated <- FALSE
@@ -48,44 +19,37 @@ observeEvent(input$csvFileFoI, {
   
   inCSVFoI$UoMs <- read.csv(input$csvFileFoI$datapath, header = FALSE,
                             sep = input$sepFoI, dec = input$decFoi,
-                            skip = as.numeric(input$UoMFoI), nrows = 1,
+                            skip = 1, nrows = 1,
                             stringsAsFactors = FALSE)
   inCSVFoI$UoMs[is.na(inCSVFoI$UoMs)] <- ""
   inCSVFoI$UoMs <- as.character(inCSVFoI$UoMs)
   
   inCSVFoI$df <- read.csv(input$csvFileFoI$datapath, header = FALSE,
                           sep = input$sepFoI, dec = input$decFoi,
-                          skip = as.numeric(input$UoMFoI)+1,
+                          skip = 2,
                           stringsAsFactors = FALSE)
   colnames(inCSVFoI$df) <- inCSVFoI$headAsChar
   
   ################################
   ## validation of FoI csv-file ##
   ################################
+  # look for Name, ID, lat, lon and Stammanalge,
+  # check whether columns have unique names
   
   txt <- NULL
-  if (!("ID" %in% inCSVFoI$headAsChar) || length(unique(inCSVFoI$headAsChar)) != length(inCSVFoI$headAsChar))
-    txt <- paste(txt, "<li>An unique identifier is mandatory for each feature of interest; please supply a non-empty and unique column 'ID'.</li>", sep="")
-  if (!("Name" %in% inCSVFoI$headAsChar))
-    txt <- paste(txt, "<li>A name is mandatory for each feature of interest; please supply a non-empty column 'Name'.</li>", sep="")
-  if (!("lat" %in% inCSVFoI$headAsChar))
-    txt <- paste(txt, "<li>Latitude is mandatory for each feature of interest; please supply a non-empty column 'lat'.</li>", sep="")
-  if (!("lon" %in% inCSVFoI$headAsChar))
-    txt <- paste(txt, "<li>Longitude is mandatory for each feature of interest; please supply a non-empty column 'lon'.</li>", sep="")
-  if (!("super_FoI" %in% inCSVFoI$headAsChar))
-    txt <- paste(txt, "<li>A superior feature of interest is mandatory for each feature of interest (yet, it might be empty); please supply a column 'super_FoI'.</li>", sep="")
+  if (!(reqColFoI$id %in% inCSVFoI$headAsChar) || length(unique(inCSVFoI$df[,reqColFoI$id])) != length(inCSVFoI$df[,reqColFoI$id]))
+    txt <- paste0(txt, "<li>An unique identifier is mandatory for each feature of interest; please supply a non-empty and unique column '", reqColFoI[1], "'.</li>")
+  for (reqColName in reqColFoI[-1]) {
+    if (!(reqColName %in% inCSVFoI$headAsChar))
+      txt <- paste0(txt, "<li>Please supply a column '", reqColName, "'.</li>", sep="")
+  }
+
+  if(length(unique(inCSVFoI$headAsChar)) != length(inCSVFoI$headAsChar))
+    txt <- paste0(txt, "<li>Column names must be unique.</li>")
   
   vali$txt <- txt
-  
-  comp_header <- outer(inCSVFoI$headAsChar, inCSVFoI$headAsChar, "==")
-  if(any(comp_header[upper.tri(comp_header)]))
-    vali$txt <- paste(vali$txt, "<li>Column names must be unique.</li>", sep="")
-  
   vali$validated <- TRUE
 })
-
-# look for Name, ID, lat, lon and super_FoI,
-# check whether columns have unique names
 
 output$foiValidationOut <- renderUI({
   if (vali$validated) {
@@ -107,14 +71,20 @@ output$foiValidationOut <- renderUI({
 # check Parameter and their UoMs
 
 observeEvent(input$checkDB, {
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  
+  progress$set(message = "Checking DB.", value = 0)
   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
-                                   paste(inCSVFoI$df$ID, collapse="', '"),"')")) ## [inclRowFoI()]
+                                   paste(inCSVFoI$df[,reqColFoI$id], collapse="', '"),"')")) ## [inclRowFoI()]
   if (nrow(FoIinDB) > 0) {
     checkDB$txtInfo <- paste("The following features are already in the DB: <ul><li>",
                              paste0(FoIinDB$identifier, collapse="</li><li>"))
   } else {
     checkDB$txtInfo <- NULL
   }
+  
+  progress$inc(1/2, "Features")
   
   checkDB$foiInDB <- FoIinDB$identifier
   
@@ -143,6 +113,8 @@ observeEvent(input$checkDB, {
         )
     }
   }
+  
+  progress$inc(1, "Units of measurements")
   
   checkDB$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -173,13 +145,13 @@ output$DBConsistencyActionOut <- renderUI({
   }
 })
 
-output$tableFoI <- DT::renderDataTable({
+output$tableFoI <- renderDataTable({
   if (!is.null(inCSVFoI$df)) {
-    showTab <- inCSVFoI$df # [inclRowFoI(), inclColFoI(), drop=F]
+    showTab <- inCSVFoI$df 
     
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
     
-    if (!is.na(input$UoMFoI) && !is.null(input$UoMFoI)) {
+    if (!is.null(inCSVFoI$UoMs)) {
       showUoM <- sapply(inCSVFoI$UoMs, function(x) {
         if (!is.na(x) & nchar(x) > 0) {
           paste0(" [",x,"]")
@@ -195,7 +167,7 @@ output$tableFoI <- DT::renderDataTable({
     
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
-                                                 scrollX=TRUE, sort=FALSE),
+                                       scrollX=TRUE, sort=FALSE),
                         escape=FALSE)
     
     # if DB consistency has been checked, apply colors 
@@ -203,11 +175,11 @@ output$tableFoI <- DT::renderDataTable({
       rowClrs <- rep("white", nrow(showTab))
       
       if (!is.null(checkDB$txtInfo)) {
-        rowClrs[which(showTab$ID %in% checkDB$foiInDB)] <- "yellow"
+        rowClrs[which(showTab[[reqColFoI$id]] %in% checkDB$foiInDB)] <- "yellow"
         for (col in c(1, which(inCSVFoI$headAsChar %in% checkDB$colInDB$dede))) {
           if (col %in% checkDB$uomMissMatchCols) next;
           showDT <- formatStyle(showDT, col, "ID", 
-                                backgroundColor = styleEqual(showTab$ID, rowClrs))
+                                backgroundColor = styleEqual(showTab[[reqColFoI$id]], rowClrs))
         }
       }
       
@@ -215,7 +187,7 @@ output$tableFoI <- DT::renderDataTable({
         rowClrs <- rep("red", nrow(showTab))
         for (col in checkDB$uomMissMatchCols) {
           showDT <- formatStyle(showDT, col, "ID", 
-                                backgroundColor = styleEqual(showTab$ID, rowClrs))
+                                backgroundColor = styleEqual(showTab[[reqColFoI$id]], rowClrs))
         }
       }
     }
@@ -230,7 +202,7 @@ output$tableFoI <- DT::renderDataTable({
 ###############################################
 
 observeEvent(input$storeDB, {
-  foi_data <- inCSVFoI$df ## [inclRowFoI(), inclColFoI(), drop=F]
+  foi_data <- inCSVFoI$df
   foi_header <- inCSVFoI$headAsChar ## [inclColFoI()]
   foi_uom <- inCSVFoI$UoMs ## [inclColFoI()]
   
@@ -240,14 +212,22 @@ observeEvent(input$storeDB, {
   foi_uom <- foi_uom[!foi_empty_cols]
   foi_data <- foi_data[,!foi_empty_cols]
   
-  # any parent features that need to be inserted before? Those with empty or missing super_FoI column
-  par_foi <- is.na(foi_data$super_FoI) | nchar(foi_data$super_FoI) == 0
+  # any parent features that need to be inserted before? Those with empty or missing Stammanalge column
+  par_foi <- is.na(foi_data[,reqColFoI$super_FoI]) | nchar(foi_data[,reqColFoI$super_FoI]) == 0
+  
+  nRowDf <- nrow(foi_data)
+  
+  progress <- shiny::Progress$new()
+  on.exit(progress$close())
+  
+  progress$set(message = "Inserting into DB.", value = 0)
   
   if (any(par_foi)) {
     for (sfoi in which(par_foi)) {# sfoi <- 1
+      progress$inc(1/nRowDf)
       # check whether the feature is already in the DB
       foiInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = '", 
-                                       foi_data[sfoi,]$ID,"'"))
+                                       foi_data[sfoi,reqColFoI$id],"'"))
       if (nrow(foiInDB) > 0) {
         if (!input$owFoI) {
           next;
@@ -258,72 +238,97 @@ observeEvent(input$storeDB, {
           relationTab <- dbGetQuery(db, paste0("SELECT parentfeatureid, childfeatureid FROM featurerelation WHERE parentfeatureid = ",
                                                curId, "OR childfeatureid =",curId))
           
+          # insert tmp feature
+          insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                         body = SOSinsFoI("tmp", "tmp", 0, 0),
+                                         content_type_xml(), accept_xml())$content)
+          if (verbose)
+            message(insMsg)
+          
+          tmpId <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'tmp'"))$featureofinterestid
+          
+          # map curID from series on tmp feature
+          dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
+          
           # delete relevant part of featurerelation table and from feature of interest table
           dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE parentfeatureid = ",
                                  curId, " OR childfeatureid = ", curId))
           dbSendQuery(db, paste0("DELETE FROM featureofinterest WHERE featureofinterestid = ", curId))
           
           # cache-update!
-          POST(url = paste0(SOSWebApp, "admin/cache/reload"), 
-               config=authenticate("a","a"), body="a")
-          
-          reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                         body = SOSreqFoI(foi_data[sfoi,]$ID), # foi_data[sfoi,]$ID
-                                         content_type_xml(), accept_json())$content)
-          
-          while (is.null(fromJSON(reqMsg)$exceptions)) {
-            if (verbose)
-              message(foi_data[foi,]$ID)
-            
-            Sys.sleep(0.5)
-            reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                           body = SOSreqFoI(foi_data[sfoi,]$ID), # foi_data[sfoi,]$ID
-                                           content_type_xml(), accept_json())$content)
-          }
+          SOScacheUpdate(foi_data[sfoi,reqColFoI$id])
           
           # re-insert the FoI
-          insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                         body = SOSinsFoI(foi_data[sfoi,]$ID, foi_data[sfoi,]$Name,
-                                                          foi_data[sfoi,]$lat, foi_data[sfoi,]$lon),
+          insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                         body = SOSinsFoI(foi_data[sfoi,reqColFoI$id], foi_data[sfoi,reqColFoI$name],
+                                                          foi_data[sfoi,reqColFoI$lat], foi_data[sfoi,reqColFoI$lon]),
                                          content_type_xml(), accept_xml())$content)
           if (verbose)
             message(insMsg)
           
           # find the new featureofinterest id
           newFoIId <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = '", 
-                                            foi_data[sfoi,]$ID,"'"))
+                                            foi_data[sfoi,reqColFoI$id],"'"))
+          
           # clear featurerelation table first
           dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", newFoIId))
+          
           # re-assign the featureofinterest id to the old one
           dbSendQuery(db, paste0("UPDATE featureofinterest SET featureofinterestid = ", curId, " WHERE identifier = '", 
-                                 foi_data[sfoi,]$ID,"'"))
+                                 foi_data[sfoi,reqColFoI$id],"'"))
+          
           # restore the featurerelation table
           dbWriteTable(db, "featurerelation", relationTab, append = TRUE, row.names=FALSE)
+          
+          # re-assign the right FoI id in series table replacing the temp ID
+          dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
+          
+          # remove tmp feature
+          dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", tmpId))
+          dbSendQuery(db, paste0("DELETE FROM featureofinterest WHERE featureofinterestid = ", tmpId))
+          
+          # cache-update!
+          SOScacheUpdate("tmp")
         }
       } else {
-        insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                       body = SOSinsFoI(foi_data[sfoi,]$ID, foi_data[sfoi,]$Name, 
-                                                        foi_data[sfoi,]$lat, foi_data[sfoi,]$lon),
+        insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                       body = SOSinsFoI(foi_data[sfoi,reqColFoI$id], foi_data[sfoi,reqColFoI$name], 
+                                                        foi_data[sfoi,reqColFoI$lat], foi_data[sfoi,reqColFoI$lon]),
                                        content_type_xml(), accept_xml())$content)
-       if (verbose)
-         message(insMsg)
+        if (verbose)
+          message(insMsg)
       }
     }
   }
   
   # insert remaining FoI
   for (foi in which(!par_foi)) { # foi <- 2
+    progress$inc(1/nRowDf)
+    
     # check whether the feature is already in the DB
     foiInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = '", 
-                                     foi_data[foi,]$ID,"'"))
+                                     foi_data[foi,reqColFoI$id],"'"))
     if (nrow(foiInDB) > 0) {
       if (!input$owFoI) {
         next;
       } else {
         curId <- foiInDB$featureofinterestid
+        
         # retrive relevant part of featurerelation table
         relationTab <- dbGetQuery(db, paste0("SELECT parentfeatureid, childfeatureid FROM featurerelation WHERE parentfeatureid = ",
                                              curId, "OR childfeatureid =",curId))
+        
+        # insert tmp feature
+        insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                       body = SOSinsFoI("tmp", "tmp", 0, 0),
+                                       content_type_xml(), accept_xml())$content)
+        if (verbose)
+          message(insMsg)
+        
+        tmpId <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'tmp'"))$featureofinterestid
+        
+        # map curID from series on tmp feature
+        dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
         
         # delete relevant part of featurerelation table and from feature of interest table
         dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE parentfeatureid = ",
@@ -331,48 +336,47 @@ observeEvent(input$storeDB, {
         dbSendQuery(db, paste0("DELETE FROM featureofinterest WHERE featureofinterestid = ", curId))
         
         # cache-update!
-        POST(url = paste0(SOSWebApp, "admin/cache/reload"), 
-             config=authenticate("a","a"), body="a")
-        
-        reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                       body = SOSreqFoI(foi_data[foi,]$ID), # foi_data[sfoi,]$ID
-                                       content_type_xml(), accept_json())$content)
-        
-        while (is.null(fromJSON(reqMsg)$exceptions)) {
-          if (verbose)
-            message(foi_data[foi,]$ID)
-          
-          Sys.sleep(0.5)
-          reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                         body = SOSreqFoI(foi_data[foi,]$ID), # foi_data[sfoi,]$ID
-                                         content_type_xml(), accept_json())$content)
-        }
+        SOScacheUpdate(foi_data[foi,reqColFoI$id])
         
         # re-insert the FoI
-        insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                       body = SOSinsFoI(foi_data[foi,]$ID, foi_data[foi,]$Name,
-                                                        foi_data[foi,]$lat, foi_data[foi,]$lon, 
-                                                        foi_data[foi,]$super_FoI),
+        insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                       body = SOSinsFoI(foi_data[foi,reqColFoI$id], foi_data[foi,reqColFoI$idname],
+                                                        foi_data[foi,reqColFoI$lat], foi_data[foi,reqColFoI$lon], 
+                                                        foi_data[foi,reqColFoI$super_FoI]),
                                        content_type_xml(), accept_xml())$content)
         if (verbose)
           message(insMsg)
         
         # find the new featureofinterest id
         newFoIId <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = '", 
-                                          foi_data[foi,]$ID,"'"))
+                                          foi_data[foi,reqColFoI$id],"'"))
+        
         # clear featurerelation table first
         dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", newFoIId))
+        
         # re-assign the featureofinterest id to the old one
         dbSendQuery(db, paste0("UPDATE featureofinterest SET featureofinterestid = ", curId, " WHERE identifier = '", 
-                               foi_data[foi,]$ID,"'"))
+                               foi_data[foi, reqColFoI$id],"'"))
+        
         # restore the featurerelation table
         dbWriteTable(db, "featurerelation", relationTab, append = TRUE, row.names=FALSE)
+        
+        # re-assign the right FoI id in series table replacing the temp ID
+        dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
+        
+        # remove tmp feature
+        dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", tmpId))
+        dbSendQuery(db, paste0("DELETE FROM featureofinterest WHERE featureofinterestid = ", tmpId))
+        
+        # cache-update!
+        SOScacheUpdate("tmp")
       }
+      
     } else {
-      insMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-                                     body = SOSinsFoI(foi_data[foi,]$ID, foi_data[foi,]$Name,
-                                                      foi_data[foi,]$lat, foi_data[foi,]$lon, 
-                                                      foi_data[foi,]$super_FoI),
+      insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                     body = SOSinsFoI(foi_data[foi,reqColFoI$id], foi_data[foi,reqColFoI$name],
+                                                      foi_data[foi,reqColFoI$lat], foi_data[foi,reqColFoI$lon], 
+                                                      foi_data[foi,reqColFoI$super_FoI]),
                                      content_type_xml(), accept_xml())$content)
       if (verbose)
         message(insMsg)
@@ -436,7 +440,7 @@ observeEvent(input$storeDB, {
     
     # find the FoI idntifier
     foi_db_id <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier ='", 
-                                       foi_data$ID[i],"'"))
+                                       foi_data[[reqColFoI$id]][i],"'"))
     
     # check whether the FoI has already some data
     if (nrow(dbGetQuery(db, paste0("SELECT id FROM foidata WHERE featureofinterestid = ", foi_db_id))) > 0) {

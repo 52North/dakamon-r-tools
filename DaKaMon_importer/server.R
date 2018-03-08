@@ -13,6 +13,12 @@ BGencode <- 0
 BGchar <- "< BG"
 feederPath <- "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar"
 stndTime <- "T12:00:00+00:00"
+adminConf <- authenticate("a","a")
+reqColFoI <- list(id="ID", # also checks whether it is unique
+                  name="Name",
+                  super_FoI="Stammanlage",
+                  lat="lat",
+                  lon="lon")
 
 
 ## tools
@@ -83,21 +89,26 @@ SOSdelObsByID <- function(obsId) {
            <sosdo:observation>", obsId, "</sosdo:observation>
            </sosdo:DeleteObservation>")
 }
-  
-# 
-# cat(SOSreqObs())
-# 
-# reqMsg <- rawToChar(httr::POST(paste0(SOSWebApp, "service"), 
-#                                body = SOSreqObs(),
-#                                content_type_xml(), accept_json())$content)
-# length(fromJSON(reqMsg)$observation)
-# 
-# 
-# numTime <- as.numeric(Sys.time())
-# 
-# 
-# as.character(as.POSIXct(numTime+1e-3, origin = "1970-01-01", tz="GMT"))
 
+SOScacheUpdate <- function(gmlId, wait=0.5, conf=adminConf, verbose=FALSE) {
+  POST(url = paste0(SOSWebApp, "admin/cache/reload"), 
+       config=conf, body="a")
+  
+  reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                 body = SOSreqFoI(gmlId),
+                                 content_type_xml(), accept_json())$content)
+  
+  while (is.null(fromJSON(reqMsg)$exceptions)) {
+    if (verbose)
+      message(foi_data[sfoi,]$ID)
+    
+    Sys.sleep(wait)
+    reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
+                                   body = SOSreqFoI(gmlId), # foi_data[sfoi,]$ID
+                                   content_type_xml(), accept_json())$content)
+  }
+}
+  
 ## /tools
 
 server <- function(input, output) {
