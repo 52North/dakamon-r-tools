@@ -42,11 +42,13 @@ RUN mkdir -pv /usr/local/52n &&\
     rm -rfv /srv/shiny-server/*
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar
 
-ADD DaKaMon_importer /srv/shiny-server/
+ADD DaKaMon_importer/*.* /srv/shiny-server/DaKaMon_importer/
 
-ADD DaKaMon_viewer /srv/shiny-server/
+ADD DaKaMon_viewer/*.* /srv/shiny-server/DaKaMon_viewer/
 
 ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
+
+RUN chown shiny:shiny /var/lib/shiny-server
 
 USER shiny
 
