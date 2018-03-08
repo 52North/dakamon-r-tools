@@ -4,7 +4,7 @@ library(DT)
 library("rpostgis")
 library("httr")
 
-# db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+# db <- dbConnect("PostgreSQL", host="db", dbname="sos", user="postgres", password="postgres", port="5432")
 
 ui <- fluidPage(
   shinyjs::useShinyjs(),
