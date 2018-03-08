@@ -5,7 +5,7 @@ library("rpostgis")
 library("httr")
 
 db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
-db
+on.exit(dbDisconnect(db))
 
 # overwriteDB <- function() FALSE
 

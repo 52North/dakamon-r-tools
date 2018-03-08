@@ -12,6 +12,9 @@ verbose <- TRUE
 BGencode <- 0
 BGchar <- "< BG"
 
+# db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+# on.exit(dbDisconnect(db), add=T)
+
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   titlePanel("DaKaMon Importer"),
@@ -26,7 +29,6 @@ ui <- fluidPage(
                sidebarPanel(fluidRow(column(6, textInput("sepFoI", "Column separator:", value = ";", width = "80%")),
                                      column(6, textInput("decFoI", "Decimal separator:", value = ".", width = "80%"))),
                             fileInput("csvFileFoI", "Select a FoI file for upload."),
-                        #    selectInput("UoMFoI", "Unit of measurement row:", choices = c(1:20), selected = "1"),
                             checkboxInput("owFoI", "Overwrite ALL data?", FALSE), 
                             uiOutput("foiValidationOut"),
                             uiOutput("DBConsistencyTxtOut"),
