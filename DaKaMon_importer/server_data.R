@@ -333,7 +333,7 @@ output$dataValidationOut <- renderUI({
 #   missmatch -> no upload!
 
 observeEvent(input$dataCheckDB, {
-  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   # check whether all FoIs are already in the DB
@@ -547,7 +547,7 @@ output$tableData <- renderDataTable({
 
 observeEvent(input$dataStoreDB, {
   if (!is.null(inCSVData$df)) {
-    db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     on.exit(dbDisconnect(db), add=T)
     
     if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {

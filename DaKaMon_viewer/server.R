@@ -1,9 +1,10 @@
 # server  DaKaMon viewer
 library(DT)
 
+dbHost <- "db"
 
 server <- function(input, output) {
-  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   # load all super FoI from DB
@@ -64,7 +65,7 @@ server <- function(input, output) {
   # subFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation)"))
 
   subFoiData <- reactive({
-    db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     on.exit(dbDisconnect(db), add=T)
     
     sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoi[s(),1], collapse="', '") , "'))"))
@@ -116,7 +117,7 @@ server <- function(input, output) {
   # load all avaialble obsProp for the selected FoI
   
   obsProp <- reactive({
-    db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     on.exit(dbDisconnect(db), add=T)
     
     # curDBUoM <- dbGetQuery(db, paste0("SELECT unit 
@@ -147,7 +148,7 @@ server <- function(input, output) {
                                          obsProp()$name, multiple = TRUE))
   
   data <- reactive({
-    db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     on.exit(dbDisconnect(db), add=T)
     
     df <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoi[s(),1], collapse="', '") , "'))"))

@@ -71,7 +71,7 @@ output$foiValidationOut <- renderUI({
 # check Parameter and their UoMs
 
 observeEvent(input$checkDB, {
-  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   progress <- shiny::Progress$new()
@@ -205,7 +205,7 @@ output$tableFoI <- renderDataTable({
 ###############################################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   foi_data <- inCSVFoI$df

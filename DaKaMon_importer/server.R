@@ -5,12 +5,14 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 
-SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
+
+SOSWebApp <- "http://sos:8080/52n-sos-webapp/"
+dbHost <- "db"
 verbose <- TRUE
 BGencode <- 0
 BGchar <- "< BG"
 BGlabel <- "Bestimmungsgrenze" # label in DB
-feederPath <- "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar"
+feederPath <- "/usr/local/52n/52n-sos-importer-feeder-bin.jar"
 stndTime <- "T12:00:00+00:00"
 adminConf <- authenticate("a","a")
 reqColFoI <- list(id="ID", # also checks whether it is unique
