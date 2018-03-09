@@ -34,7 +34,8 @@ RUN mkdir -pv /usr/local/52n &&\
     rm -rf /tmp/sos-importer &&\
     apt-get purge git maven openjdk-8-jdk --assume-yes &&\
     apt-get install openjdk-8-jre --assume-yes --no-install-recommends &&\
-    apt-get autoremove --purge --assume-yes && apt-get clean --assume-yes &&\
+    apt-get autoremove --purge --assume-yes
+RUN chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
     rm -rf /var/cache/apt/archives &&\
     rm -rf /root/.m2 &&\
     rm -rf /var/lib/apt/lists/* &&\
@@ -43,11 +44,9 @@ RUN mkdir -pv /usr/local/52n &&\
 
 # install R packages and dependencies
 RUN apt-get update &&\
-    apt-get install --assume-yes --no-install-recommends libssl-dev
+    apt-get install --assume-yes --no-install-recommends libssl-dev libpq-dev
 
-RUN R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr'), repos='https://cran.rstudio.com/')"
-
-RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar
+RUN R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr', 'RPostgreSQL'), repos='https://cran.rstudio.com/')"
 
 ADD DaKaMon_importer/*.* /srv/shiny-server/DaKaMon_importer/
 
@@ -55,7 +54,9 @@ ADD DaKaMon_viewer/*.* /srv/shiny-server/DaKaMon_viewer/
 
 ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
-RUN chown shiny:shiny /var/lib/shiny-server
+RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
+    chown shiny:shiny -R /srv/shiny-server && chown shiny:shiny -R /opt/shiny-server &&\
+    chown shiny:shiny /var/lib/shiny-server
 
 USER shiny
 
