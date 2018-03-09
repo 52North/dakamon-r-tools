@@ -3,7 +3,7 @@ library(shiny)
 library(DT)
 library(httr)
 library(rjson)
-
+library(RPostgreSQL)
 
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE

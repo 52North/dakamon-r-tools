@@ -71,8 +71,11 @@ output$foiValidationOut <- renderUI({
 # check Parameter and their UoMs
 
 observeEvent(input$checkDB, {
+  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  on.exit(dbDisconnect(db), add=T)
+  
   progress <- shiny::Progress$new()
-  on.exit(progress$close())
+  on.exit(progress$close(), add = T)
   
   progress$set(message = "Checking DB.", value = 0)
   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
@@ -202,6 +205,9 @@ output$tableFoI <- renderDataTable({
 ###############################################
 
 observeEvent(input$storeDB, {
+  db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
+  on.exit(dbDisconnect(db), add=T)
+  
   foi_data <- inCSVFoI$df
   foi_header <- inCSVFoI$headAsChar ## [inclColFoI()]
   foi_uom <- inCSVFoI$UoMs ## [inclColFoI()]
@@ -218,7 +224,7 @@ observeEvent(input$storeDB, {
   nRowDf <- nrow(foi_data)
   
   progress <- shiny::Progress$new()
-  on.exit(progress$close())
+  on.exit(progress$close(), add=T)
   
   progress$set(message = "Inserting into DB.", value = 0)
   

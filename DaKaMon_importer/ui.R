@@ -4,15 +4,10 @@ library(DT)
 library(shinyjs)
 library(httr)
 
-# db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
-
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
 BGencode <- 0
 BGchar <- "< BG"
-
-# db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
-# on.exit(dbDisconnect(db), add=T)
 
 ui <- fluidPage(
   useShinyjs(),

@@ -354,7 +354,7 @@ observeEvent(input$dataCheckDB, {
   inCSVData$obsInDB <- NULL
   
   progress <- Progress$new()
-  on.exit(progress$close())
+  on.exit(progress$close(), add=T)
   
   progress$set(message = "Checking DB!", value = 0)
   

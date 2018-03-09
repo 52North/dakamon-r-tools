@@ -3,18 +3,21 @@ library(shiny)
 
 ui <- fluidPage(
   tabsetPanel(
-    tabPanel("Ka selection", 
+    tabPanel("Stammanalgen selection", 
              column(12, dataTableOutput('table'),
                     textOutput("selText"))
     ), 
-    tabPanel("Sub FOI",
+    tabPanel("Kläranlagen feature selection",
              column(12, dataTableOutput('table2'),
                     textOutput("selText2"))
     ),
-    tabPanel("Data",
-             column(12, dataTableOutput('tabSummary')),
-             column(12, br()),
-             column(12, dataTableOutput('table3'))
+    tabPanel("Daten",
+             sidebarLayout(
+               sidebarPanel(uiOutput("obsPhen"), width = 2),
+               mainPanel(column(12, dataTableOutput('tabSummary')),
+                         column(12, br()),
+                         column(12, dataTableOutput('table3'))))
+             
     )
   )
 )
