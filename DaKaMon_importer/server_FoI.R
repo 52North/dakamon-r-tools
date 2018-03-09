@@ -410,11 +410,12 @@ observeEvent(input$storeDB, {
   if (length(misCols > 0)) { 
     for (i in 1:length(misCols)) {# i <- 1
       colId <- sprintf("col%03d", i + length(regCols))
-      dbColumn(db, "foidata", colId, "add", 
-               coltype = switch(class(foi_data[,misCols[i]]),
-                                integer = "numeric",
-                                numeric = "numeric",
-                                character = "character varying(255)"))
+      coltype = switch(class(foi_data[,misCols[i]]),
+                       integer = "numeric",
+                       numeric = "numeric",
+                       character = "character varying(255)")
+      
+      dbSendQuery(db, paste0("ALTER TABLE foidata ADD COLUMN ", colId, " ", coltype, ";"))
       
       # look-up UoM id
       unitId <- NULL
