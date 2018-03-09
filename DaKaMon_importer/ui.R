@@ -1,9 +1,8 @@
 # UI DaKaMon import
 library(shiny)
 library(DT)
-
-library("rpostgis")
-library("httr")
+library(shinyjs)
+library(httr)
 
 # db <- dbConnect("PostgreSQL", host="localhost", dbname="sos", user="postgres", password="postgres", port="5432")
 
@@ -16,7 +15,7 @@ BGchar <- "< BG"
 # on.exit(dbDisconnect(db), add=T)
 
 ui <- fluidPage(
-  shinyjs::useShinyjs(),
+  useShinyjs(),
   titlePanel("DaKaMon Importer"),
   
   #############

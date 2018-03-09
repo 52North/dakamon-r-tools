@@ -1,7 +1,6 @@
 # server DaKaMon Import
 library(shiny)
 library(DT)
-library(rpostgis)
 library(httr)
 library(rjson)
 

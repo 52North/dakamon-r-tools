@@ -85,23 +85,23 @@ server <- function(input, output) {
                                                       buttons = list(list(extend = 'colvis',
                                                                           columns = 1:ncol(subFoiData())))),
                                        extensions = 'Buttons')
-  # 
-  # sp <- reactive({
-  #   sr <- input$table2_rows_selected
-  #   if(length(sr) == 0) {
-  #     1:nrow(do.call(bind_rows, subFoIs[s()]))
-  #   } else {
-  #     sort(sr)
-  #   }})
-  # 
-  # output$selText2 <- renderText({
-  #   if (length(sp()) == 1) {
-  #     paste("Row", sp(), "is selected.")
-  #   } else {
-  #     paste("Rows", paste(sp(), collapse=", "), "are selected.")
-  #   }
-  # })
-  # 
+
+  sp <- reactive({
+    sr <- input$table2_rows_selected
+    if(length(sr) == 0) {
+      1:nrow(do.call(bind_rows, subFoIs[s()]))
+    } else {
+      sort(sr)
+    }})
+
+  output$selText2 <- renderText({
+    if (length(sp()) == 1) {
+      paste("Row", sp(), "is selected.")
+    } else {
+      paste("Rows", paste(sp(), collapse=", "), "are selected.")
+    }
+  })
+   
   # rownames(as.data.frame(bind_cols(lapply(do.call(bind_rows, lapply(phenData[1:4], function(x) do.call(bind_rows, x[1:4]))), function(x) summary(x)[1:6]))) ) <- 
   # 
   # summary(do.call(bind_rows, lapply(phenData[1:4], function(x) do.call(bind_rows, x[1:4])))[,2])

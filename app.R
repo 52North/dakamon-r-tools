@@ -1,7 +1,6 @@
 library(shiny)
 library(DT)
 
-library("rpostgis")
 library("httr")
 
 # db <- dbConnect("PostgreSQL", host="db", dbname="sos", user="postgres", password="postgres", port="5432")

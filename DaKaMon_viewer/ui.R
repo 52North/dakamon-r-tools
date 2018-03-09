@@ -1,6 +1,5 @@
 # ui - DaKaMon viewer
 library(shiny)
-library("rpostgis")
 
 ui <- fluidPage(
   tabsetPanel(

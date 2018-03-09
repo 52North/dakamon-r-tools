@@ -40,7 +40,12 @@ RUN mkdir -pv /usr/local/52n &&\
     rm -rf /var/lib/apt/lists/* &&\
     rm -rf /opt/shiny-server/samples &&\
     rm -rfv /srv/shiny-server/*
-RUN R -e "install.packages(c('DT', 'rpostgis', 'httr', 'rjson', 'dyplr'), repos='https://cran.rstudio.com/')"
+# install R packages as sudo or user shiny
+RUN apt-get update &&\
+    apt-get install --assume-yes --no-install-recommends libssl-dev # libgeos-dev libpq-dev
+# RUN R -e "install.packages(c('rpostgis'), repos='https://cran.rstudio.com/')"
+RUN R -e "install.packages(c('DT', 'httr', 'rjson', 'dplyr'), repos='https://cran.rstudio.com/')"
+RUN R -e "install.packages(c('shinyjs'), repos='https://cran.rstudio.com/')"
 
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar
 
