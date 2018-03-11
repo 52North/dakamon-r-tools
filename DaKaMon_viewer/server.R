@@ -5,9 +5,10 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 
-SOSWebApp <- "http://localhost:8080/52n-sos-webapp/" # "http://sos:8080/52n-sos-webapp/"
-dbHost <- "localhost" # "db"
-verbose <- TRUE
+local <- FALSE
+SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
+dbHost <- ifelse(local, "localhost", "db") 
+verbose <- local
 BGencode <- 0
 BGchar <- "< BG"
 BGlabel <- "Bestimmungsgrenze" # label in DB
