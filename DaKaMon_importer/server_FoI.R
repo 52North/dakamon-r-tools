@@ -365,7 +365,8 @@ observeEvent(input$storeDB, {
                                foi_data[foi, reqColFoI$id],"'"))
         
         # restore the featurerelation table
-        dbWriteTable(db, "featurerelation", relationTab, append = TRUE, row.names=FALSE)
+        if (nrow(relationTab) > 0)
+          dbWriteTable(db, "featurerelation", relationTab, append = TRUE, row.names=FALSE)
         
         # re-assign the right FoI id in series table replacing the temp ID
         dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
