@@ -5,7 +5,7 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 
-local <- FALSE
+local <- interactive()
 SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 dbHost <- ifelse(local, "localhost", "db") 
 verbose <- local
@@ -14,7 +14,7 @@ BGchar <- "< BG"
 BGlabel <- "Bestimmungsgrenze" # label in DB
 feederPath <- ifelse(local, "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
 stndTime <- "T12:00:00+00:00"
-adminConf <- authenticate("a","a")
+adminConf <- authenticate("dakamon-administrator","p")
 reqColFoI <- list(id="ID", # also checks whether it is unique
                   name="Name",
                   super_FoI="Stammanlage",

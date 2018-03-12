@@ -9,7 +9,7 @@ ui <- fluidPage(tabsetPanel(
     "Stammanalgen selection",
     column(12, dataTableOutput('table'),
            conditionalPanel(
-             "$('#table3').hasClass('recalculating')",
+             "$('#table').hasClass('recalculating')",
              tags$div('Loading ... ')
            ),
            textOutput("selText"),
@@ -20,7 +20,7 @@ ui <- fluidPage(tabsetPanel(
     "Kläranlagen feature selection",
     column(12, dataTableOutput('table2'),
            conditionalPanel(
-             "$('#table3').hasClass('recalculating')",
+             "$('#table2').hasClass('recalculating')",
              tags$div('Loading ... ')
            ),
            textOutput("selText2"),
@@ -44,7 +44,7 @@ ui <- fluidPage(tabsetPanel(
                             label = "Include metadata header in export?",
                             value = FALSE),
                downloadButton("exportCSV", "Export as csv-file."),
-               downloadLink("exportRData", "Export as RData-file."),
+               downloadButton("exportRData", "Export as RData-file."),
                width = 2
              ),
              mainPanel(

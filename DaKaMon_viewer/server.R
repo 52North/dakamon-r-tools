@@ -5,7 +5,7 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 
-local <- FALSE
+local <- interactive()
 SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 dbHost <- ifelse(local, "localhost", "db") 
 verbose <- local
@@ -87,19 +87,23 @@ SOSgetObsByFoITime <- function(obsProp, time, foiURI) {
 
 server <- function(input, output) {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-  on.exit(dbDisconnect(db), add=T)
   
   # load all super FoI from DB
   superFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation)"))
+  # dbDisconnect(db)
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   superFoiData <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT featureofinterestid FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation))"))
+  # dbDisconnect(db)
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   foiDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM foidatametadata"))
+  dbDisconnect(db)
   colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
   
   output$table  <- renderDataTable({
     showTab <- superFoiData[,-1]
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showUoM <- sapply(foiDataMetaData$uom, function(x) {
       if (!is.na(x) & nchar(x) > 0) {
         paste0(" [",x,"]")
@@ -109,12 +113,13 @@ server <- function(input, output) {
     })
     showHead <- paste0(showHead, showUoM)
     showHead <- paste0(showHead, "</span>")
-    
-    datatable(showTab, colnames = showHead, filter="top",
+
+    datatable(showTab, colnames = showHead, 
+              filter="top",
               options = list(paging=FALSE, dom = 'Brti'),
               escape=FALSE)
   })
-  
+
   s <- reactive({
     sr <- input$table_rows_selected
     if(is.null(sr)) {
@@ -123,11 +128,13 @@ server <- function(input, output) {
       sort(sr)
     }
   })
-  
+
+  # output$selText <- renderPrint({superFoiData[,-1]})
   output$selText <- renderText({
     if (length(s()) == 1) {
       paste("Row", s(), "is selected.")
     } else {
+      # paste("Rows", paste(s(), collapse=", "), "are selected.")
       paste("Rows", paste(s(), collapse=", "), "are selected.")
     }
   })

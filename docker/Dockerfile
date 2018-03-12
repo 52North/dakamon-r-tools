@@ -55,7 +55,7 @@ ADD DaKaMon_viewer/*.* /srv/shiny-server/DaKaMon_viewer/
 ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
-    chown shiny:shiny -R /srv/shiny-server && chown shiny:shiny -R /opt/shiny-server &&\
+    chown shiny:shiny -Rv /srv/shiny-server && chown shiny:shiny -Rv /opt/shiny-server &&\
     chown shiny:shiny /var/lib/shiny-server
 
 USER shiny
