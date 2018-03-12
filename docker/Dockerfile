@@ -24,6 +24,7 @@ RUN chmod +x /usr/bin/shiny-server.sh &&\
 RUN git clone https://github.com/EHJ-52n/arctic-sea.git &&\
     cd arctic-sea &&\
     git fetch --all &&\
+    git checkout -b distribution/dakamon origin/distribution/dakamon &&\
     mvn install &&\
     cd .. &&\
     git clone https://github.com/EHJ-52n/sos-importer.git &&\
