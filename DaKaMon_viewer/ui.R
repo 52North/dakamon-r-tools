@@ -6,7 +6,7 @@ BGchar <- "< BG"
 
 ui <- fluidPage(tabsetPanel(
   tabPanel(
-    "Stammanalgen selection",
+    "Stammanlagen selection",
     column(12, dataTableOutput('table'),
            conditionalPanel(
              "$('#table').hasClass('recalculating')",
