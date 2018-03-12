@@ -23,11 +23,9 @@ RUN chmod +x /usr/bin/shiny-server.sh &&\
     apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git
 RUN git clone https://github.com/EHJ-52n/arctic-sea.git &&\
     cd arctic-sea &&\
-    git fetch --all &&\
-    git checkout -b distribution/dakamon origin/distribution/dakamon &&\
     mvn install &&\
-    cd .. &&\
-    git clone https://github.com/EHJ-52n/sos-importer.git &&\
+    cd ..
+RUN git clone https://github.com/EHJ-52n/sos-importer.git &&\
     cd sos-importer &&\
     mvn package -e -Pcheck
 RUN mkdir -pv /usr/local/52n &&\
@@ -41,7 +39,7 @@ RUN chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
     rm -rf /root/.m2 &&\
     rm -rf /var/lib/apt/lists/* &&\
     rm -rf /opt/shiny-server/samples &&\
-    rm -rfv /srv/shiny-server/*
+    rm -rf /srv/shiny-server/*
 
 # install R packages and dependencies
 RUN apt-get update &&\
