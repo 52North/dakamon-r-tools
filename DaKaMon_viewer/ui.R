@@ -1,5 +1,7 @@
 # ui - DaKaMon viewer
 library(shiny)
+library(DT)
+library(shinyjs)
 
 BGchar <- "< BG"
 # BGlabel <- "Bestimmungsgrenze" # label in DB
@@ -7,9 +9,9 @@ BGchar <- "< BG"
 ui <- fluidPage(tabsetPanel(
   tabPanel(
     "Stammanlagen selection",
-    column(12, dataTableOutput('table'),
+    column(12, DTOutput('tableFoi'),
            conditionalPanel(
-             "$('#table').hasClass('recalculating')",
+             "$('#tableFoi').hasClass('recalculating')",
              tags$div('Loading ... ')
            ),
            textOutput("selText"),
@@ -18,7 +20,7 @@ ui <- fluidPage(tabsetPanel(
   ),
   tabPanel(
     "Kläranlagen feature selection",
-    column(12, dataTableOutput('table2'),
+    column(12, DTOutput('table2'),
            conditionalPanel(
              "$('#table2').hasClass('recalculating')",
              tags$div('Loading ... ')
@@ -48,13 +50,13 @@ ui <- fluidPage(tabsetPanel(
                width = 2
              ),
              mainPanel(
-               dataTableOutput('table3stat'),
+               DTOutput('table3stat'),
                conditionalPanel(
                  "$('#table3stat').hasClass('recalculating')",
                  tags$div('Calculating ... ')
                ),
                br(),
-               dataTableOutput('table3'),
+               DTOutput('table3'),
                conditionalPanel(
                  "$('#table3').hasClass('recalculating')",
                  tags$div('Loading ... ')

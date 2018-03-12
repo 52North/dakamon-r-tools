@@ -99,31 +99,33 @@ server <- function(input, output) {
   dbDisconnect(db)
   colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
   
-  output$table  <- renderDataTable({
-    showTab <- superFoiData[,-1]
-
-    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
-    showUoM <- sapply(foiDataMetaData$uom, function(x) {
-      if (!is.na(x) & nchar(x) > 0) {
-        paste0(" [",x,"]")
-      } else {
-        ""
-      }
-    })
-    showHead <- paste0(showHead, showUoM)
-    showHead <- paste0(showHead, "</span>")
-
-    datatable(showTab, colnames = showHead, 
+  showTab <- superFoiData[,-1]
+  
+  # print(str(foiDataMetaData))
+  
+  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+  
+  showUoM <- sapply(foiDataMetaData$uom, function(x) {
+    if (!is.na(x) & nchar(x) > 0) {
+      paste0(" [",x,"]")
+    } else {
+      ""
+    }
+  })
+  showHead <- paste0(showHead, showUoM)
+  showHead <- paste0(showHead, "</span>")
+  
+  # print(str(datatable(showTab)))
+  
+  output$tableFoi  <- renderDT(datatable(showTab, # colnames = showHead, 
               filter="top",
               options = list(paging=FALSE, dom = 'Brti'),
-              escape=FALSE)
-  })
+              escape=FALSE))
 
   s <- reactive({
-    sr <- input$table_rows_selected
+    sr <- input$tableFoi_rows_selected
     if(is.null(sr)) {
-      input$table_rows_all
+      input$tableFoi_rows_all
     } else {
       sort(sr)
     }
@@ -134,7 +136,6 @@ server <- function(input, output) {
     if (length(s()) == 1) {
       paste("Row", s(), "is selected.")
     } else {
-      # paste("Rows", paste(s(), collapse=", "), "are selected.")
       paste("Rows", paste(s(), collapse=", "), "are selected.")
     }
   })
@@ -165,14 +166,14 @@ server <- function(input, output) {
   
   subFoiData <- reactive({
     db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-    on.exit(dbDisconnect(db), add=T)
     
     sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoi[s(),1], collapse="', '") , "'))"))
     colnames(sfd) <- foiDataMetaData$dede[match(colnames(sfd), foiDataMetaData$columnid)]
+    dbDisconnect(db)
     sfd[,-1]
   })
   
-  output$table2 <- renderDataTable({
+  output$table2 <- renderDT({
     showTab <- subFoiData()
     
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
@@ -236,7 +237,6 @@ server <- function(input, output) {
   
   obsProp <- reactive({
     db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-    on.exit(dbDisconnect(db), add=T)
     
     op <- NULL
     for (i in 1:length(sp())) { # i <- 1
@@ -258,6 +258,7 @@ server <- function(input, output) {
       LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
       WHERE foi.identifier = '", subFoiData()[sp()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00'")))
     }
+    dbDisconnect(db)
     
     op
   })
@@ -267,9 +268,10 @@ server <- function(input, output) {
                                          selected = obsProp()$name[1]))
   
   data <- reactive({
+    # print(str(obsProp()))
+    
     if (!is.null(input$selObsPhen)) {
       db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-      on.exit(dbDisconnect(db), add=T)
       
       # uObsPropIds <- unique(obsProp()$identifier)
       resDf <- NULL
@@ -309,7 +311,7 @@ server <- function(input, output) {
           resDf <- rbind(resDf, resDfRow)
         }
       }
-      
+      dbDisconnect(db)
       
       resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
       colnames(resUom) <- c("id", "date", uObsPropSelId)
@@ -332,12 +334,11 @@ server <- function(input, output) {
     }
   })
   
-  output$table3 <- renderDataTable({
+  output$table3 <- renderDT({
     input$refreshData
     
     showTab <- isolate(data()[["resDf"]])
-    # on.exit(showTab <- NULL, add=TRUE)
-    
+
     isolate({
       showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
       
