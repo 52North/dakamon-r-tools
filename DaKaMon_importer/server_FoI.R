@@ -38,14 +38,14 @@ observeEvent(input$csvFileFoI, {
   
   txt <- NULL
   if (!(reqColFoI$id %in% inCSVFoI$headAsChar) || length(unique(inCSVFoI$df[,reqColFoI$id])) != length(inCSVFoI$df[,reqColFoI$id]))
-    txt <- paste0(txt, "<li>An unique identifier is mandatory for each feature of interest; please supply a non-empty and unique column '", reqColFoI[1], "'.</li>")
+    txt <- paste0(txt, "<li>Jede Kläranlage und jeder Verfahrensschritt benötigt eine presistent und eindeutige ID in der Spalte'", reqColFoI[1], "'.</li>")
   for (reqColName in reqColFoI[-1]) {
     if (!(reqColName %in% inCSVFoI$headAsChar))
-      txt <- paste0(txt, "<li>Please supply a column '", reqColName, "'.</li>", sep="")
+      txt <- paste0(txt, "<li>Bitte ergänze die Spalte '", reqColName, "'.</li>", sep="")
   }
 
   if(length(unique(inCSVFoI$headAsChar)) != length(inCSVFoI$headAsChar))
-    txt <- paste0(txt, "<li>Column names must be unique.</li>")
+    txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
   
   vali$txt <- txt
   vali$validated <- TRUE
@@ -54,7 +54,7 @@ observeEvent(input$csvFileFoI, {
 output$foiValidationOut <- renderUI({
   if (vali$validated) {
     if (is.null(vali$txt)) {
-      actionButton("checkDB", "Check DB consistency!")
+      actionButton("checkDB", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", vali$txt, "</ul></div></html"))
     }
@@ -77,11 +77,11 @@ observeEvent(input$checkDB, {
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add = T)
   
-  progress$set(message = "Checking DB.", value = 0)
+  progress$set(message = "Prüfe Datenkonsistenz.", value = 0)
   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
                                    paste(inCSVFoI$df[,reqColFoI$id], collapse="', '"),"')")) ## [inclRowFoI()]
   if (nrow(FoIinDB) > 0) {
-    checkDB$txtInfo <- paste("The following features are already in the DB: <ul><li>",
+    checkDB$txtInfo <- paste("Folgende Kläranalgen/Verfahrensschritte sind bereits in der DB: <ul><li>",
                              paste0(FoIinDB$identifier, collapse="</li><li>"))
   } else {
     checkDB$txtInfo <- NULL
@@ -107,7 +107,7 @@ observeEvent(input$checkDB, {
     if (length(checkDB$uomMissMatchCols) > 0) {
       checkDB$txtErr <-
         paste(
-          "The following columns have non-matching units of measurement: <ul><li>",
+          "Folgende Spalten haben unterschiedliche Maßeinheiten: <ul><li>",
           paste0(
             paste0(checkDB$colInDB$dede[checkDB$uomMissMatchCols], ": [",
                    checkDB$colInDB$unit[checkDB$uomMissMatchCols], "] "),
@@ -117,7 +117,7 @@ observeEvent(input$checkDB, {
     }
   }
   
-  progress$inc(1, "Units of measurements")
+  progress$inc(1, "Maßeinheiten")
   
   checkDB$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -140,7 +140,7 @@ output$DBConsistencyActionOut <- renderUI({
   if (checkDB$checked) {
     if (is.null(checkDB$txtErr)) {
       if (is.null(checkDB$txtInfo) || input$owFoI) {
-        actionButton("storeDB", "Store in DB!")
+        actionButton("storeDB", "Einfügen in DB!")
       } 
     } 
   } else {
@@ -226,7 +226,7 @@ observeEvent(input$storeDB, {
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add=T)
   
-  progress$set(message = "Inserting into DB.", value = 0)
+  progress$set(message = "Füge Daten in DB ein.", value = 0)
   
   if (any(par_foi)) {
     for (sfoi in which(par_foi)) {# sfoi <- 1
@@ -243,6 +243,18 @@ observeEvent(input$storeDB, {
           # retrive relevant part of featurerelation table
           relationTab <- dbGetQuery(db, paste0("SELECT parentfeatureid, childfeatureid FROM featurerelation WHERE parentfeatureid = ",
                                                curId, "OR childfeatureid =",curId))
+          
+          # remove tmp feature if still present (previous crash)
+          # remove tmp feature
+          odlTmpId <- dbGetQuery(db, "SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'tmp'")
+          if (nrow(odlTmpId)>0) {
+            # remove tmp feature
+            dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", odlTmpId$featureofinterestid))
+            dbSendQuery(db, paste0("DELETE FROM featureofinterest WHERE featureofinterestid = ", odlTmpId$featureofinterestid))
+            
+            # cache-update!
+            SOScacheUpdate("tmp", verbose=verbose)
+          }
           
           # insert tmp feature
           insMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
@@ -466,8 +478,8 @@ observeEvent(input$storeDB, {
   }
   
   showModal(modalDialog(
-    title = "Upload completed.",
-    "Feature of interest upload completed.",
+    title = "Vorgang abgeschlossen.",
+    "Kläranalgen/Verfahrensschritte erfolgreich angelegt.",
     easyClose = TRUE,
     footer = NULL
   ))

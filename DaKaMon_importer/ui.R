@@ -18,12 +18,14 @@ ui <- fluidPage(
   #############
   
   tabsetPanel(
-    tabPanel("Basic data upload",
+    tabPanel("Kläranlagen anlegen",
              sidebarLayout(
-               sidebarPanel(fluidRow(column(6, textInput("sepFoI", "Column separator:", value = ";", width = "80%")),
-                                     column(6, textInput("decFoI", "Decimal separator:", value = ".", width = "80%"))),
-                            fileInput("csvFileFoI", "Select a FoI file for upload."),
-                            checkboxInput("owFoI", "Overwrite ALL data?", FALSE), 
+               sidebarPanel(textInput("sepFoI", "Spaltentrennzeichen:", value = ";", width = "80%"),
+                            textInput("decFoI", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                            fileInput("csvFileFoI", "Kläranlagen csv-Datei", 
+                                      buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                      accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+                            checkboxInput("owFoI", "Alle Daten überschreiben?", FALSE), 
                             uiOutput("foiValidationOut"),
                             uiOutput("DBConsistencyTxtOut"),
                             uiOutput("DBConsistencyActionOut"), # DBConsistencyActionOut
@@ -36,16 +38,18 @@ ui <- fluidPage(
     ###  Data  ###
     ##############
 
-    tabPanel("Time series data upload",
+    tabPanel("Zeitreihen anlegen",
              sidebarLayout(
-               sidebarPanel(fluidRow(column(6, textInput("dataSep", "Column separator:", value = ";", width = "80%")),
-                                     column(6, textInput("dataDec", "Decimal separator:", value = ".", width = "80%"))),
-                            fileInput("dataCsvFile", "Select a data file for upload."),
-                            selectInput("dataBG", "Detection threshold row:", choices = c(1:20), selected = "1"),
-                            selectInput("dataUoM", "Unit of measurement row:", choices = c(1:20), selected = "2"),
-                            selectInput("dataStgr", "Element group row:", choices = c(1:20), selected = "3"),
-                            textInput("dataBGchar", "Detection limit character:", value = BGchar),
-                            checkboxInput("dataOW", "Overwrite ALL data?", FALSE), 
+               sidebarPanel(textInput("dataSep", "Spaltentrennzeichen:", value = ";", width = "80%"),
+                            textInput("dataDec", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                            fileInput("dataCsvFile", "Beobachtungs csv-Datei", 
+                                      buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                      accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+                            selectInput("dataBG", "Zeile mit Bestimmungsgrenze:", choices = c(1:20), selected = "1"),
+                            selectInput("dataUoM", "Zeile mit Maßeinheit:", choices = c(1:20), selected = "2"),
+                            selectInput("dataStgr", "Zeile mit Elementgruppe:", choices = c(1:20), selected = "3"),
+                            textInput("dataBGchar", "Unter Bestimmungsgrenze:", value = BGchar),
+                            checkboxInput("dataOW", "Alle Daten überschreiben?", FALSE), 
                             uiOutput("dataValidationOut"),
                             uiOutput("dataDBConsistencyTxtOut"),
                             uiOutput("dataDBConsistencyActionOut"),

@@ -14,7 +14,10 @@ BGchar <- "< BG"
 BGlabel <- "Bestimmungsgrenze" # label in DB
 feederPath <- ifelse(local, "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
 stndTime <- "T12:00:00+00:00"
-adminConf <- authenticate("dakamon-administrator","p")
+adminPwd <- "p"
+ifelse(local, 
+       adminConf <- authenticate("a",adminPwd),
+       adminConf <-   authenticate("dakamon-administrator",adminPwd))
 reqColFoI <- list(id="ID", # also checks whether it is unique
                   name="Name",
                   super_FoI="Stammanlage",
@@ -93,7 +96,7 @@ SOSdelObsByID <- function(obsId) {
            </sosdo:DeleteObservation>")
 }
 
-SOScacheUpdate <- function(gmlId=NULL, wait=0.5, conf=adminConf, verbose=FALSE) {
+SOScacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
   POST(url = paste0(SOSWebApp, "admin/cache/reload"), 
        config=conf, body="a")
   
@@ -102,9 +105,9 @@ SOScacheUpdate <- function(gmlId=NULL, wait=0.5, conf=adminConf, verbose=FALSE) 
                                    body = SOSreqFoI(gmlId),
                                    content_type_xml(), accept_json())$content)
     
-    while (is.null(fromJSON(reqMsg)$exceptions)) {
+    while (is.null(fromJSON(reqMsg)$exceptions)) { #} && length(fromJSON(reqMsg)$featureOfInterest) > 0) {
       if (verbose)
-        message(foi_data[sfoi,]$ID)
+        message(reqMsg)
       
       Sys.sleep(wait)
       reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"), 
