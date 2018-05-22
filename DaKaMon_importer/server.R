@@ -20,7 +20,7 @@ ifelse(local,
        adminConf <-   authenticate("dakamon-administrator",adminPwd))
 reqColFoI <- list(id="ID", # also checks whether it is unique
                   name="Name",
-                  super_FoI="Stammanlage",
+                  super_FoI="Kläranlage",
                   lat="lat",
                   lon="lon")
 reqColData <- list(id="ID", 

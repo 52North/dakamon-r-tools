@@ -296,13 +296,13 @@ observeEvent(input$dataCsvFile, {
   
   txt <- NULL
   if (!(reqColData$id %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>A pre-registered identifier is mandatory for each row; please supply a non-empty column 'ID'.</li>")
+    txt <- paste0(txt, "<li>Bitte eine Spalte 'ID' mit eindeutigen Bezügen zu Kläranlagen/Verfahrensschritten angeben.</li>")
   if (!(reqColData$probeId %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>A probe number is mandatory (yet, it might be empty); please supply a column '", reqColData$probeId, "'.</li>")
+    txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColData$probeId, "' angeben.</li>")
   if (!(reqColData$date %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>A date is mandatory for each row; please supply a non-empty column '", reqColData$date, "'.</li>")
+    txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColData$date, "' angeben.</li>")
   if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>Column names must be unique.</li>")
+    txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein..</li>")
   
   valiData$txt <- txt
   valiData$validated <- TRUE
@@ -311,7 +311,7 @@ observeEvent(input$dataCsvFile, {
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
     if (is.null(valiData$txt)) {
-      actionButton("dataCheckDB", "Check DB consistency!")
+      actionButton("dataCheckDB", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiData$txt, "</ul></div></html"))
     }
@@ -344,7 +344,7 @@ observeEvent(input$dataCheckDB, {
   missFoI <- foiInCSV[!(foiInCSV %in% FoIinDB$identifier)]
   
   if (length(missFoI) > 0) {
-    CheckDBData$txtErr <- paste("The following features are not yet in the DB: <ul><li>",
+    CheckDBData$txtErr <- paste("Folgende Kläranalgen/Verfahrnsschritte müssen vorab noch in der DB angelegt werden: <ul><li>",
                                 paste0(missFoI, collapse="</li><li>"))
   } else {
     checkDB$txtErr <- NULL
@@ -356,7 +356,7 @@ observeEvent(input$dataCheckDB, {
   progress <- Progress$new()
   on.exit(progress$close(), add=T)
   
-  progress$set(message = "Checking DB!", value = 0)
+  progress$set(message = "Prüfe DB!", value = 0)
   
   nRowDf <- nrow(inCSVData$df)
   nColDf <- ncol(inCSVData$df)
@@ -366,7 +366,7 @@ observeEvent(input$dataCheckDB, {
   for (colDf in 4:nColDf) { # colDf <- 9
     colVec <- rep(0, nRowDf)
     
-    progress$inc(1/(nColDf-3), paste(detail="Checking column", colDf))
+    progress$inc(1/(nColDf-3), paste(detail="Prüfe Spalte", colDf))
     
     # querry Stoffgruppe
     opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name, identifier FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
@@ -446,18 +446,18 @@ output$dataDBConsistencyActionOut <- renderUI({
     }
     if (all(inCSVData$obsInDB < 2)) {
       if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
-        actionButton("dataStoreDB", "Store in DB!")
+        actionButton("dataStoreDB", "Speichere in DB!")
       } else {
-        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Some observations are already in the DB (see yellow cells). Check the box above to overwrite the data in the data base.</div></html>")
+        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Einige Daten sind bereits in der DB (siehe gelbe Zellen).</div></html>")
       }
     } else {
       if (any( inCSVData$obsInDB == 2)) {
-        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Detection limit and/or unit of measurement differ in csv and data base (see red cells).</div></html>")
+        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Bestimmungsgrenze und/oder Maßeinheit sind in csv und DB unterschiedlich (siehe rote Zellen).</div></html>")
       } else {
         if (input$dataOW) {
-          actionButton("dataStoreDB", "Store in DB!")
+          actionButton("dataStoreDB", "Speichere in DB!")
         } else {
-          HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Group of elements differ in csv and data base (see blue cells).</div></html>")
+          HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Elementgruppen sind in csv und DB unterschiedlich (siehe blaue Zellen).</div></html>")
         }
       }
     }
@@ -516,7 +516,7 @@ output$tableData <- renderDataTable({
     
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
-                                       scrollX=TRUE, sort=FALSE),
+                                       scrollX=TRUE, sort=FALSE, dom="t"),
                         escape=FALSE)
     
     # if DB consistency has been checked, apply colors
@@ -554,7 +554,7 @@ observeEvent(input$dataStoreDB, {
       
       # delete observations already in the DB
       progress <- Progress$new()
-      progress$set(message = "Preparing DB.", value = 0)
+      progress$set(message = "Bereite DB vor.", value = 0)
       
       for (id in inCSVData$obsIdsInDB) {
         progress$inc(1/length(inCSVData$obsIdsInDB))
@@ -608,7 +608,7 @@ observeEvent(input$dataStoreDB, {
     }
     
     progress <- Progress$new()
-    progress$set(message = "Uploading data into DB.", value = 0)
+    progress$set(message = "Lade Daten in DB.", value = 0)
     
     # loop over unique FoI
     uFoIs <- unique(feedTab[,reqColData$id])
@@ -631,7 +631,10 @@ observeEvent(input$dataStoreDB, {
       
       feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
       
-      write.table(feedTab[feedTab[,reqColData$id] == uFoI,-1], feedCSV, sep = input$dataSep, dec = input$dataDec, row.names = FALSE, col.names=TRUE, fileEncoding="UTF-8")
+      write.table(feedTab[feedTab[,reqColData$id] == uFoI,-1], feedCSV, 
+                  sep = input$dataSep, dec = input$dataDec, 
+                  row.names = FALSE, col.names=TRUE, 
+                  fileEncoding="UTF-8")
       
       feedConf <- tempfile(pattern = "feedConf", fileext = ".xml")
       
@@ -656,10 +659,10 @@ observeEvent(input$dataStoreDB, {
 
     ## add Stoffgruppe and link observablepropertyrelation
     # remove missing or "NA"
-    inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- NA
+    inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- "ohne"
     
     progress <- Progress$new()
-    progress$set(message = "Registering element groups in DB.", value = 0)
+    progress$set(message = "Registriere Elementgruppe in DB.", value = 0)
     
     nColDf <- ncol(inCSVData$df)
     
@@ -670,7 +673,7 @@ observeEvent(input$dataStoreDB, {
       # find observablepropertyids
       opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
       if (nrow(opIdPhen) == 0) {
-        message(paste0("The following observable property is missing in the DB: ",  inCSVData$headAsChar[colDf]))
+        message(paste0("Folgendes 'ObserveableProperty' fehlt in der DB: ",  inCSVData$headAsChar[colDf]))
         next;
       }
       # check for opIdPhen being mentioned in relation
@@ -714,8 +717,8 @@ observeEvent(input$dataStoreDB, {
   }
   
   showModal(modalDialog(
-    title = "Upload completed.",
-    "Time series upload completed.",
+    title = "Vorgang abgeschlossen.",
+    "Zeitreihendaten in der DB abgelegt.",
     easyClose = TRUE,
     footer = NULL
   ))

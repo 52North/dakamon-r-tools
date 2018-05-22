@@ -8,60 +8,63 @@ BGchar <- "< BG"
 
 ui <- fluidPage(tabsetPanel(
   tabPanel(
-    "Stammanlagen selection",
+    "Kläranalgen",
     column(12, DTOutput('tableFoi'),
            conditionalPanel(
              "$('#tableFoi').hasClass('recalculating')",
-             tags$div('Loading ... ')
+             tags$div('Lade ... ')
            ),
            textOutput("selText"),
-           downloadButton("exportKaCSV", "Export as csv-file."),
-           downloadButton("exportKaRData", "Export as RData-file."))
+           downloadButton("exportKaCSV", "Export als csv-Datei."),
+           downloadButton("exportKaRData", "Export als RData-Datei."))
   ),
   tabPanel(
-    "Kläranlagen feature selection",
+    "Verfahrensschritte",
     column(12, DTOutput('table2'),
            conditionalPanel(
              "$('#table2').hasClass('recalculating')",
-             tags$div('Loading ... ')
+             tags$div('Lade ... ')
            ),
            textOutput("selText2"),
-           downloadButton("exportKaFCSV", "Export as csv-file."),
-           downloadButton("exportKaFRData", "Export as RData-file."))
+           downloadButton("exportKaVsCSV", "Export als csv-Datei."),
+           downloadButton("exportKaVsRData", "Export als RData-Datei."))
   ),
   tabPanel("Daten",
            sidebarLayout(
              sidebarPanel(
+               uiOutput("elemGroup"),
                uiOutput("obsPhen"),
                checkboxInput(
                  "repBG",
-                 label = paste0("Shall values below the detection limit be replaced by ", BGchar, "?"),
+                 label = paste0("Sollen Werte unterhalb der Bestimmungsgrenze durch '", BGchar, "' ersetzt werden?"),
                  value = FALSE
                ),
-               checkboxInput("computeStat",
-                             label = "Compute summary statistics?",
+               checkboxInput("randomId",
+                             label = "Sollen IDs annonymisiert ausgegeben werden?",
                              value = FALSE),
-               actionButton("refreshData", "Load data from DB."),
+               actionButton("refreshData", "Lade Daten aus der DB."),
+               checkboxInput("computeStat",
+                             label = "Sollen Statistiken berechnet werden?",
+                             value = FALSE),
                checkboxInput("includeMetaHead",
-                            label = "Include metadata header in export?",
-                            value = FALSE),
-               downloadButton("exportCSV", "Export as csv-file."),
-               downloadButton("exportRData", "Export as RData-file."),
-               width = 2
-             ),
+                             label = "Sollen die Metadaten mit exportiert weden?",
+                             value = FALSE),
+               downloadButton("exportDataCSV", "Export als csv-Datei."),
+               downloadButton("exportDataRData", "Export als RData-Datei."),
+               width = 2),
              mainPanel(
-               DTOutput('table3stat'),
-               conditionalPanel(
-                 "$('#table3stat').hasClass('recalculating')",
-                 tags$div('Calculating ... ')
-               ),
-               br(),
                DTOutput('table3'),
                conditionalPanel(
                  "$('#table3').hasClass('recalculating')",
-                 tags$div('Loading ... ')
-               )
-             )
+                 tags$div('Lade ... ')
+               ),
+               textOutput("selText3"),
+               br(),
+               DTOutput('table3stat'),
+               conditionalPanel(
+                 "$('#table3stat').hasClass('recalculating')",
+                 tags$div('Berechne ... ')
+               ))
              
            ))
 ))

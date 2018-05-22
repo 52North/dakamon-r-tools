@@ -170,7 +170,7 @@ output$tableFoI <- renderDataTable({
     
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
-                                       scrollX=TRUE, sort=FALSE),
+                                       scrollX=TRUE, sort=FALSE, dom="t"),
                         escape=FALSE)
     
     # if DB consistency has been checked, apply colors 
@@ -228,6 +228,7 @@ observeEvent(input$storeDB, {
   
   progress$set(message = "Füge Daten in DB ein.", value = 0)
   
+  # parent feature first
   if (any(par_foi)) {
     for (sfoi in which(par_foi)) {# sfoi <- 1
       progress$inc(1/nRowDf)
@@ -239,13 +240,12 @@ observeEvent(input$storeDB, {
           next;
         } else {
           curId <- foiInDB$featureofinterestid
-          
+
           # retrive relevant part of featurerelation table
           relationTab <- dbGetQuery(db, paste0("SELECT parentfeatureid, childfeatureid FROM featurerelation WHERE parentfeatureid = ",
                                                curId, "OR childfeatureid =",curId))
           
           # remove tmp feature if still present (previous crash)
-          # remove tmp feature
           odlTmpId <- dbGetQuery(db, "SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'tmp'")
           if (nrow(odlTmpId)>0) {
             # remove tmp feature
@@ -265,8 +265,11 @@ observeEvent(input$storeDB, {
           
           tmpId <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'tmp'"))$featureofinterestid
           
-          # map curID from series on tmp feature
+          # map curID in table series to tmp id
           dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
+          
+          # map curID in table foidata to tmp id
+          dbSendQuery(db, paste0("UPDATE foidata SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
           
           # delete relevant part of featurerelation table and from feature of interest table
           dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE parentfeatureid = ",
@@ -300,6 +303,9 @@ observeEvent(input$storeDB, {
           
           # re-assign the right FoI id in series table replacing the temp ID
           dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
+          
+          # re-assign the right FoI id in foidata table replacing the temp ID
+          dbSendQuery(db, paste0("UPDATE foidata SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
           
           # remove tmp feature
           dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", tmpId))
@@ -348,6 +354,9 @@ observeEvent(input$storeDB, {
         # map curID from series on tmp feature
         dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
         
+        # map curID in table foidata to tmp id
+        dbSendQuery(db, paste0("UPDATE foidata SET featureofinterestid = ", tmpId, " WHERE featureofinterestid = ", curId))
+        
         # delete relevant part of featurerelation table and from feature of interest table
         dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE parentfeatureid = ",
                                curId, " OR childfeatureid = ", curId))
@@ -382,6 +391,9 @@ observeEvent(input$storeDB, {
         
         # re-assign the right FoI id in series table replacing the temp ID
         dbSendQuery(db, paste0("UPDATE series SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
+        
+        # re-assign the right FoI id in foidata table replacing the temp ID
+        dbSendQuery(db, paste0("UPDATE foidata SET featureofinterestid = ", curId, " WHERE featureofinterestid = ", tmpId))
         
         # remove tmp feature
         dbSendQuery(db, paste0("DELETE FROM featurerelation WHERE childfeatureid = ", tmpId))

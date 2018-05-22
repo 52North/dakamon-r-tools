@@ -100,9 +100,7 @@ server <- function(input, output) {
   colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
   
   showTab <- superFoiData[,-1]
-  
-  # print(str(foiDataMetaData))
-  
+
   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
   
   showUoM <- sapply(foiDataMetaData$uom, function(x) {
@@ -115,11 +113,9 @@ server <- function(input, output) {
   showHead <- paste0(showHead, showUoM)
   showHead <- paste0(showHead, "</span>")
   
-  # print(str(datatable(showTab)))
-  
   output$tableFoi  <- renderDT(datatable(showTab, # colnames = showHead, 
               filter="top",
-              options = list(paging=FALSE, dom = 'Brti'),
+              options = list(paging=FALSE, dom = 'Brt'),
               escape=FALSE))
 
   s <- reactive({
@@ -131,12 +127,11 @@ server <- function(input, output) {
     }
   })
 
-  # output$selText <- renderPrint({superFoiData[,-1]})
   output$selText <- renderText({
     if (length(s()) == 1) {
-      paste("Row", s(), "is selected.")
+      paste("Zeile", s(), "ist ausgewählt.")
     } else {
-      paste("Rows", paste(s(), collapse=", "), "are selected.")
+      paste("Zeilen", paste(s(), collapse=", "), "sind ausgewählt.")
     }
   })
   
@@ -145,7 +140,8 @@ server <- function(input, output) {
       paste("data-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(superFoiData[s(),-1]), file, sep = ";", fileEncoding = "UTF-8")
+      write.table(isolate(superFoiData[s(),-1]), file, sep = ";", 
+                  fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
   
@@ -191,7 +187,7 @@ server <- function(input, output) {
     showHead <- paste0(showHead, "</span>")
     
     datatable(showTab, colnames = showHead, filter="top",
-              options = list(paging=FALSE, dom = 'Brti'),
+              options = list(paging=FALSE, dom = 'Brt'),
               escape=FALSE)
   })
   
@@ -201,26 +197,28 @@ server <- function(input, output) {
       input$table2_rows_all
     } else {
       sort(sr)
-    }})
-  
-  output$selText2 <- renderText({
-    if (length(sp()) == 1) {
-      paste("Row", sp(), "is selected.")
-    } else {
-      paste("Rows", paste(sp(), collapse=", "), "are selected.")
     }
   })
   
-  output$exportKaFCSV <- downloadHandler(
+  output$selText2 <- renderText({
+    if (length(sp()) == 1) {
+      paste("Zeile", sp(), "ist ausgewählt.")
+    } else {
+      paste("Zeilen", paste(sp(), collapse=", "), "sind ausgewählt.")
+    }
+  })
+  
+  output$exportKaVsCSV <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(subFoiData()[sp(),]), file, sep = ";", fileEncoding = "UTF-8")
+      write.table(isolate(subFoiData()[sp(),]), file, sep = ";", 
+                  fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
   
-  output$exportKaFRData <- downloadHandler(
+  output$exportKaVsRData <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".RData", sep="")
     },
@@ -233,9 +231,25 @@ server <- function(input, output) {
   #####################
   ######  TAB 3  ######
   #####################
-  # load all avaialble obsProp for the selected FoI
+
+  # load all avaialble elemGroup for the selected FoI
+  
+  elemGroup <- reactive({
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+    res <- dbGetQuery(db, "SELECT observablepropertyid, identifier, name FROM observableproperty WHERE description = 'Stoffgruppe'")
+    dbDisconnect(db)
+    res
+  })
+  
+  output$elemGroup <- renderUI(selectInput("selElemGroup", "Stoffgruppenauswahl:", 
+                                           elemGroup()$name, multiple = TRUE, 
+                                           selected = elemGroup()$name[1]))
+  
+    # load all avaialble obsProp for the selected FoI
   
   obsProp <- reactive({
+    if (is.null(input$selElemGroup))
+      return(NULL)
     db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     
     op <- NULL
@@ -256,28 +270,29 @@ server <- function(input, output) {
       LEFT OUTER JOIN observablepropertyrelation AS opr ON (op.observablepropertyid = opr.childobservablepropertyid)
       LEFT OUTER JOIN observableproperty AS oprv ON (opr.parentobservablepropertyid = oprv.observablepropertyid)
       LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
-      WHERE foi.identifier = '", subFoiData()[sp()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00'")))
+      WHERE foi.identifier = '", subFoiData()[sp()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND opr.parentobservablepropertyid IN ('", paste(elemGroup()$observablepropertyid[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")))
     }
     dbDisconnect(db)
     
     op
   })
   
-  output$obsPhen <- renderUI(selectInput("selObsPhen", "Select phenomenon:", 
+  
+  
+  output$obsPhen <- renderUI(selectInput("selObsPhen", "Phänomenauswahl:", 
                                          obsProp()$name, multiple = TRUE, 
                                          selected = obsProp()$name[1]))
   
   data <- reactive({
-    # print(str(obsProp()))
-    
     if (!is.null(input$selObsPhen)) {
       db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
       
-      # uObsPropIds <- unique(obsProp()$identifier)
       resDf <- NULL
       
       for (foi in subFoiData()[sp(), "ID"]) {
         selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
+        
+        if(length(selObsPropFoi$seriesid) == 0) next;
         
         # lookup observed time stamps for all series of this FoI
         foiTimes <- unique(dbGetQuery(db, paste0("SELECT resulttime
@@ -306,19 +321,28 @@ server <- function(input, output) {
               resDfRow[obs$observableProperty] <- obs$result$value
             }
           }
-          colnames(resDfRow) <- c("id", "date", unique(obsProp()[obsPropSel, "name"]))
+          colnames(resDfRow) <- c("ID", "Datum", unique(obsProp()[obsPropSel, "name"]))
           
           resDf <- rbind(resDf, resDfRow)
         }
       }
       dbDisconnect(db)
       
+      resDf$Datum <- as.Date(resDf$Datum)
+      
+      if (input$randomId) {
+        db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+        dbIdMap <- dbGetQuery(db, paste0("SELECT id, rndid FROM foidata WHERE id IN ('", paste(resDf$ID, collapse="', '"), "')"))
+        resDf$ID <- dbIdMap[match(resDf$ID, dbIdMap$id), 2]
+        dbDisconnect(db)
+      }
+
       resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-      colnames(resUom) <- c("id", "date", uObsPropSelId)
+      colnames(resUom) <- c("ID", "Datun", uObsPropSelId)
       resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-      colnames(resBg) <- c("id", "date", uObsPropSelId)
+      colnames(resBg) <- c("ID", "Datum", uObsPropSelId)
       resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-      colnames(resStgr) <- c("id", "date", uObsPropSelId)
+      colnames(resStgr) <- c("ID", "Datum", uObsPropSelId)
       
       for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
         frid <- match(obsPropId, obsProp()$identifier)
@@ -383,16 +407,25 @@ server <- function(input, output) {
       colnames(showTab) <- showHead
       datatable(showTab, #colnames=showHead,
                 filter="top", 
-                options=list(paging=FALSE,dom = 'Brti'),
+                options=list(paging=FALSE,dom = 'Brt'),
                 escape=FALSE)
     }
   })
   
+  selData <- reactive({
+    sr <- input$table3_rows_selected
+    if(is.null(sr)) {
+      input$table3_rows_all
+    } else {
+      sort(sr)
+    }
+  })
+  
   output$table3stat <- renderDataTable({
-    if (!is.null(input$table3_rows_all) & input$computeStat) {
+    if (!is.null(selData()) & input$computeStat) {
       input$refreshData
       
-      filterData <- isolate(data()$resDf[input$table3_rows_all,])
+      filterData <- isolate(data()$resDf[selData(),])
       
       stat <- apply(filterData[,-c(1:2), drop=FALSE], 2, function(x) {
         xSum <- round(summary(as.numeric(x)),3)
@@ -401,44 +434,59 @@ server <- function(input, output) {
         xSum
       })
       
-      rownames(stat) <- c("Min.","1st Qu.","Median","Mean", "3rd Qu.","Max.", "NA")
+      rownames(stat) <- c("Min.","1st Qu.","Median","Mittelw.", "3rd Qu.","Max.", "NA")
       
       datatable(stat, # colnames=showHead,
-                options=list(paging=FALSE, dom = 'Brti'))
+                options=list(paging=FALSE, dom = 'Brt'))
     }
   })
   
-  output$exportCSV <- downloadHandler(
+  output$selText3 <- renderText({
+    if (is.null(selData()))
+      return(NULL)
+    if (length(selData()) == 1) {
+      paste("Zeile", selData(), "ist ausgewählt.")
+    } else {
+      paste("Zeilen", paste(selData(), collapse=", "), "sind ausgewählt.")
+    }
+  })
+  
+  output$exportDataCSV <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
+
+      df <- data()$resDf[selData(),]
+
       if (input$includeMetaHead) {
         dfCol <- colnames(df)
-        metaHead <- rbind(data()[["uom"]], 
-                          data()[["bg"]], 
-                          data()[["stgr"]])
-        colnames(metaHead) <- dfCol 
-        df <- rbind(metaHead, df)
+        df <- rbind(setNames(data()[["uom"]], dfCol), 
+                    setNames(data()[["bg"]], dfCol), 
+                    setNames(data()[["stgr"]], dfCol),
+                    df)
       }
-      write.table(df, file, sep = ";", fileEncoding = "UTF-8")
+      
+      write.table(isolate(df), file, sep = ";", 
+                  fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
   
-  output$exportRData <- downloadHandler(
+  output$exportDataRData <- downloadHandler(
     filename = function() {
       paste("data-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(data()$resDf[input$table3_rows_all,])
+      df <- data()$resDf[selData(),]
+      
       if (input$includeMetaHead) {
         dfCol <- colnames(df)
-        metaHead <- rbind(data()[["uom"]], 
-                          data()[["bg"]], 
-                          data()[["stgr"]])
-        colnames(metaHead) <- dfCol 
-        df <- rbind(metaHead, df)
+        df <- rbind(setNames(data()[["uom"]], dfCol), 
+                    setNames(data()[["bg"]], dfCol), 
+                    setNames(data()[["stgr"]], dfCol),
+                    df)
       }
+      
       save(df, file = file)
     }
   )
