@@ -1,7 +1,7 @@
 #
 #  build via
 #
-#    docker build -f docker/Dockerfile -t shiny-server:dakamon .
+#    docker build -f docker/Dockerfile -t shiny-server:dakamon-YYYY-MM .
 #
 #  from repository root
 FROM rocker/shiny:latest
@@ -21,10 +21,6 @@ RUN chmod +x /usr/bin/shiny-server.sh &&\
     apt-get --assume-yes upgrade &&\
     apt-get dist-upgrade --assume-yes &&\
     apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git
-RUN git clone https://github.com/EHJ-52n/arctic-sea.git &&\
-    cd arctic-sea &&\
-    mvn install &&\
-    cd ..
 RUN git clone https://github.com/EHJ-52n/sos-importer.git &&\
     cd sos-importer &&\
     mvn package -e -Pcheck
