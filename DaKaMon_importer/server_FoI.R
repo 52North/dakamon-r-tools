@@ -33,7 +33,7 @@ observeEvent(input$csvFileFoI, {
   ################################
   ## validation of FoI csv-file ##
   ################################
-  # look for Name, ID, lat, lon and Stammanalge,
+  # look for Name, ID, lat, lon and Stammanlage,
   # check whether columns have unique names
   
   txt <- NULL
@@ -81,7 +81,7 @@ observeEvent(input$checkDB, {
   FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
                                    paste(inCSVFoI$df[,reqColFoI$id], collapse="', '"),"')")) ## [inclRowFoI()]
   if (nrow(FoIinDB) > 0) {
-    checkDB$txtInfo <- paste("Folgende Kläranalgen/Verfahrensschritte sind bereits in der DB: <ul><li>",
+    checkDB$txtInfo <- paste("Folgende Kläranlagen/Verfahrensschritte sind bereits in der DB: <ul><li>",
                              paste0(FoIinDB$identifier, collapse="</li><li>"))
   } else {
     checkDB$txtInfo <- NULL
@@ -491,7 +491,7 @@ observeEvent(input$storeDB, {
   
   showModal(modalDialog(
     title = "Vorgang abgeschlossen.",
-    "Kläranalgen/Verfahrensschritte erfolgreich angelegt.",
+    "Kläranlagen/Verfahrensschritte erfolgreich angelegt.",
     easyClose = TRUE,
     footer = NULL
   ))
