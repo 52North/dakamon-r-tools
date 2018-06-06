@@ -4,6 +4,11 @@ library(DT)
 library(shinyjs)
 library(httr)
 
+if(!require(readr)) {
+  install.packages("readr", quiet=TRUE)
+  library(readr)
+}
+
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 verbose <- TRUE
 BGencode <- 0

@@ -262,6 +262,9 @@ observeEvent(input$dataStgr, {
 })
 
 observeEvent(input$dataCsvFile, {
+  csvEncode <- readr::guess_encoding(input$dataCsvFile$datapath)
+  inCSVData$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+  
   valiData$validated <- FALSE
   CheckDBData$checked <- FALSE
   
