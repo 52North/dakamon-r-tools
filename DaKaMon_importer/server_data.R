@@ -205,17 +205,22 @@ rowSkip <- reactive(max(as.numeric(c(input$dataStgr, input$dataBG, input$dataUoM
 
 observeEvent(input$dataUoM, {
   if (!is.null(input$dataCsvFile$datapath)) {
+    csvEncode <- readr::guess_encoding(input$dataCsvFile$datapath)
+    inCSVData$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+    
     inCSVData$UoMs <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                                sep = input$dataSep, dec = input$dataDec,
                                skip = as.numeric(input$dataUoM), nrows = 1,
-                               stringsAsFactors = FALSE)
+                               stringsAsFactors = FALSE, 
+                               fileEncoding = inCSVData$csvEncode)
     inCSVData$UoMs[is.na(inCSVData$UoMs)] <- ""
     inCSVData$UoMs <- as.character(inCSVData$UoMs)
     
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                              sep = input$dataSep, dec = input$dataDec,
                              skip = rowSkip()+1,
-                             stringsAsFactors = FALSE)
+                             stringsAsFactors = FALSE, 
+                             fileEncoding = inCSVData$csvEncode)
     colnames(inCSVData$df) <- inCSVData$headAsChar
   }
 })
@@ -226,12 +231,14 @@ observeEvent(input$dataBG, {
                                           header = FALSE,
                                           sep = input$dataSep, dec = input$dataDec,
                                           skip = as.numeric(input$dataBG), nrows = 1, 
-                                          stringsAsFactors = FALSE))
+                                          stringsAsFactors = FALSE, 
+                                          fileEncoding = inCSVData$csvEncode))
     
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                              sep = input$dataSep, dec = input$dataDec,
                              skip = rowSkip()+1,
-                             stringsAsFactors = FALSE)
+                             stringsAsFactors = FALSE, 
+                             fileEncoding = inCSVData$csvEncode)
     colnames(inCSVData$df) <- inCSVData$headAsChar
   }
 })
@@ -242,12 +249,14 @@ observeEvent(input$dataStgr, {
                                             header = FALSE,
                                             sep = input$dataSep, dec = input$dataDec,
                                             skip = as.numeric(input$dataStgr), nrows = 1, 
-                                            stringsAsFactors = FALSE))
+                                            stringsAsFactors = FALSE, 
+                                            fileEncoding = inCSVData$csvEncode))
     
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                              sep = input$dataSep, dec = input$dataDec,
                              skip = rowSkip()+1,
-                             stringsAsFactors = FALSE)
+                             stringsAsFactors = FALSE, 
+                             fileEncoding = inCSVData$csvEncode)
     colnames(inCSVData$df) <- inCSVData$headAsChar
   }
 })
@@ -259,12 +268,14 @@ observeEvent(input$dataCsvFile, {
   inCSVData$headAsChar <- as.character(read.csv(input$dataCsvFile$datapath,
                                                 header = FALSE,
                                                 sep = input$dataSep, dec = input$dataDec,
-                                                nrows = 1, stringsAsFactors = FALSE))
+                                                nrows = 1, stringsAsFactors = FALSE, 
+                                                fileEncoding = inCSVData$csvEncode))
   
   inCSVData$UoMs <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                              sep = input$dataSep, dec = input$dataDec,
                              skip = as.numeric(input$dataUoM), nrows = 1,
-                             stringsAsFactors = FALSE)
+                             stringsAsFactors = FALSE, 
+                             fileEncoding = inCSVData$csvEncode)
   inCSVData$UoMs[is.na(inCSVData$UoMs)] <- ""
   inCSVData$UoMs <- as.character(inCSVData$UoMs)
   
@@ -272,19 +283,22 @@ observeEvent(input$dataCsvFile, {
                                         header = FALSE,
                                         sep = input$dataSep, dec = input$dataDec,
                                         skip = as.numeric(input$dataBG), nrows = 1, 
-                                        stringsAsFactors = FALSE), scientific=FALSE))
+                                        stringsAsFactors = FALSE), scientific=FALSE, 
+                                      fileEncoding = inCSVData$csvEncode))
   
   inCSVData$stgr <- as.character(read.csv(input$dataCsvFile$datapath,
                                           header = FALSE,
                                           sep = input$dataSep, dec = input$dataDec,
                                           skip = as.numeric(input$dataStgr), nrows = 1, 
-                                          stringsAsFactors = FALSE))
+                                          stringsAsFactors = FALSE, 
+                                          fileEncoding = inCSVData$csvEncode))
   
   
   inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
                            sep = input$dataSep, dec = input$dataDec,
                            skip = rowSkip()+1,
-                           stringsAsFactors = FALSE)
+                           stringsAsFactors = FALSE, 
+                           fileEncoding = inCSVData$csvEncode)
   colnames(inCSVData$df) <- inCSVData$headAsChar
   
   #################################
@@ -344,7 +358,7 @@ observeEvent(input$dataCheckDB, {
   missFoI <- foiInCSV[!(foiInCSV %in% FoIinDB$identifier)]
   
   if (length(missFoI) > 0) {
-    CheckDBData$txtErr <- paste("Folgende Kläranalgen/Verfahrnsschritte müssen vorab noch in der DB angelegt werden: <ul><li>",
+    CheckDBData$txtErr <- paste("Folgende Kläranlagen/Verfahrensschritte müssen vorab noch in der DB angelegt werden: <ul><li>",
                                 paste0(missFoI, collapse="</li><li>"))
   } else {
     checkDB$txtErr <- NULL

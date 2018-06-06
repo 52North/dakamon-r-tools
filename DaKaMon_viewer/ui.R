@@ -8,7 +8,7 @@ BGchar <- "< BG"
 
 ui <- fluidPage(tabsetPanel(
   tabPanel(
-    "Kläranalgen",
+    "Kläranlagen",
     column(12, DTOutput('tableFoi'),
            conditionalPanel(
              "$('#tableFoi').hasClass('recalculating')",
@@ -40,14 +40,14 @@ ui <- fluidPage(tabsetPanel(
                  value = FALSE
                ),
                checkboxInput("randomId",
-                             label = "Sollen IDs annonymisiert ausgegeben werden?",
+                             label = "Sollen IDs anonymisiert ausgegeben werden?",
                              value = FALSE),
                actionButton("refreshData", "Lade Daten aus der DB."),
                checkboxInput("computeStat",
                              label = "Sollen Statistiken berechnet werden?",
                              value = FALSE),
                checkboxInput("includeMetaHead",
-                             label = "Sollen die Metadaten mit exportiert weden?",
+                             label = "Sollen die Metadaten mit exportiert werden?",
                              value = FALSE),
                downloadButton("exportDataCSV", "Export als csv-Datei."),
                downloadButton("exportDataRData", "Export als RData-Datei."),

@@ -12,24 +12,32 @@ observeEvent(input$csvFileFoI, {
   vali$validated <- FALSE
   checkDB$checked <- FALSE
 
+  csvEncode <- readr::guess_encoding(input$csvFileFoI$datapath)
+  inCSVFoI$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+  
   inCSVFoI$headAsChar <- as.character(read.csv(input$csvFileFoI$datapath,
                                                header = FALSE,
-                                               sep = input$sepFoI, dec = input$decFoi,
-                                               nrows = 1, stringsAsFactors = FALSE))
+                                               sep = input$sepFoI, dec = input$decFoI,
+                                               nrows = 1, stringsAsFactors = FALSE, 
+                                               fileEncoding = inCSVFoI$csvEncode))
 
   inCSVFoI$UoMs <- read.csv(input$csvFileFoI$datapath, header = FALSE,
-                            sep = input$sepFoI, dec = input$decFoi,
+                            sep = input$sepFoI, dec = input$decFoI,
                             skip = 1, nrows = 1,
-                            stringsAsFactors = FALSE)
+                            stringsAsFactors = FALSE, 
+                            fileEncoding = inCSVFoI$csvEncode)
   inCSVFoI$UoMs[is.na(inCSVFoI$UoMs)] <- ""
   inCSVFoI$UoMs <- as.character(inCSVFoI$UoMs)
 
   inCSVFoI$df <- read.csv(input$csvFileFoI$datapath, header = FALSE,
-                          sep = input$sepFoI, dec = input$decFoi,
+                          sep = input$sepFoI, dec = input$decFoI,
                           skip = 2,
-                          stringsAsFactors = FALSE)
+                          stringsAsFactors = FALSE, 
+                          fileEncoding = inCSVFoI$csvEncode)
   colnames(inCSVFoI$df) <- inCSVFoI$headAsChar
 
+  print(summary(inCSVFoI$df))
+  
   ################################
   ## validation of FoI csv-file ##
   ################################
@@ -38,7 +46,7 @@ observeEvent(input$csvFileFoI, {
 
   txt <- NULL
   if (!(reqColFoI$id %in% inCSVFoI$headAsChar) || length(unique(inCSVFoI$df[,reqColFoI$id])) != length(inCSVFoI$df[,reqColFoI$id]))
-    txt <- paste0(txt, "<li>Jede Kläranlage und jeder Verfahrensschritt benötigt eine presistent und eindeutige ID in der Spalte'", reqColFoI[1], "'.</li>")
+    txt <- paste0(txt, "<li>Jede Kläranlage und jeder Verfahrensschritt benötigt eine persistente und eindeutige ID in der Spalte'", reqColFoI[1], "'.</li>")
   for (reqColName in reqColFoI[-1]) {
     if (!(reqColName %in% inCSVFoI$headAsChar))
       txt <- paste0(txt, "<li>Bitte ergänze die Spalte '", reqColName, "'.</li>", sep="")
@@ -218,7 +226,7 @@ observeEvent(input$storeDB, {
   foi_uom <- foi_uom[!foi_empty_cols]
   foi_data <- foi_data[,!foi_empty_cols]
 
-  # any parent features that need to be inserted before? Those with empty or missing Stammanalge column
+  # any parent features that need to be inserted before? Those with empty or missing Stammanlage column
   par_foi <- is.na(foi_data[,reqColFoI$super_FoI]) | nchar(foi_data[,reqColFoI$super_FoI]) == 0
 
   nRowDf <- nrow(foi_data)

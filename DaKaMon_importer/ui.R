@@ -18,7 +18,7 @@ ui <- fluidPage(
   #############
   
   tabsetPanel(
-    tabPanel("Kläranlagen anlegen",
+    tabPanel("Kläranlagen/Verfahrensschritte anlegen",
              sidebarLayout(
                sidebarPanel(textInput("sepFoI", "Spaltentrennzeichen:", value = ";", width = "80%"),
                             textInput("decFoI", "Dezimaltrennzeichen:", value = ".", width = "80%"),
