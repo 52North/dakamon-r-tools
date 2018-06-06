@@ -1,7 +1,7 @@
 #
 #  build via
 #
-#    docker build -f docker/Dockerfile -t shiny-server:dakamon-YYYY-MM .
+#    docker build -f docker/Dockerfile_dev -t shiny-server:dakamon-YYYY-MM .
 #
 #  from repository root
 FROM rocker/shiny:latest
@@ -20,25 +20,28 @@ RUN chmod +x /usr/bin/shiny-server.sh &&\
     apt-get update &&\
     apt-get --assume-yes upgrade &&\
     apt-get dist-upgrade --assume-yes &&\
-    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git &&\
-    git clone https://github.com/EHJ-52n/sos-importer.git &&\
+    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git
+RUN git clone https://github.com/EHJ-52n/sos-importer.git &&\
     cd sos-importer &&\
-    mvn package -e -Pcheck &&\
-    mkdir -pv /usr/local/52n &&\
+    mvn package -e -Pcheck
+RUN mkdir -pv /usr/local/52n &&\
     mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/local/52n/ &&\
     rm -rf /tmp/sos-importer &&\
     apt-get purge git maven openjdk-8-jdk --assume-yes &&\
     apt-get install openjdk-8-jre --assume-yes --no-install-recommends &&\
-    apt-get autoremove --purge --assume-yes &&\
-    chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
+    apt-get autoremove --purge --assume-yes
+RUN chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
     rm -rf /var/cache/apt/archives &&\
     rm -rf /root/.m2 &&\
     rm -rf /var/lib/apt/lists/* &&\
     rm -rf /opt/shiny-server/samples &&\
-    rm -rf /srv/shiny-server/* &&\
-    apt-get update &&\
-    apt-get install --assume-yes --no-install-recommends libssl-dev libpq-dev && \
-    R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr', 'RPostgreSQL'), repos='https://cran.rstudio.com/')"
+    rm -rf /srv/shiny-server/*
+
+# install R packages and dependencies
+RUN apt-get update &&\
+    apt-get install --assume-yes --no-install-recommends libssl-dev libpq-dev
+
+RUN R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr', 'RPostgreSQL'), repos='https://cran.rstudio.com/')"
 
 ADD DaKaMon_importer/*.* /srv/shiny-server/DaKaMon_importer/
 
