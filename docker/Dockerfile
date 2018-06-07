@@ -19,8 +19,9 @@ WORKDIR /tmp
 RUN chmod +x /usr/bin/shiny-server.sh &&\
     apt-get update &&\
     apt-get --assume-yes upgrade &&\
-    apt-get dist-upgrade --assume-yes &&\
-    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git
+    apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git&&\
+    apt-get purge --assume-yes openjdk-10-jre-headless &&\
+    ln -sv /usr/lib/jvm/java-8-openjdk-amd64 /usr/lib/jvm/default-java
 RUN git clone https://github.com/EHJ-52n/sos-importer.git &&\
     cd sos-importer &&\
     mvn package -e -Pcheck
