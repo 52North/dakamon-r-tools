@@ -35,8 +35,6 @@ observeEvent(input$csvFileFoI, {
                           stringsAsFactors = FALSE, 
                           fileEncoding = inCSVFoI$csvEncode)
   colnames(inCSVFoI$df) <- inCSVFoI$headAsChar
-
-  print(summary(inCSVFoI$df))
   
   ################################
   ## validation of FoI csv-file ##
@@ -221,6 +219,8 @@ observeEvent(input$storeDB, {
   foi_uom <- inCSVFoI$UoMs ## [inclColFoI()]
 
   foi_empty_cols <- apply(foi_data, 2, function(x) all(is.na(x)))
+  
+  foi_empty_cols[which(names(foi_empty_cols) == reqColFoI$super_FoI)] <- FALSE
 
   foi_header <- foi_header[!foi_empty_cols]
   foi_uom <- foi_uom[!foi_empty_cols]

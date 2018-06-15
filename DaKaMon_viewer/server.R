@@ -89,10 +89,12 @@ server <- function(input, output) {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   
   # load all super FoI from DB
-  superFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation)"))
+  foiIdUnknown <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'unknown'"))$featureofinterestid
+  superFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid =", foiIdUnknown," )"))
   # dbDisconnect(db)
   # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-  superFoiData <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT featureofinterestid FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation))"))
+  superFoiData <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (", 
+                                        paste0(superFoi$featureofinterestid, collapse=", "), ")"))
   # dbDisconnect(db)
   # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   foiDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM foidatametadata"))
