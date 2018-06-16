@@ -100,7 +100,7 @@ server <- function(input, output) {
   foiDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM foidatametadata"))
   dbDisconnect(db)
   colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
-  
+
   showTab <- superFoiData[,-1]
 
   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
@@ -165,7 +165,7 @@ server <- function(input, output) {
   subFoiData <- reactive({
     db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
     
-    sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoi[s(),1], collapse="', '") , "'))"))
+    sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoiData[s(),1], collapse="', '") , "'))"))
     colnames(sfd) <- foiDataMetaData$dede[match(colnames(sfd), foiDataMetaData$columnid)]
     dbDisconnect(db)
     sfd[,-1]
@@ -189,7 +189,7 @@ server <- function(input, output) {
     showHead <- paste0(showHead, "</span>")
     
     datatable(showTab, colnames = showHead, filter="top",
-              options = list(paging=FALSE, dom = 'Brt'),
+              options = list(paging=FALSE, dom = 'Brt', ordering=FALSE),
               escape=FALSE)
   })
   
@@ -297,9 +297,9 @@ server <- function(input, output) {
         if(length(selObsPropFoi$seriesid) == 0) next;
         
         # lookup observed time stamps for all series of this FoI
-        foiTimes <- unique(dbGetQuery(db, paste0("SELECT resulttime
+        foiTimes <- unique(dbGetQuery(db, paste0("SELECT phenomenontimestart
           FROM observation
-          WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))$resulttime)
+          WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))$phenomenontimestart)
         
         obsPropSel <- obsProp()$name %in% input$selObsPhen
         

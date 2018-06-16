@@ -283,11 +283,12 @@ observeEvent(input$dataCsvFile, {
   inCSVData$UoMs <- as.character(inCSVData$UoMs)
   
   inCSVData$bg <- as.character(format(read.csv(input$dataCsvFile$datapath,
-                                        header = FALSE,
-                                        sep = input$dataSep, dec = input$dataDec,
-                                        skip = as.numeric(input$dataBG), nrows = 1, 
-                                        stringsAsFactors = FALSE), scientific=FALSE, 
-                                      fileEncoding = inCSVData$csvEncode))
+                                               header = FALSE,
+                                               sep = input$dataSep, dec = input$dataDec,
+                                               skip = as.numeric(input$dataBG), nrows = 1, 
+                                               stringsAsFactors = FALSE, 
+                                               fileEncoding = inCSVData$csvEncode),
+                                      scientific=FALSE))
   
   inCSVData$stgr <- as.character(read.csv(input$dataCsvFile$datapath,
                                           header = FALSE,
