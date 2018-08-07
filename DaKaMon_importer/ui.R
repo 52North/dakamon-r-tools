@@ -9,23 +9,11 @@ if(!require(readr)) {
   library(readr)
 }
 
+# consts and config:
 
-# common constants:
-# column Separator
-colSep <- ";"
-# decimal separator
-decSep <- ","
-# encoding
-csvEncode <- "UTF-8"
+source("conf.R")
 
-SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
-verbose <- TRUE
-BGencode <- 0
-BGchar <- "BG"
-NGencode <- -1
-NGchar <- "NG"
-
-csvInfo <- paste0("Die CSV-Datei muss \"", colSep, "\" als Spaltentrennzeichen und \"", decSep, "\" als Dezimaltrennzeichen verwenden und in \"", csvEncode, "\" enkodiert sein.")
+## UI
 
 ui <- navbarPage("Datenimport",
                  # useShinyjs(),
@@ -66,22 +54,22 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(dataTableOutput('tablePNS'))
                                      )),
                             
-                            ## Parameter (PRM)
+                            ## Parameter (PAR)
                             tabPanel("Parameter anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("sepPRM", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("decPRM", "Dezimaltrennzeichen:", value = ".", width = "80%"),
-                                         fileInput("csvFilePRM", "CSV-Datei mit Parametern", 
+                                         # textInput("sepPAR", "Spaltentrennzeichen:", value = ";", width = "80%"),
+                                         # textInput("decPAR", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                                         fileInput("csvFilePAR", "CSV-Datei mit Parametern", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,                     
-                                         checkboxInput("owPRM", "Alle Daten überschreiben?", FALSE), 
-                                         uiOutput("PRMValidationOut"),
-                                         uiOutput("PRMDBConsistencyTxtOut"),
-                                         uiOutput("PRMDBConsistencyActionOut"),
+                                         checkboxInput("owPAR", "Alle Daten überschreiben?", FALSE), 
+                                         uiOutput("PARValidationOut"),
+                                         uiOutput("PARDBConsistencyTxtOut"),
+                                         uiOutput("PARDBConsistencyActionOut"),
                                          width = 2),
-                                       mainPanel(dataTableOutput('tablePRM'))
+                                       mainPanel(dataTableOutput('tablePAR'))
                                      )),
                             
                             ## Probe

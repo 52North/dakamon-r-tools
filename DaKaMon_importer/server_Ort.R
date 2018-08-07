@@ -3,17 +3,19 @@
 ################################################################################
 
 inCSVOrt <- reactiveValues()
-vali <- reactiveValues(validated = FALSE)
-checkDB <- reactiveValues(checked = FALSE)
+valiOrt <- reactiveValues(validated = FALSE)
+checkDBOrt <- reactiveValues(checked = FALSE)
 
 observeEvent(input$csvFileOrt, {
-  vali$validated <- FALSE
-  checkDB$checked <- FALSE
+  valiOrt$validated <- FALSE
+  checkDBOrt$checked <- FALSE
 
-  if (is.null(csvEncode))
+  if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFileOrt$datapath)
+    csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+  }
   
-  inCSVOrt$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+  inCSVOrt$csvEncode <- csvEncode
   
   inCSVOrt$headAsChar <- as.character(read.csv(input$csvFileOrt$datapath,
                                                header = FALSE,
