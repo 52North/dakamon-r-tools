@@ -100,8 +100,8 @@ server <- function(input, output) {
   foiDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM foidatametadata"))
   dbDisconnect(db)
   colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
-
-  showTab <- superFoiData[,-1]
+  colOrder <- foiDataMetaData$colorder[match(colnames(superFoiData), foiDataMetaData$columnid)]
+  showTab <- superFoiData[,colOrder[-1]]
 
   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
   
