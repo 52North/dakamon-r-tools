@@ -1,7 +1,7 @@
 #
 #  build via
 #
-#    docker build -f docker/Dockerfile_dev -t shiny-server:dakamon-YYYY-MM .
+#    docker build -f docker/Dockerfile -t shiny-server:dakamon-YYYY-MM .
 #
 #  from repository root
 FROM rocker/shiny:latest
