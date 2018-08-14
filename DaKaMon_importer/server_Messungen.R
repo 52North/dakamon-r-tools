@@ -3,7 +3,7 @@
 ################################################################################
 
 ## tools
-confInit <- function(url=SOSWebApp, csvPath="~/GitRepos/dakamon_r-tools/Daten/KA2017_03938_BG.csv") {
+confInit <- function(url=SOSWebApp, csvPath) {
   paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
          <SosImportConfiguration xsi:schemaLocation=\"https://raw.githubusercontent.com/52North/sos-importer/master/bindings/src/main/resources/import-configuration.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
          <DataFile referenceIsARegularExpression=\"false\">
@@ -189,136 +189,52 @@ confAddMetaClose <- function() {
 
 ## /tools
 
+sepData <- colSep
+decData <- decSep
+
 # reactive variables
 inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
 CheckDBData <- reactiveValues(checked = FALSE)
 
-rowSkip <- reactive(max(as.numeric(c(input$dataStgr, input$dataBG, input$dataUoM))))
-
-## data logic
-# toAdd: validate UoM?
-# add Button "check DB consistency" -> list known vs new variables; matching vs non-matching uom ( -> hottable to fix?) -> manually update csv file
-# check Identifier: mark missing identifier!
-
-observeEvent(input$dataUoM, {
-  if (!is.null(input$dataCsvFile$datapath)) {
-    csvEncode <- readr::guess_encoding(input$dataCsvFile$datapath)
-    inCSVData$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
-    
-    inCSVData$UoMs <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                               sep = input$dataSep, dec = input$dataDec,
-                               skip = as.numeric(input$dataUoM), nrows = 1,
-                               stringsAsFactors = FALSE, 
-                               fileEncoding = inCSVData$csvEncode)
-    inCSVData$UoMs[is.na(inCSVData$UoMs)] <- ""
-    inCSVData$UoMs <- as.character(inCSVData$UoMs)
-    
-    inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                             sep = input$dataSep, dec = input$dataDec,
-                             skip = rowSkip()+1,
-                             stringsAsFactors = FALSE, 
-                             fileEncoding = inCSVData$csvEncode)
-    colnames(inCSVData$df) <- inCSVData$headAsChar
-  }
-})
-
-observeEvent(input$dataBG, {
-  if (!is.null(input$dataCsvFile$datapath)) {
-    inCSVData$bg <- as.character(read.csv(input$dataCsvFile$datapath,
-                                          header = FALSE,
-                                          sep = input$dataSep, dec = input$dataDec,
-                                          skip = as.numeric(input$dataBG), nrows = 1, 
-                                          stringsAsFactors = FALSE, 
-                                          fileEncoding = inCSVData$csvEncode))
-    
-    inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                             sep = input$dataSep, dec = input$dataDec,
-                             skip = rowSkip()+1,
-                             stringsAsFactors = FALSE, 
-                             fileEncoding = inCSVData$csvEncode)
-    colnames(inCSVData$df) <- inCSVData$headAsChar
-  }
-})
-
-observeEvent(input$dataStgr, {
-  if (!is.null(input$dataCsvFile$datapath)) {
-    inCSVData$stgr <- as.character(read.csv(input$dataCsvFile$datapath,
-                                            header = FALSE,
-                                            sep = input$dataSep, dec = input$dataDec,
-                                            skip = as.numeric(input$dataStgr), nrows = 1, 
-                                            stringsAsFactors = FALSE, 
-                                            fileEncoding = inCSVData$csvEncode))
-    
-    inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                             sep = input$dataSep, dec = input$dataDec,
-                             skip = rowSkip()+1,
-                             stringsAsFactors = FALSE, 
-                             fileEncoding = inCSVData$csvEncode)
-    colnames(inCSVData$df) <- inCSVData$headAsChar
-  }
-})
-
 observeEvent(input$dataCsvFile, {
-  csvEncode <- readr::guess_encoding(input$dataCsvFile$datapath)
-  inCSVData$csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
-  
   valiData$validated <- FALSE
   CheckDBData$checked <- FALSE
   
-  inCSVData$headAsChar <- as.character(read.csv(input$dataCsvFile$datapath,
-                                                header = FALSE,
-                                                sep = input$dataSep, dec = input$dataDec,
-                                                nrows = 1, stringsAsFactors = FALSE, 
-                                                fileEncoding = inCSVData$csvEncode))
-  
-  inCSVData$UoMs <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                             sep = input$dataSep, dec = input$dataDec,
-                             skip = as.numeric(input$dataUoM), nrows = 1,
+  if (!is.null(input$dataCsvFile$datapath)) {
+    
+    if (is.null(csvEncode)) {
+      csvEncode <- readr::guess_encoding(input$csvFileOrt$datapath)
+      csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
+    }
+    
+    inCSVData$csvEncode <- csvEncode
+    
+    inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = TRUE,
+                             sep = sepData, dec = decData,
                              stringsAsFactors = FALSE, 
                              fileEncoding = inCSVData$csvEncode)
-  inCSVData$UoMs[is.na(inCSVData$UoMs)] <- ""
-  inCSVData$UoMs <- as.character(inCSVData$UoMs)
-  
-  inCSVData$bg <- as.character(format(read.csv(input$dataCsvFile$datapath,
-                                               header = FALSE,
-                                               sep = input$dataSep, dec = input$dataDec,
-                                               skip = as.numeric(input$dataBG), nrows = 1, 
-                                               stringsAsFactors = FALSE, 
-                                               fileEncoding = inCSVData$csvEncode),
-                                      scientific=FALSE))
-  
-  inCSVData$stgr <- as.character(read.csv(input$dataCsvFile$datapath,
-                                          header = FALSE,
-                                          sep = input$dataSep, dec = input$dataDec,
-                                          skip = as.numeric(input$dataStgr), nrows = 1, 
-                                          stringsAsFactors = FALSE, 
-                                          fileEncoding = inCSVData$csvEncode))
-  
-  
-  inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = FALSE,
-                           sep = input$dataSep, dec = input$dataDec,
-                           skip = rowSkip()+1,
-                           stringsAsFactors = FALSE, 
-                           fileEncoding = inCSVData$csvEncode)
-  colnames(inCSVData$df) <- inCSVData$headAsChar
-  
+    inCSVData$headAsChar <- colnames(inCSVData$df) 
+  }
+
   #################################
   ## validation of data csv-file ##
   #################################
   # ID
-  # Proben-Nr
-  # Datum
-  
+  # Parameter
+  # Wert
+  # Einheit
+  # BG
+  # NG
+
   txt <- NULL
-  if (!(reqColData$id %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>Bitte eine Spalte 'ID' mit eindeutigen Bezügen zu Kläranlagen/Verfahrensschritten angeben.</li>")
-  if (!(reqColData$probeId %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColData$probeId, "' angeben.</li>")
-  if (!(reqColData$date %in% inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColData$date, "' angeben.</li>")
+  for (reqColName in reqColData) {
+    if (!(reqColName %in% inCSVData$headAsChar))
+      txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColName, "' angeben.</li>")
+  }
+  
   if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar))
-    txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein..</li>")
+    txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein.</li>")
   
   valiData$txt <- txt
   valiData$validated <- TRUE
@@ -336,129 +252,28 @@ output$dataValidationOut <- renderUI({
   }
 })
 
-###########################
-## DB consistency checks ##
-###########################
-# check for FoI, phenomenon and date -> to avoid exception in the DB; if input$dataOW -> remove entry in DB and re-insert
-# check for identical Stoffgruppe in 'observablepropertyrelation'; Stoffgruppe is an observable property and a parentfeature of the observableproperties
-#   a new Stoffgruppe needs to be inserted after the insertion of the data into tables 'observableproperties' and 'observeablepropertyrelation'
-#   if the observeableproperty already is in the DB, the Stoffgruppe field is overwritten if input$dataOW if !input$dataOW -> no upload!
-# check for identical UoMs: 
-#   missmatch -> no upload!
-# check for identical BG:
-#   missmatch -> no upload!
+########################
+## DB consistency checks
+# check whether the ProbeIDs exist
+# check whether the Parameter exist
+# check whether the combination of ProbeId and Parameter already corresponds to some time series data
+# -> upload/update; handle BG and NG in data column -> replace with 0 or -99, -9999, or alike to have pure numbers
 
 observeEvent(input$dataCheckDB, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
-  # check whether all FoIs are already in the DB
-  FoIinDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('", 
-                                   paste(inCSVData$df$ID, collapse="', '"),"')"))
-  foiInCSV <- inCSVData$df$ID
-  
-  missFoI <- foiInCSV[!(foiInCSV %in% FoIinDB$identifier)]
-  
-  if (length(missFoI) > 0) {
-    CheckDBData$txtErr <- paste("Folgende Kläranlagen/Verfahrensschritte müssen vorab noch in der DB angelegt werden: <ul><li>",
-                                paste0(missFoI, collapse="</li><li>"))
-  } else {
-    checkDB$txtErr <- NULL
-  }
-  
-  # loop over columns, querry data for each FoI and Date, store presence/absence per column and row
-  inCSVData$obsInDB <- NULL
-  
-  progress <- Progress$new()
-  on.exit(progress$close(), add=T)
-  
-  progress$set(message = "Prüfe DB!", value = 0)
-  
-  nRowDf <- nrow(inCSVData$df)
-  nColDf <- ncol(inCSVData$df)
-  
-  obsIdsInDB <- NULL
-  
-  for (colDf in 4:nColDf) { # colDf <- 9
-    colVec <- rep(0, nRowDf)
-    
-    progress$inc(1/(nColDf-3), paste(detail="Prüfe Spalte", colDf))
-    
-    # querry Stoffgruppe
-    opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name, identifier FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
-    if (nrow(opIdPhen) == 1) {
-      # check for opIdPhen being mentioned in observablepropertyrelation
-      opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
-      if (nrow(opIdsRel) == 1) {
-        stgrInDB <- dbGetQuery(db, paste0("SELECT name FROM observableproperty WHERE observablepropertyid = ", opIdsRel$parentobservablepropertyid))$name
-      } else {
-        stgrInDB <- ""
-      }
-    }
-    
-    for (i in 1:nRowDf) { # i <- 1
-      phenTime <- paste0(as.character(as.Date(inCSVData$df[i, "Datum"], format = "%m/%e/%Y")), stndTime)
-      
-      # request obs from SOS
-      insMsg <- fromJSON(rawToChar(POST(paste0(SOSWebApp, "service"), 
-                                        body = SOSreqObs(FoI=inCSVData$df$ID[i],
-                                                         obsProp=opIdPhen$identifier,
-                                                         phenTime=phenTime),
-                                        content_type_xml(), accept_json())$content))
-      
-      # querry UoM
-      curDBUoM <- dbGetQuery(db, paste0("SELECT unit 
-      FROM unit AS u
-      LEFT OUTER JOIN series AS s ON (u.unitid = s.unitid)
-      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
-      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df[i, reqColData$id], "' AND s.firsttimestamp != '1970-01-01 00:00'"))
-      
-      # querry BG
-      curDBBGid <- dbGetQuery(db, paste0("SELECT referenceseriesid 
-      FROM seriesreference AS sr
-      LEFT OUTER JOIN series AS s ON (sr.seriesid = s.seriesid)
-      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
-      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-      WHERE op.name = '", inCSVData$headAsChar[colDf], "' AND foi.identifier = '", inCSVData$df[i, reqColData$id], "' AND s.firsttimestamp != '1970-01-01 00:00'"))
-
-      if (nrow(curDBBGid)==1) {
-        curDBBG <- dbGetQuery(db, paste0("SELECT firstnumericvalue FROM series WHERE seriesid = ", curDBBGid$referenceseriesid))
-      } 
-      
-      if (is.null(insMsg$exceptions)) {
-        if (length(insMsg$observations) > 0) {
-          colVec[i] <- 1
-          obsIdsInDB <- c(obsIdsInDB, insMsg$observations[[1]]$identifier$value)
-          
-          if (length(curDBUoM$unit) > 0) {
-            if (inCSVData$UoMs[colDf] != curDBUoM$unit)
-              colVec[i] <- 2
-          }
-          
-          if (length(curDBBG$firstnumericvalue) > 0) {
-            if (as.numeric(inCSVData$bg[colDf]) != curDBBG$firstnumericvalue)
-              colVec[i] <- 2
-          }
-          
-          inCSVData$stgr[colDf][is.na(inCSVData$stgr[colDf]) || inCSVData$stgr[colDf] == "NA"] <- ""
-          if (inCSVData$stgr[colDf] != stgrInDB)
-            colVec[i] <- 3
-        }
-      }
-    }
-    
-    inCSVData$obsInDB <- cbind(inCSVData$obsInDB, colVec)
-  }
-  inCSVData$obsIdsInDB <- obsIdsInDB
+  # check whether the ProbeIDs exist
+  # check whether the Parameter exist
+  # check whether the combination of ProbeId and Parameter already corresponds to some time series data
   
   CheckDBData$checked <- TRUE
 }, ignoreInit=TRUE)
 
-output$dataDBConsistencyActionOut <- renderUI({
+output$dataDBConsistencyOut <- renderUI({ # 
   if (CheckDBData$checked) {
-    if (!is.null(CheckDBData$txtErr)) {
-      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", CheckDBData$txtErr, "</li></ul></div></html")))
+    if (!is.null(CheckDBData$txt)) {
+      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", CheckDBData$txt, "</li></ul></div></html")))
     }
     if (all(inCSVData$obsInDB < 2)) {
       if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
@@ -492,48 +307,15 @@ output$tableData <- renderDataTable({
     format(showTab, scientific=FALSE)
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", inCSVData$headAsChar)
     
-    if (!is.null(inCSVData$UoMs)) {
-      showUoM <- sapply(inCSVData$UoMs, function(x) {
-        if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-          paste0(" [",x,"]")
-        } else {
-          ""
-        }
-      })
-      if (!is.null(inCSVData$df))
-        showHead <- paste0(showHead, showUoM)
-    }
-    
-    if (!is.null(inCSVData$bg)) {
-      showBg <- sapply(inCSVData$bg, function(x) {
-        if (!is.na(x) & nchar(x) > 0 & x != "NA") {
-          paste0("<br> BG: ", x)
-        } else {
-          "<br>"
-        }
-      })
-      if (!is.null(inCSVData$df))
-        showHead <- paste0(showHead, showBg)
-    }
-    
-    if (!is.null(inCSVData$stgr)) {
-      showStgr <- sapply(inCSVData$stgr, function(x) {
-        if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-          paste0("<br>", x)
-        } else {
-          "<br>"
-        }
-      })
-      if (!is.null(inCSVData$df))
-        showHead <- paste0(showHead, showStgr)
-    }
-    
     showHead <- paste0(showHead, "</span>")
     
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
-                                       scrollX=TRUE, sort=FALSE, dom="t"),
+                                       scrollX=TRUE, sort=FALSE, dom="t",
+                                       language=list(url = lngJSON)),
                         escape=FALSE)
+    
+    showDT <- formatSignif(showDT, c('NG', 'BG'), 1, dec.mark=",")
     
     # if DB consistency has been checked, apply colors
     if (CheckDBData$checked) {
@@ -558,8 +340,7 @@ output$tableData <- renderDataTable({
 #   - build lab_config.xml from CSV
 #   - paste text blocks per column in parallel
 #   - clean and write csv-file for SOS importer
-#   - run: java -jar 52n-sos-importer-feeder-bin.jar -c lab_config.xml
-# store Stoffgruppen
+#   - run multi feeder: java -jar 52n-sos-importer-feeder-bin.jar -c //FOLDER//
 
 observeEvent(input$dataStoreDB, {
   if (!is.null(inCSVData$df)) {
@@ -648,7 +429,7 @@ observeEvent(input$dataStoreDB, {
       feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
       
       write.table(feedTab[feedTab[,reqColData$id] == uFoI,-1], feedCSV, 
-                  sep = input$dataSep, dec = input$dataDec, 
+                  sep = sepData, dec = decData, 
                   row.names = FALSE, col.names=TRUE, 
                   fileEncoding="UTF-8")
       
@@ -657,9 +438,9 @@ observeEvent(input$dataStoreDB, {
       writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
                        confCsvMetaInit(),
                        confColTxt,
-                       confCsvMetaClose(decSep = input$dataDec, 
+                       confCsvMetaClose(decSep = decData, 
                                         skipRows = 0,
-                                        colSep = input$dataSep),
+                                        colSep = sepData),
                        confAddMetaInit(),
                        confSensorTxt,
                        confObsPropTxt,

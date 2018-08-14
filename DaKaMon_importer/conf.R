@@ -8,6 +8,9 @@ decSep <- ","
 # encoding
 csvEncode <- "UTF-8"
 
+# langiage
+lngJSON <- "http://cdn.datatables.net/plug-ins/1.10.11/i18n/German.json"
+
 csvInfo <- paste0("Die CSV-Datei muss \"", colSep, "\" als Spaltentrennzeichen und \"", decSep, "\" als Dezimaltrennzeichen verwenden und in \"", csvEncode, "\" enkodiert sein.")
 
 SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
@@ -32,14 +35,16 @@ ifelse(local,
        adminConf <- authenticate("a", adminPwd),
        adminConf <-   authenticate("dakamon-administrator", adminPwd))
 
-reqColOrt <- list(id="ID",
+## DB="GUI/CSV"
+
+reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
                   lon="lon")
 
 reqColPNS <- list(id="ID",
                   name="Name",
-                  geo="Orts-ID",
+                  geo="OrtsID",
                   lat="lat",
                   lon="lon")
 
@@ -49,13 +54,19 @@ reqColPAR <- list(id="ID",
 
 
 reqColProbe <- list(id="ID",
-                    geoSub="PNS-ID",
+                    geoSub="PNSID",
                     colDate="Probenahmedatum",
                     eventTiemBegin="Ereignisbeginn",
                     eventTimeEnd="Ereignisende",
                     probeTechnic="Probenahmetechnik",
                     probeType="Probenahmeart")
 
-reqColData <- list(id="ID", 
-                   probeId = "Proben-ID")
+reqColData <- list(probeId = "ProbenID",
+                   obsProp = "Parameter",
+                   value = "Wert",
+                   uom = "Einheit",
+                   bg = "BG",
+                   ng = "NG") 
+
+
 

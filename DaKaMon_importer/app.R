@@ -3,11 +3,11 @@ library(shiny)
 library(DT)
 library(shinyjs)
 library(httr)
+library(rjson)
+library(RPostgreSQL)
 
-if(!require(readr)) {
-  install.packages("readr", quiet=TRUE)
-  library(readr)
-}
+# guess an encoding
+library(readr)
 
 # consts and config:
 
@@ -16,22 +16,18 @@ source("conf.R")
 ## UI
 
 ui <- navbarPage("Datenimport",
-                 # useShinyjs(),
                  navbarMenu("Messdaten",
                             ## Ort
-                            tabPanel("Ort anlegen",
+                            tabPanel("Ort anlegen", useShinyjs(),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("sepOrt", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("decOrt", "Dezimaltrennzeichen:", value = ".", width = "80%"),
                                          fileInput("csvFileOrt", "CSV-Datei mit Orten", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
                                          checkboxInput("owOrt", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("OrtValidationOut"),
-                                         uiOutput("OrtDBConsistencyTxtOut"),
-                                         uiOutput("OrtDBConsistencyActionOut"),
+                                         uiOutput("OrtDBConsistencyOut"),
                                          width = 2),
                                        mainPanel(dataTableOutput('tableOrt'))
                                      )),
@@ -40,8 +36,6 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Probenahmestelle anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("sepPNS", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("decPNS", "Dezimaltrennzeichen:", value = ".", width = "80%"),
                                          fileInput("csvFilePNS", "CSV-Datei mit Probenahmestellen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -117,36 +111,33 @@ ui <- navbarPage("Datenimport",
                  ######################
                  
                  navbarMenu("Literaturdaten",
-                            ## Referenz
+                            ## Referenz (Ref)
                             tabPanel("Referenz anlegen",
                                      sidebarLayout(
-                                       sidebarPanel(# textInput("sepProbe", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("decProbe", "Dezimaltrennzeichen:", value = ".", width = "80%"),
-                                         fileInput("csvFileProbe", "CSV-Datei mit Referenzen", 
+                                       sidebarPanel(
+                                         fileInput("csvFileRef", "CSV-Datei mit Referenzen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
-                                         uiOutput("ProbeValidationOut"),
-                                         uiOutput("ProbeDBConsistencyTxtOut"),
-                                         uiOutput("ProbeDBConsistencyActionOut"), # DBConsistencyActionOut
+                                         checkboxInput("owRef", "Alle Daten überschreiben?", FALSE), 
+                                         uiOutput("RefValidationOut"),
+                                         uiOutput("RefDBConsistencyOut"),
                                          width = 2),
-                                       mainPanel(dataTableOutput('tableProbe'))
+                                       mainPanel(dataTableOutput('tableRef'))
                                      )),
                             
                             tabPanel("Literaturdaten hochladen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         fileInput("csvFileProbe", "CSV-Datei mit Literaturwerten", 
+                                         fileInput("csvFileLit", "CSV-Datei mit Literaturwerten", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
                                          checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
-                                         uiOutput("ProbeValidationOut"),
-                                         uiOutput("ProbeDBConsistencyTxtOut"),
-                                         uiOutput("ProbeDBConsistencyActionOut"), 
+                                         uiOutput("LitValidationOut"),
+                                         uiOutput("LitDBConsistencyOut"),
                                          width = 2),
-                                       mainPanel(dataTableOutput('tableProbe'))
+                                       mainPanel(dataTableOutput('tableLit'))
                                      ))),
                  
                  ## Dateien
@@ -159,6 +150,25 @@ ui <- navbarPage("Datenimport",
                                     buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt"),
                           checkboxInput("owDatei", "Datei überschreiben?", FALSE), 
                           uiOutput("DateiValidationOut"),
-                          uiOutput("DateiDBConsistencyTxtOut"),
-                          uiOutput("DateiDBConsistencyActionOut"))
+                          uiOutput("DateiDBConsistencyOut"))
 )
+
+
+server <- function(input, output) {
+  
+  source("server_Ort.R", local = TRUE)$value
+  
+  source("server_Probenahme.R", local = TRUE)$value
+  
+  source("server_Parameter.R", local = TRUE)$value
+  
+  source("server_Probe.R", local = TRUE)$value
+  
+  source("server_Messungen.R", local = TRUE)$value
+  
+  # Lit
+  # Datei upload
+}
+
+
+shinyApp(ui, server)

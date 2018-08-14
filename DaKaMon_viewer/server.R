@@ -111,7 +111,8 @@ server <- function(input, output) {
   
   output$tableFoi  <- renderDT(datatable(showTab, # colnames = showHead, 
               filter="top",
-              options = list(paging=FALSE, dom = 'Brt'),
+              options = list(paging=FALSE, dom = 'Brt',
+                             language=list(url = lngJSON)),
               escape=FALSE))
 
   s <- reactive({
@@ -183,7 +184,8 @@ server <- function(input, output) {
     showHead <- paste0(showHead, "</span>")
     
     datatable(showTab, colnames = showHead, filter="top",
-              options = list(paging=FALSE, dom = 'Brt', ordering=FALSE),
+              options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
+                             language=list(url = lngJSON)),
               escape=FALSE)
   })
   
@@ -403,7 +405,8 @@ server <- function(input, output) {
       colnames(showTab) <- showHead
       datatable(showTab, #colnames=showHead,
                 filter="top", 
-                options=list(paging=FALSE,dom = 'Brt'),
+                options=list(paging=FALSE,dom = 'Brt',
+                             language=list(url = lngJSON)),
                 escape=FALSE)
     }
   })
@@ -433,7 +436,8 @@ server <- function(input, output) {
       rownames(stat) <- c("Min.","1st Qu.","Median","Mittelw.", "3rd Qu.","Max.", "NA")
       
       datatable(stat, # colnames=showHead,
-                options=list(paging=FALSE, dom = 'Brt'))
+                options=list(paging=FALSE, dom = 'Brt',
+                             language=list(url = lngJSON)))
     }
   })
   
