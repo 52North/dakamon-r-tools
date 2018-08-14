@@ -11,13 +11,10 @@ ENV JAVA_HOME /usr/lib/jvm/default-java
 
 EXPOSE 3838
 
-ADD docker/shiny-server.sh /usr/bin/shiny-server.sh
-
 WORKDIR /tmp
 
 # install sos-importer
-RUN chmod +x /usr/bin/shiny-server.sh &&\
-    apt-get update &&\
+RUN apt-get update &&\
     apt-get --assume-yes upgrade &&\
     apt-get install --assume-yes --no-install-recommends openjdk-8-jdk maven git&&\
     apt-get purge --assume-yes openjdk-10-jre-headless &&\
@@ -53,6 +50,11 @@ ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
     chown shiny:shiny -R /srv/shiny-server && chown shiny:shiny -R /opt/shiny-server &&\
     chown shiny:shiny /var/lib/shiny-server
+
+
+ADD docker/shiny-server.sh /usr/bin/shiny-server.sh
+
+RUN chmod +x /usr/bin/shiny-server.sh
 
 USER shiny
 
