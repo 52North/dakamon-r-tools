@@ -88,7 +88,7 @@ observeEvent(input$checkDB, {
     checkDBOrt$txt <- NULL
   }
   
-  checkDB$OrtInDB <- OrtInDB
+  checkDBOrt$OrtInDB <- OrtInDB
   
   checkDBOrt$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -160,31 +160,83 @@ observeEvent(input$storeDB, {
   progress$set(message = "Füge Orte in DB ein.", value = 0)
   
   ## add missign columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM columnmetadata"))[,1]
-  misCols <- which(sapply(paste0("Ort_", Ort_header), # TODO drop ID
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
+  misCols <- which(sapply(paste0("ort_", Ort_header), # TODO drop ID and Name
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("Ort_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0("ort_", sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(Ort_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
       
       # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE Ortdata ADD COLUMN ", colId, " ", coltype, ";"))
+      dbSendQuery(db, paste0("ALTER TABLE ort_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO Ortdatametadata (columnid, dede)
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
                                VALUES ('", paste(colId, Ort_header[misCols[i]], sep="', '"),"')"))
     }
   }
   
   # if there are already Orte in the DB that are again in the CSV
   if (nrow(checkDBOrt$OrtInDB) > 0) {
-    ## UPDATE FoI and data via SQL ##
+    ## UPDATE FoI and data via SQL, returns the id (pkid) of the updated feature ##
+    dbSendQuery(db, paste0("with update_ort as (
+      UPDATE featureofinterest SET
+        name = name_var,
+        geom =  ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326)
+      WHERE identifier = var
+      RETURNING featureofinterestid
+    )
+    UPDATE ort_data SET
+      ort_col003 = ort_col003_var,
+      ort_col004 = ort_col004_var,
+      ort_col005 = ort_col005_var,
+      ort_col006 = ort_col006_var,
+      ort_col007 = ort_col007_var,
+      ort_col008 = ort_col008_var,
+      ort_col009 = ort_col009_var,
+      ort_col010 = ort_col010_var,
+      ort_col011 = ort_col011_var,
+      ort_col012 = ort_col012_var,
+      ort_col013 = ort_col013_var,
+      ort_col014 = ort_col014_var,
+      ort_col015 = ort_col015_var
+    WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort)
+    RETURNING featureofinterestid;"))
   } else {
-    ## INSERT FoI and data via SQL ##
+    ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
+    dbSendQuery(db, paste0("with insert_ort as (
+      INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
+      VALUES (nextval('featureofinterestid_seq'), 1,",
+             Ort_data[foi,reqColOrt$id],
+             Ort_data[foi,reqColOrt$name], 
+             "ST_GeomFromText('POINT (' || ",
+             Ort_data[foi,reqColOrt$lat],
+             " || ' ' || ",
+             Ort_data[foi,reqColOrt$lon],
+             "|| ')', 4326))
+      RETURNING featureofinterestid as ort_id
+    )
+    INSERT INTO ort_data (featureofinterestid, rndid, ", paste(regCols, sep = ','), ")
+      SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
+        'ort_col003_var',
+        'ort_col004_var',
+        'ort_col005_var',
+        'ort_col006_var', 
+        'ort_col007_var',
+        'ort_col008_var',
+        'ort_col009_var',
+        'ort_col010_var',
+        'ort_col011_var',
+        'ort_col012_var',
+        'ort_col013_var',
+        'ort_col014_var',
+        'ort_col015_var',
+      " FROM insert_ort
+    RETURNING ort_id;"))
   }
   
   showModal(modalDialog(

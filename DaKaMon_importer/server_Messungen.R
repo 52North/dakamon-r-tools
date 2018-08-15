@@ -260,12 +260,31 @@ output$dataValidationOut <- renderUI({
 # -> upload/update; handle BG and NG in data column -> replace with 0 or -99, -9999, or alike to have pure numbers
 
 observeEvent(input$dataCheckDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   # check whether the ProbeIDs exist
   # check whether the Parameter exist
   # check whether the combination of ProbeId and Parameter already corresponds to some time series data
+  
+  
+  dbSendQuery(db, paste0("WITH query_pro AS (
+    SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
+  ),
+  query_para AS (
+    SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
+  ),
+  insert_unit AS (
+    INSERT INTO unit
+    (unitid, unit)
+    VALUES(nextval('unitid_seq'),
+           'pro_para_col003_var'
+    )
+    ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
+    RETURNING unitid as unit_id
+  )		
+  INSERT INTO probe_parameter
+  SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
   
   CheckDBData$checked <- TRUE
 }, ignoreInit=TRUE)

@@ -90,7 +90,7 @@ observeEvent(input$checkDB, {
   
   # TODO: check whether referenced super FoIs exist; if not -> error state: no upload
   
-  checkDB$PNSInDB <- PNSInDB
+  checkDBPNS$PNSInDB <- PNSInDB
   
   checkDBPNS$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -162,31 +162,81 @@ observeEvent(input$storeDB, {
   progress$set(message = "Füge Probenahmestellen in DB ein.", value = 0)
   
   ## add missign columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM columnmetadata"))[,1]
-  misCols <- which(sapply(paste0("PNS_", PNS_header), # TODO drop ID, parent identifier
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
+  misCols <- which(sapply(paste0("pns_", PNS_header), # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("PNS_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0("pns_", sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(PNS_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
       
       # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE PNSdata ADD COLUMN ", colId, " ", coltype, ";"))
+      dbSendQuery(db, paste0("ALTER TABLE pns_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO PNSdatametadata (columnid, dede)
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
                                VALUES ('", paste(colId, PNS_header[misCols[i]], sep="', '"),"')"))
     }
   }
   
   # if there are already PNSe in the DB that are again in the CSV
   if (nrow(checkDBPNS$PNSInDB) > 0) {
-    ## UPDATE FoI and data via SQL, mind the parental FoI ##
+    ## UPDATE FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
+    dbSendQuery(db, paste0("with update_pns as (
+      UPDATE featureofinterest 
+      	SET
+      		name = name_var,
+      		geom =  ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326)
+      WHERE identifier = var
+      RETURNING featureofinterestid
+      )
+      UPDATE pns_data 
+      	SET
+      		pns_col003 = pns_col003_var,
+      		pns_col004 = pns_col004_var,
+      		pns_col005 = pns_col005_var,
+      		pns_col006 = pns_col006_var,
+      		pns_col007 = pns_col007_var
+      WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
+      RETURNING featureofinterestid;"))
+    
+    ## if pns - foi relation does not exist, insert relation ## 
+    dbSendQuery(db, paste0("INSERT INTO featurerelation
+        VALUES 
+      	(SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'parent_identifier_var',
+      			featureofinterestid);"))
   } else {
-    ## INSERT FoI and data via SQL, mind the parental FoI ##
+    ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
+    dbSendQuery(db, paste0("with insert_pns as (
+    INSERT INTO featureofinterest
+         (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
+         VALUES 
+         (nextval('featureofinterestid_seq'),
+         1,
+         'identifier_var',
+         'name_var',
+         ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326))
+         RETURNING featureofinterestid
+  ), insert_pns_rel as (
+         INSERT INTO featurerelation
+         INSERT INTO featurerelation 
+         SELECT insert_ort.featureofinterestid, insert_pns.featureofinterestid
+         FROM insert_ort, insert_pns
+         RETURNING childfeatureid
+    )
+   INSERT INTO pns_data 
+   SELECT featureofinterestid, 
+   pseudo_encrypt(nextval('rndIdSeq')::int),
+   'pns_col003_var',
+   'pns_col004_var',
+   'pns_col005_var',
+   pns_col006_var,
+   pns_col007_var
+   FROM insert_pns
+   RETURNING featureofinterestid;"))
   }
   
   showModal(modalDialog(

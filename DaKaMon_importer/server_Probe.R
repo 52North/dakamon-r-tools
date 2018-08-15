@@ -79,16 +79,21 @@ observeEvent(input$checkDB, {
   progress$set(message = "Prüfe bereits registrierte Proben.", value = 0)
   
   # get all Probes from the DB that have any of the identifiers in the CSV
-  ProbeInDB <- dbGetQuery(db, paste0("SELECT probeid, identifier FROM probe WHERE identifier IN ('",
+  if (length(inCSVPAR$df) > 0) {
+    ProbeInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM probe WHERE identifier IN ('",
                                      paste(inCSVProbe$df[,reqColProbe$id], collapse="', '"),"')"))
-  if (nrow(ProbeInDB) > 0) {
+  } else {
+    ProbeInDB <- vector()
+  }
+  
+  if (!is.null(ProbeInDB) && length(ProbeInDB) > 0 && nrow(ProbeInDB) > 0) {
     checkDBProbe$txt <- paste("Folgende Proben sind bereits in der DB: <ul><li>",
                               paste0(ProbeInDB$identifier, collapse="</li><li>"))
   } else {
     checkDBProbe$txt <- NULL
   }
   
-  checkDB$ProbeInDB <- ProbeInDB
+  checkDBProbe$ProbeInDB <- ProbeInDB
   
   # check PNS ids
   PNSInDB <- dbGetQuery(db, paste0("SELECT identifier FROM featureofinterest WHERE identifier IN ('",
@@ -169,31 +174,65 @@ observeEvent(input$storeDB, {
   progress$set(message = "Füge Proben in DB ein.", value = 0)
   
   ## add missign columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM columnmetadata"))[,1]
-  misCols <- which(sapply(paste0("Probe_", Probe_header), # TODO drop ID, Probeent identifier
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
+  misCols <- which(sapply(paste0("probe_", Probe_header), # TODO drop ID, Probeent identifier
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("Probe_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0("probe_", sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(Probe_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
       
       # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE Probedata ADD COLUMN ", colId, " ", coltype, ";"))
+      dbSendQuery(db, paste0("ALTER TABLE probe_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO Probedatametadata (columnid, dede)
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
                                VALUES ('", paste(colId, Probe_header[misCols[i]], sep="', '"),"')"))
     }
   }
   
   # if there are already Probee in the DB that are again in the CSV
   if (nrow(checkDBProbe$ProbeInDB) > 0) {
-    ## UPDATE Probe via SQL ##
+    ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
+    dbSendQuery(db, paste0("UPDATE probe 
+    	SET
+    		probe_col003 = probe_col003_var,
+    		probe_col004 = probe_col004_var,
+    		probe_col005 = probe_col005_var,
+    		probe_col006 = probe_col006_var,
+    		probe_col007 = probe_col007_var,
+    		probe_col008 = probe_col008_var,
+    		probe_col009 = probe_col009_var,
+    		probe_col010 = probe_col010_var,
+    		probe_col011 = probe_col011_var,
+    		probe_col012 = probe_col012_var,
+    		probe_col013 = probe_col013_var,
+    		probe_col014 = probe_col014_var,
+    		probe_col015 = probe_col015_var
+    RETURNING id;	"))
   } else {
-    ## INSERT Probe via SQL ##
+    ## INSERT Probe via SQL, returns the id (pkid) of the inserted probe ##
+    dbSendQuery(db, paste0("INSERT INTO probe
+      (id, identifier, probe_col003, probe_col004, probe_col005, probe_col006, probe_col007, probe_col008, probe_col009, probe_col010, probe_col011, probe_col012, probe_col013, probe_col014, probe_col015) 
+      VALUES  ((nextval('probeid_seq'),
+                'identifier_var',
+                'probe_col003_var',
+                'probe_col004_var',
+                'probe_col005_var',
+                'probe_col006_var',
+                probe_col007_var,
+                probe_col008_var,
+                'probe_col009_var',
+                'probe_col010_var',
+                'probe_col011_var',
+                probe_col012_var,
+                'probe_col013_var',
+                'probe_col014_var',
+                'probe_col015_var')
+               RETURNING id;"))
   }
   
   showModal(modalDialog(

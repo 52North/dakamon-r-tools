@@ -79,16 +79,21 @@ observeEvent(input$checkDB, {
   progress$set(message = "Prüfe bereits registrierte Parameter.", value = 0)
   
   # get all PARs from the DB that have any of the identifiers in the CSV
-  PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observablepropertyid WHERE identifier IN ('",
+  if (length(inCSVPAR$df) > 0) {
+    PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
                                    paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
-  if (nrow(PARInDB) > 0) {
+  } else {
+    PARInDB <- vector()
+  }
+  
+  if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
     checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
                             paste0(PARInDB$identifier, collapse="</li><li>"))
   } else {
     checkDBPAR$txt <- NULL
   }
   
-  checkDB$PARInDB <- PARInDB
+  checkDBPAR$PARInDB <- PARInDB
   
   checkDBPAR$checked <- TRUE
 }, ignoreInit=TRUE)
@@ -160,31 +165,65 @@ observeEvent(input$storeDB, {
   progress$set(message = "Füge Parameter in DB ein.", value = 0)
   
   ## add missign columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM columnmetadata"))[,1]
-  misCols <- which(sapply(paste0("PAR_", PAR_header), # TODO drop ID, parent identifier
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
+  misCols <- which(sapply(paste0("param_", PAR_header), # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("PAR_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0("param_", sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(PAR_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
       
       # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE PARdata ADD COLUMN ", colId, " ", coltype, ";"))
+      dbSendQuery(db, paste0("ALTER TABLE parameter_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO PARdatametadata (columnid, dede)
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
                                VALUES ('", paste(colId, PAR_header[misCols[i]], sep="', '"),"')"))
     }
   }
   
   # if there are already PARe in the DB that are again in the CSV
   if (nrow(checkDBPAR$PARInDB) > 0) {
-    ## UPDATE PAR via SQL ##
+    ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
+    dbSendQuery(db, paste0("with update_param as (
+        UPDATE observableproperty 
+        SET
+        name = name_var
+        WHERE identifier = var
+        RETURNING observablepropertyid
+      )
+      UPDATE parameter_data 
+      SET
+      param_col003 = param_col003_var,
+      param_col004 = param_col004_var,
+      param_col005 = param_col005_var,
+      param_col006 = param_col006_var,
+      param_col007 = param_col007_var
+      WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param)
+      RETURNING observablepropertyid;"))
   } else {
-    ## INSERT PAR via SQL ##
+    ## INSERT PAR via SQL, returns the id (pkid) of the inserted parameter ##
+    dbSendQuery(db, paste0("with insert_param as (
+        INSERT INTO observableproperty 
+        (observablepropertyid, identifier, name) 
+        VALUES 
+        (nextval('observablepropertyid_seq'),
+          'identifier_var',
+          'name_var')
+        RETURNING observablepropertyid
+      )
+      INSERT INTO parameter_data 
+      SELECT  observablepropertyid,
+      'param_col003_var',
+      'param_col004_var',
+      'param_col005_var',
+      'param_col006_var',
+      'param_col007_var'
+      FROM insert_param
+      RETURNING observablepropertyid;"))	
   }
   
   showModal(modalDialog(
