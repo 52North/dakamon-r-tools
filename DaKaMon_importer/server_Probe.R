@@ -70,7 +70,7 @@ output$ProbeValidationOut <- renderUI({
 # find existing Proben; check whether the PNSID exists
 
 observeEvent(input$checkDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pProbe="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   progress <- shiny::Progress$new()
@@ -146,11 +146,11 @@ output$tableProbe <- renderDataTable({
 })
 
 #####################
-## Insert Feautres ##
+## Insert Probe ##
 #####################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pProbe="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   Probe_data <- inCSVProbe$df

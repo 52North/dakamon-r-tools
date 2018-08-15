@@ -344,7 +344,7 @@ output$tableData <- renderDataTable({
 
 observeEvent(input$dataStoreDB, {
   if (!is.null(inCSVData$df)) {
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
     on.exit(dbDisconnect(db), add=T)
     
     if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {

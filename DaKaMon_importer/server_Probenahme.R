@@ -70,7 +70,7 @@ output$PNSValidationOut <- renderUI({
 # find existing PNSe
 
 observeEvent(input$checkDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pPNS="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   progress <- shiny::Progress$new()
@@ -138,12 +138,12 @@ output$tablePNS <- renderDataTable({
   }
 })
 
-#####################
-## Insert Feautres ##
-#####################
+#############################
+## Insert Probenamestellen ##
+#############################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pPNS="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   PNS_data <- inCSVPNS$df

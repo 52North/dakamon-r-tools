@@ -70,7 +70,7 @@ output$PARValidationOut <- renderUI({
 # find existing Parameters
 
 observeEvent(input$checkDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pPAR="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   progress <- shiny::Progress$new()
@@ -136,12 +136,12 @@ output$tablePAR <- renderDataTable({
   }
 })
 
-#####################
-## Insert Feautres ##
-#####################
+###########################################
+## Insert Parameter/ObservableProperties ##
+###########################################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", pPAR="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
   on.exit(dbDisconnect(db), add=T)
   
   PAR_data <- inCSVPAR$df
