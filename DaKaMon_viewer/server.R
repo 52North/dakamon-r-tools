@@ -78,28 +78,36 @@ SOSgetObsByFoITime <- function(obsProp, time, foiURI) {
   </sos:GetObservation>")
 }
 ## /tools
-
 server <- function(input, output) {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
   
   # load all super FoI from DB
-  foiIdUnknown <- dbGetQuery(db, paste0("SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'unknown'"))$featureofinterestid
-  superFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid =", foiIdUnknown," )"))
+  ort <- dbGetQuery(db, "SELECT foi.featureofinterestid, foi.name, foi.identifier 
+                         FROM featureofinterest foi, ort_data od 
+                         WHERE foi.featureofinterestid = od.featureofinterestid")
+  
   # dbDisconnect(db)
-  # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-  superFoiData <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (", 
-                                        paste0(superFoi$featureofinterestid, collapse=", "), ")"))
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
+  ortColColumns <- paste0("od.", grep("col*", ortDataMetaData$columnid, value = TRUE))
+  ortData <- dbGetQuery(db, paste0("SELECT foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+                                    " FROM featureofinterest foi
+                                    RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
+                                    WHERE foi.featureofinterestid IN (", 
+                                        paste0(ort$featureofinterestid, collapse=", "), ")"))
   # dbDisconnect(db)
-  # db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-  foiDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM foidatametadata"))
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  
+  #pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
   dbDisconnect(db)
-  colnames(superFoiData) <- foiDataMetaData$dede[match(colnames(superFoiData), foiDataMetaData$columnid)]
-  colOrder <- foiDataMetaData$colorder[match(colnames(superFoiData), foiDataMetaData$columnid)]
-  showTab <- superFoiData[,colOrder[-1]]
+  colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
+  #colnames(pnsData) <- ortDataMetaData$dede[match(colnames(opnsData), pnsDataMetaData$columnid)]
+  colOrder <- ortDataMetaData$colorder[match(colnames(ortData), ortDataMetaData$columnid)]
+  showTab <- ortData[,colOrder[-1]]
 
   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
   
-  showUoM <- sapply(foiDataMetaData$uom, function(x) {
+  showUoM <- sapply(ortDataMetaData$uom, function(x) {
     if (!is.na(x) & nchar(x) > 0) {
       paste0(" [",x,"]")
     } else {
@@ -137,7 +145,7 @@ server <- function(input, output) {
       paste("data-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(superFoiData[s(),-1]), file, sep = ";", 
+      write.table(isolate(ortData[s(),-1]), file, sep = ";", 
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
@@ -147,7 +155,7 @@ server <- function(input, output) {
       paste("data-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(superFoiData[s(),-1])
+      df <- isolate(ortData[s(),-1])
       save(df, file = file)
     }
   )
@@ -158,9 +166,9 @@ server <- function(input, output) {
   # subFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation)"))
   
   subFoiData <- reactive({
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
     
-    sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(superFoiData[s(),1], collapse="', '") , "'))"))
+    sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(ortData[s(),1], collapse="', '") , "'))"))
     colnames(sfd) <- foiDataMetaData$dede[match(colnames(sfd), foiDataMetaData$columnid)]
     dbDisconnect(db)
     sfd[,-1]
@@ -233,8 +241,12 @@ server <- function(input, output) {
   # load all avaialble elemGroup for the selected FoI
   
   elemGroup <- reactive({
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
-    res <- dbGetQuery(db, "SELECT observablepropertyid, identifier, name FROM observableproperty WHERE description = 'Stoffgruppe'")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+    col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+    res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " 
+                            FROM observableproperty op
+                            LEFT parameter_data
+                            WHERE ", col, " IS NOT NULL"))
     dbDisconnect(db)
     res
   })
@@ -248,7 +260,7 @@ server <- function(input, output) {
   obsProp <- reactive({
     if (is.null(input$selElemGroup))
       return(NULL)
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
     
     op <- NULL
     for (i in 1:length(sp())) { # i <- 1
@@ -283,7 +295,7 @@ server <- function(input, output) {
   
   data <- reactive({
     if (!is.null(input$selObsPhen)) {
-      db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+      db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
       
       resDf <- NULL
       
@@ -329,7 +341,7 @@ server <- function(input, output) {
       resDf$Datum <- as.Date(resDf$Datum)
       
       if (input$randomId) {
-        db <- dbConnect("PostgreSQL", host=dbHost, dbname="sos", user="postgres", password="postgres", port="5432")
+        db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
         dbIdMap <- dbGetQuery(db, paste0("SELECT id, rndid FROM foidata WHERE id IN ('", paste(resDf$ID, collapse="', '"), "')"))
         resDf$ID <- dbIdMap[match(resDf$ID, dbIdMap$id), 2]
         dbDisconnect(db)

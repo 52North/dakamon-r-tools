@@ -161,12 +161,13 @@ observeEvent(input$storeDB, {
   
   ## add missign columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
-  misCols <- which(sapply(paste0("ort_", Ort_header), # TODO drop ID and Name
+  ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))[,1]
+  misCols <- which(sapply(Ort_header, # TODO drop ID and Name
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("ort_", sprintf("col%03d", i + length(regCols)))
+      colId <- sprintf("col%03d", i + length(regCols))
       coltype = switch(class(Ort_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
@@ -175,11 +176,11 @@ observeEvent(input$storeDB, {
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE ort_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
-                               VALUES ('", paste(colId, Ort_header[misCols[i]], sep="', '"),"')"))
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                               VALUES ('", paste(colId, 'ort', Ort_header[misCols[i]], sep="', '"),"')"))
     }
   }
-  
+
   # if there are already Orte in the DB that are again in the CSV
   if (nrow(checkDBOrt$OrtInDB) > 0) {
     ## UPDATE FoI and data via SQL, returns the id (pkid) of the updated feature ##
@@ -208,35 +209,37 @@ observeEvent(input$storeDB, {
     RETURNING featureofinterestid;"))
   } else {
     ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
-    dbSendQuery(db, paste0("with insert_ort as (
-      INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
-      VALUES (nextval('featureofinterestid_seq'), 1,",
-             Ort_data[foi,reqColOrt$id],
-             Ort_data[foi,reqColOrt$name], 
-             "ST_GeomFromText('POINT (' || ",
-             Ort_data[foi,reqColOrt$lat],
-             " || ' ' || ",
-             Ort_data[foi,reqColOrt$lon],
-             "|| ')', 4326))
-      RETURNING featureofinterestid as ort_id
-    )
-    INSERT INTO ort_data (featureofinterestid, rndid, ", paste(regCols, sep = ','), ")
-      SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
-        'ort_col003_var',
-        'ort_col004_var',
-        'ort_col005_var',
-        'ort_col006_var', 
-        'ort_col007_var',
-        'ort_col008_var',
-        'ort_col009_var',
-        'ort_col010_var',
-        'ort_col011_var',
-        'ort_col012_var',
-        'ort_col013_var',
-        'ort_col014_var',
-        'ort_col015_var',
-      " FROM insert_ort
-    RETURNING ort_id;"))
+    for (ort in Ort_data) {
+      dbSendQuery(db, paste0("with insert_ort as (
+                               INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
+                               VALUES (nextval('featureofinterestid_seq'), 1, ",
+                           Ort_data[ort,reqColOrt$id], " ",
+                           Ort_data[ort,reqColOrt$name], 
+                           " ST_GeomFromText('POINT (' || ",
+                           Ort_data[ort,reqColOrt$lat],
+                           " || ' ' || ",
+                           Ort_data[ort,reqColOrt$lon],
+                           "|| ')', 4326)) 
+                               RETURNING featureofinterestid as ort_id
+                               )
+                               INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols, collapse=', '), ")
+                               SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
+                           'ort_col003_var',
+                           'ort_col004_var',
+                           'ort_col005_var',
+                           'ort_col006_var', 
+                           'ort_col007_var',
+                           'ort_col008_var',
+                           'ort_col009_var',
+                           'ort_col010_var',
+                           'ort_col011_var',
+                           'ort_col012_var',
+                           'ort_col013_var',
+                           'ort_col014_var',
+                           'ort_col015_var',
+                           " FROM insert_ort
+                               RETURNING ort_id;"))
+  }
   }
   
   showModal(modalDialog(

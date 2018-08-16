@@ -82,9 +82,6 @@ observeEvent(input$checkDB, {
   if (length(inCSVPAR$df) > 0) {
     ProbeInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM probe WHERE identifier IN ('",
                                      paste(inCSVProbe$df[,reqColProbe$id], collapse="', '"),"')"))
-  } else {
-    ProbeInDB <- vector()
-  }
   
   if (!is.null(ProbeInDB) && length(ProbeInDB) > 0 && nrow(ProbeInDB) > 0) {
     checkDBProbe$txt <- paste("Folgende Proben sind bereits in der DB: <ul><li>",
@@ -103,7 +100,7 @@ observeEvent(input$checkDB, {
   if(length(misPNSIDs) > 0) # error state: no upload
     checkDBProbe$txt <- paste("Folgende Probenahestellen fehlen in der DB: <ul><li>",
                               paste0(inCSVProbe$df[misPNSIDs, reqColProbe$geoSub], collapse="</li><li>"))
-  
+  }
   checkDBProbe$checked <- TRUE
 }, ignoreInit=TRUE)
 

@@ -82,18 +82,16 @@ observeEvent(input$checkDB, {
   if (length(inCSVPAR$df) > 0) {
     PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
                                    paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
-  } else {
-    PARInDB <- vector()
+  
+    if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
+      checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
+                              paste0(PARInDB$identifier, collapse="</li><li>"))
+    } else {
+      checkDBPAR$txt <- NULL
   }
   
-  if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
-    checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
-                            paste0(PARInDB$identifier, collapse="</li><li>"))
-  } else {
-    checkDBPAR$txt <- NULL
+    checkDBPAR$PARInDB <- PARInDB
   }
-  
-  checkDBPAR$PARInDB <- PARInDB
   
   checkDBPAR$checked <- TRUE
 }, ignoreInit=TRUE)
