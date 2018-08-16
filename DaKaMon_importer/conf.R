@@ -26,7 +26,10 @@ NGlabel <- "Nachweisgrenze" # label in DB
 local <- interactive()
 SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 dbHost <- ifelse(local, "localhost", "db") 
-dbname <- "sos"
+dbPort <- "5432"
+dbUser <- "postgres"
+dbPassword <- "postgres"
+dbName <- "sos"
 verbose <- local
 
 feederPath <- ifelse(local, "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")

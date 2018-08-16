@@ -70,7 +70,7 @@ output$OrtValidationOut <- renderUI({
 # find existing Orte
 
 observeEvent(input$checkDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
   progress <- shiny::Progress$new()
@@ -141,7 +141,7 @@ output$tableOrt <- renderDataTable({
 #####################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname="dakamon", user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
   Ort_data <- inCSVOrt$df
