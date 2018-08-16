@@ -209,7 +209,7 @@ observeEvent(input$storeDB, {
     RETURNING featureofinterestid;"))
   } else {
     ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
-    for (ort in Ort_data) {
+    for (ort in 1:nrow(Ort_data)) {
       dbSendQuery(db, paste0("with insert_ort as (
                                INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
                                VALUES (nextval('featureofinterestid_seq'), 1, ",
@@ -239,7 +239,7 @@ observeEvent(input$storeDB, {
                            'ort_col015_var',
                            " FROM insert_ort
                                RETURNING ort_id;"))
-  }
+    }
   }
   
   showModal(modalDialog(
