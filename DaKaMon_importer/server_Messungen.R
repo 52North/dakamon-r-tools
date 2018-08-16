@@ -430,6 +430,9 @@ observeEvent(input$dataStoreDB, {
     uFoIs <- unique(feedTab[,reqColData$id])
     nUFoIs <- length(uFoIs)
     
+    # temporal directory storing all created csv and config xml files
+    feedTmpConfigDirectory <- tmpdir()
+
     for (uFoI in uFoIs) {
       progress$inc(1/nUFoIs)
       
@@ -445,14 +448,14 @@ observeEvent(input$dataStoreDB, {
                                sep="\n")
       }
       
-      feedCSV <- tempfile(pattern = "feedCSV", fileext = ".csv")
+      feedCSV <- tempfile(pattern = "feed-csv-", tmpConfigDirectory, fileext = ".csv")
       
       write.table(feedTab[feedTab[,reqColData$id] == uFoI,-1], feedCSV, 
                   sep = sepData, dec = decData, 
                   row.names = FALSE, col.names=TRUE, 
                   fileEncoding="UTF-8")
       
-      feedConf <- tempfile(pattern = "feedConf", fileext = ".xml")
+      feedConf <- tempfile(pattern = "feed-conf",  tmpConfigDirectory, fileext = "-config.xml")
       
       writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
                        confCsvMetaInit(),
@@ -468,7 +471,10 @@ observeEvent(input$dataStoreDB, {
                        confAddMetaClose(),
                        sep="\n"), feedConf)
       
-      system(paste0("java -jar ", feederPath, " -c ", feedConf))
+    }
+
+    if (length(uFOIs) > 0) {
+      system(paste0("java -jar ", feederPath, " -m ", feedTmpConfigDirectory, " 0 ", feedNumberOfParallelImports))
     }
     
     progress$close()
@@ -539,3 +545,4 @@ observeEvent(input$dataStoreDB, {
     footer = NULL
   ))
 }, ignoreInit=TRUE)
+

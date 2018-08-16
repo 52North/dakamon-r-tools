@@ -30,6 +30,11 @@ dbname <- "sos"
 verbose <- local
 
 feederPath <- ifelse(local, "~/GitRepos/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
+#
+# specifiies the number of parallel performed imports during measurement upload
+#
+feedNumberOfParallelImports <- 1
+#
 stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"
 ifelse(local, 
