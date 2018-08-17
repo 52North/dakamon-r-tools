@@ -231,7 +231,7 @@ server <- function(input, output) {
       paste("data-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(subFoiData()[sp(),]), file, sep = ";", 
+      write.table(isolate(pnsData()[sp(),]), file, sep = ";", 
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
@@ -241,7 +241,7 @@ server <- function(input, output) {
       paste("data-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(subFoiData()[sp(),])
+      df <- isolate(pnsData()[sp(),])
       save(df, file = file)
     }
   )
