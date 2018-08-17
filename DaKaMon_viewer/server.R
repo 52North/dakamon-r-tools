@@ -79,7 +79,7 @@ SOSgetObsByFoITime <- function(obsProp, time, foiURI) {
 }
 ## /tools
 server <- function(input, output) {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   
   # load all super FoI from DB
   ort <- dbGetQuery(db, "SELECT foi.featureofinterestid, foi.name, foi.identifier 
