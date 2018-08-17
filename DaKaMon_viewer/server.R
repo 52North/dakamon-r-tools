@@ -270,30 +270,27 @@ server <- function(input, output) {
   obsProp <- reactive({
     if (is.null(input$selElemGroup))
       return(NULL)
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
-    
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+    col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     op <- NULL
     for (i in 1:length(sp())) { # i <- 1
       op <- rbind(op, 
                   dbGetQuery(db, paste0("SELECT op.observablepropertyid, op.identifier, op.name, 
                                          s.seriesid, s.unitid, s.featureofinterestid,
-                                         p.identifier AS procId, foi.identifier AS foiid,
-                                         sr.referenceseriesid, srv.lastnumericvalue, 
-                                         opr.parentobservablepropertyid, oprv.identifier AS stgrid, oprv.name AS stgrname,
-                                         u.unit
-      FROM observableproperty AS op
-      LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
-      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-      LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
-      LEFT OUTER JOIN seriesreference AS sr ON (s.seriesid = sr.seriesid)
-      LEFT OUTER JOIN series AS srv ON (sr.referenceseriesid = srv.seriesid)
-      LEFT OUTER JOIN observablepropertyrelation AS opr ON (op.observablepropertyid = opr.childobservablepropertyid)
-      LEFT OUTER JOIN observableproperty AS oprv ON (opr.parentobservablepropertyid = oprv.observablepropertyid)
-      LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
-      WHERE foi.identifier = '", subFoiData()[sp()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND opr.parentobservablepropertyid IN ('", paste(elemGroup()$observablepropertyid[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")))
+                                        p.identifier AS procId, foi.identifier AS foiid,
+                                        pd.", col, " AS stgrname,  u.unit, pro.identifier As probeid, pro.identifier As probeid, pp.bg, pp.ng
+                                        FROM observableproperty AS op
+                                        LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
+                                        LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+                                        LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
+                                        LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
+                                        LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
+                                        LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+                                        RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+      WHERE foi.identifier = '", pnsData()[sp()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", col, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")))
     }
     dbDisconnect(db)
-    
+
     op
   })
   
