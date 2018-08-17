@@ -87,34 +87,34 @@ server <- function(input, output) {
                          WHERE foi.featureofinterestid = od.featureofinterestid")
   
   # dbDisconnect(db)
-  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
-  ortColColumns <- paste0("od.", grep("col*", ortDataMetaData$columnid, value = TRUE))
-  ortData <- dbGetQuery(db, paste0("SELECT foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+  ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
+  ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
+  ortData <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
                                     " FROM featureofinterest foi
                                     RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                     WHERE foi.featureofinterestid IN (", 
                                         paste0(ort$featureofinterestid, collapse=", "), ")"))
   # dbDisconnect(db)
-  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  # db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   
-  #pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
   dbDisconnect(db)
   colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
   #colnames(pnsData) <- ortDataMetaData$dede[match(colnames(opnsData), pnsDataMetaData$columnid)]
-  colOrder <- ortDataMetaData$colorder[match(colnames(ortData), ortDataMetaData$columnid)]
-  showTab <- ortData[,colOrder[-1]]
+  #colOrder <- ortDataMetaData$colorder[match(colnames(ortData), ortDataMetaData$dede)]
+  showTab <- ortData[,-1]
 
   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
   
-  showUoM <- sapply(ortDataMetaData$uom, function(x) {
-    if (!is.na(x) & nchar(x) > 0) {
-      paste0(" [",x,"]")
-    } else {
-      ""
-    }
-  })
-  showHead <- paste0(showHead, showUoM)
+  #showUoM <- sapply(ortDataMetaData$uom, function(x) {
+  #  if (!is.na(x) & nchar(x) > 0) {
+  #    paste0(" [",x,"]")
+  #  } else {
+  #    ""
+  #  }
+  #})
+  #showHead <- paste0(showHead, showUoM)
   showHead <- paste0(showHead, "</span>")
   
   output$tableFoi  <- renderDT(datatable(showTab, # colnames = showHead, 
