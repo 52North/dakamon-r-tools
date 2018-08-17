@@ -327,12 +327,12 @@ server <- function(input, output) {
           
           resDfRow$id <- foi
           resDfRow$date <- ft
-          
+
           res <- fromJSON(rawToChar(POST(paste0(SOSWebApp, "service"), 
-                                         body = SOSgetObsByFoITime(input$selObsPhen, gsub(pattern = " ", replacement = "T", ft), foi),
+                                         body = SOSgetObsByFoITime(input$selObsPhen, gsub(pattern = " ", replacement = "T", paste0(ft, ".000")), foi),
                                          content_type_xml(), accept_json())$content))
           for (obs in res$observations) { 
-            if (input$repBG & obs$result$value < obsProp()[obsProp()$identifier == obs$observableProperty & obsProp()$foiid  == foi,]$lastnumericvalue) {
+            if (input$repBG & obs$result$value < obsProp()[obsProp()$identifier == obs$observableProperty & obsProp()$foiid  == foi,]$bg) {
               resDfRow[obs$observableProperty] <- BGchar
             } else {
               resDfRow[obs$observableProperty] <- obs$result$value
