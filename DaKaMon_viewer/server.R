@@ -348,14 +348,20 @@ server <- function(input, output) {
       resDf$Datum <- as.Date(resDf$Datum)
       
       if (input$randomId) {
-        db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
-        dbIdMap <- dbGetQuery(db, paste0("SELECT id, rndid FROM foidata WHERE id IN ('", paste(resDf$ID, collapse="', '"), "')"))
+        db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+        dbIdMap <- dbGetQuery(db, paste0("SELECT f.identifier, od.rndid FROM ort_data od 
+                                          LEFT OUTER JOIN featureofinterest f ON od.featureofinterestid = f.featureofinterestid
+                                          WHERE f.identifier IN ('", paste(resDf$ID, collapse="', '"), "')
+                                          UNION
+                                          SELECT f.identifier, pnsd.rndid FROM pns_data pnsd 
+                                          LEFT OUTER JOIN featureofinterest f ON pnsd.featureofinterestid = f.featureofinterestid
+                                          WHERE f.identifier IN ('", paste(resDf$ID, collapse="', '"), "')"))
         resDf$ID <- dbIdMap[match(resDf$ID, dbIdMap$id), 2]
         dbDisconnect(db)
       }
 
       resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-      colnames(resUom) <- c("ID", "Datun", uObsPropSelId)
+      colnames(resUom) <- c("ID", "Datum", uObsPropSelId)
       resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
       colnames(resBg) <- c("ID", "Datum", uObsPropSelId)
       resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
@@ -364,7 +370,7 @@ server <- function(input, output) {
       for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
         frid <- match(obsPropId, obsProp()$identifier)
         resUom[[obsPropId]] <- obsProp()[frid, "unit"]
-        resBg[[obsPropId]] <- obsProp()[frid, "lastnumericvalue"]
+        resBg[[obsPropId]] <- obsProp()[frid, "bg"]
         resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
       }
       
