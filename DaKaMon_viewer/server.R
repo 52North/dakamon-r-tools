@@ -165,29 +165,41 @@ server <- function(input, output) {
   # load all selcted sub FoI from DB
   # subFoi <- dbGetQuery(db, paste0("SELECT featureofinterestid, name, identifier FROM featureofinterest WHERE identifier != 'unknown' AND featureofinterestid IN (SELECT parentfeatureid FROM featurerelation)"))
   
-  subFoiData <- reactive({
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+  pnsData <- reactive({
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
     
-    sfd <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(ortData[s(),1], collapse="', '") , "'))"))
-    colnames(sfd) <- foiDataMetaData$dede[match(colnames(sfd), foiDataMetaData$columnid)]
+    pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
+    pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
+    pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    
+    # pns <- dbGetQuery(db, paste0("SELECT * FROM foidata WHERE featureofinterestid IN (SELECT childfeatureid FROM featurerelation WHERE parentfeatureid IN ('", paste(ortData[s(),1], collapse="', '") , "'))"))
+    pns <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", paste0(pnsColColumns, collapse=", "),
+                          " FROM featureofinterest foi
+                          RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
+                          RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
+                          LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
+                          WHERE fr.parentfeatureid in (", 
+                          paste(ortData[s(),1], collapse=", "), ")"))
+    
+    colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
     dbDisconnect(db)
-    sfd[,-1]
+    pns[,-1]
   })
-  
+
   output$table2 <- renderDT({
-    showTab <- subFoiData()
+    showTab <- pnsData()
     
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
     
-    showUoM <- sapply(foiDataMetaData$uom, function(x) {
-      if (!is.na(x) & nchar(x) > 0) {
-        paste0(" [",x,"]")
-      } else {
-        ""
-      }
-    })
+    #showUoM <- sapply(foiDataMetaData$uom, function(x) {
+    #  if (!is.na(x) & nchar(x) > 0) {
+    #    paste0(" [",x,"]")
+    #  } else {
+    #    ""
+    #  }
+    #})
     
-    showHead <- paste0(showHead, showUoM)
+   # showHead <- paste0(showHead, showUoM)
     
     showHead <- paste0(showHead, "</span>")
     
