@@ -302,17 +302,17 @@ server <- function(input, output) {
   
   data <- reactive({
     if (!is.null(input$selObsPhen)) {
-      db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+      db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
       
       resDf <- NULL
       
-      for (foi in subFoiData()[sp(), "ID"]) {
+      for (foi in pnsData()[sp(), "ID"]) {
         selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
         
         if(length(selObsPropFoi$seriesid) == 0) next;
         
         # lookup observed time stamps for all series of this FoI
-        foiTimes <- unique(dbGetQuery(db, paste0("SELECT phenomenontimestart
+        foiTimes <- unique(dbGetQuery(db, paste0("SELECT DISTINCT phenomenontimestart
           FROM observation
           WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))$phenomenontimestart)
         
