@@ -253,11 +253,9 @@ server <- function(input, output) {
   # load all avaialble elemGroup for the selected FoI
   
   elemGroup <- reactive({
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbname, user="postgres", password="postgres", port="5432")
+    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
     col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-    res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " 
-                            FROM observableproperty op
-                            LEFT parameter_data
+    res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
                             WHERE ", col, " IS NOT NULL"))
     dbDisconnect(db)
     res
