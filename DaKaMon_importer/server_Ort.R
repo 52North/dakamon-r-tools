@@ -161,7 +161,7 @@ observeEvent(input$storeDB, {
   
   ## add missign columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
-  ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))[,1]
+  ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   misCols <- which(sapply(Ort_header, # TODO drop ID and Name
                           function(x) is.na(match(x, regCols))))
   
@@ -210,19 +210,20 @@ observeEvent(input$storeDB, {
   } else {
     ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
     for (ort in 1:nrow(Ort_data)) {
+      print(paste0(Ort_data[ort,reqColOrt$id], Ort_data[ort,reqColOrt$name]))
       dbSendQuery(db, paste0("with insert_ort as (
                                INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
                                VALUES (nextval('featureofinterestid_seq'), 1, ",
-                           Ort_data[ort,reqColOrt$id], " ",
+                           Ort_data[ort,reqColOrt$id],
                            Ort_data[ort,reqColOrt$name], 
-                           " ST_GeomFromText('POINT (' || ",
+                           "ST_GeomFromText('POINT (' || ",
                            Ort_data[ort,reqColOrt$lat],
                            " || ' ' || ",
                            Ort_data[ort,reqColOrt$lon],
                            "|| ')', 4326)) 
                                RETURNING featureofinterestid as ort_id
                                )
-                               INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols, collapse=', '), ")
+                               INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols[,1], collapse=', '), ")
                                SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
                            'ort_col003_var',
                            'ort_col004_var',
@@ -238,7 +239,7 @@ observeEvent(input$storeDB, {
                            'ort_col014_var',
                            'ort_col015_var',
                            " FROM insert_ort
-                               RETURNING ort_id;"))
+                               RETURNING ort_id;"), sep=" ")
     }
   }
   
