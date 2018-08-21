@@ -211,35 +211,36 @@ observeEvent(input$storeDB, {
   } else {
     ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
     for (ort in 1:nrow(Ort_data)) {
-      query = paste("with insert_ort as (
-                               INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
-                    VALUES (nextval('featureofinterestid_seq'), 1,",
-                    Ort_data[ort,reqColOrt$id], ",",
-                    "'", Ort_data[ort,reqColOrt$name], "'", ",",
-                    " ST_GeomFromText('POINT ('||",
-                    Ort_data[ort,reqColOrt$lat],
-                    "|| ' ' ||",
-                    Ort_data[ort,reqColOrt$lon],
-                    "|| ')', 4326)) 
-                    RETURNING featureofinterestid as ort_id
-                    )
-                    INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols[,1], collapse=', '), ")
-                    SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
-                    'ort_col003_var',
-                    'ort_col004_var',
-                    'ort_col005_var',
-                    'ort_col006_var', 
-                    'ort_col007_var',
-                    'ort_col008_var',
-                    'ort_col009_var',
-                    'ort_col010_var',
-                    'ort_col011_var',
-                    'ort_col012_var',
-                    'ort_col013_var',
-                    'ort_col014_var',
-                    'ort_col015_var',
-                    " FROM insert_ort
-                    RETURNING ort_id;");
+      
+      dynamicColumns = paste0(ortDataCols[,1], collapse=', ')
+      dynamicValues = ""
+      for (col in ortDataCols[["dede"]]) {
+        value = Ort_data[ort,col]
+        if (is.null(value) || is.na(value)) {
+          if (class(value) == "character") {
+            dynamicValues = paste(dynamicValues, '', sep=', ')
+          } else {
+            dynamicValues = paste(dynamicValues, -1, sep=', ')
+          }
+        } else {
+          if (class(value) == "character") {
+            value = paste0("'", value, "'")       
+          }
+          dynamicValues = paste(dynamicValues, value, sep=', ') 
+        }
+      }
+      
+      insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
+                             VALUES (nextval('featureofinterestid_seq'), 1",
+                            paste0("'", Ort_data[ort,reqColOrt$id], "'"),
+                            paste0("'", Ort_data[ort,reqColOrt$name], "'"),
+                            paste0("ST_GeomFromText('POINT ('|| ", Ort_data[ort,reqColOrt$lat], "|| ' ' ||", Ort_data[ort,reqColOrt$lon], " || ')', 4326)) "), 
+                            sep=", ")
+      
+      insertOrt = paste0("INSERT INTO ort_data (featureofinterestid, rndid, ", dynamicColumns, ")
+                          SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int)", dynamicValues, " FROM insert_ort")
+      query = paste("WITH insert_ort as (", insertFeature, " RETURNING featureofinterestid as ort_id)",
+                    insertOrt, ";");
       dbSendQuery(db, query)
     }
   }
