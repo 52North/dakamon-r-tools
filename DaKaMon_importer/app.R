@@ -170,5 +170,14 @@ server <- function(input, output) {
   # Datei upload
 }
 
+connectToDB <- function(callback = NULL) {
+  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  
+  if (Sys.info()["sysname"] == "Windows")
+    dbSendQuery(db, "set client_encoding='windows-1252'")
+  
+  db
+}
+
 
 shinyApp(ui, server)

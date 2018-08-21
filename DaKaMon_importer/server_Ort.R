@@ -141,7 +141,8 @@ output$tableOrt <- renderDataTable({
 #####################
 
 observeEvent(input$storeDB, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  #db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
   
   Ort_data <- inCSVOrt$df
@@ -210,36 +211,36 @@ observeEvent(input$storeDB, {
   } else {
     ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
     for (ort in 1:nrow(Ort_data)) {
-      print(paste0(Ort_data[ort,reqColOrt$id], Ort_data[ort,reqColOrt$name]))
-      dbSendQuery(db, paste0("with insert_ort as (
+      query = paste("with insert_ort as (
                                INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
-                               VALUES (nextval('featureofinterestid_seq'), 1, ",
-                           Ort_data[ort,reqColOrt$id],
-                           Ort_data[ort,reqColOrt$name], 
-                           "ST_GeomFromText('POINT (' || ",
-                           Ort_data[ort,reqColOrt$lat],
-                           " || ' ' || ",
-                           Ort_data[ort,reqColOrt$lon],
-                           "|| ')', 4326)) 
-                               RETURNING featureofinterestid as ort_id
-                               )
-                               INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols[,1], collapse=', '), ")
-                               SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
-                           'ort_col003_var',
-                           'ort_col004_var',
-                           'ort_col005_var',
-                           'ort_col006_var', 
-                           'ort_col007_var',
-                           'ort_col008_var',
-                           'ort_col009_var',
-                           'ort_col010_var',
-                           'ort_col011_var',
-                           'ort_col012_var',
-                           'ort_col013_var',
-                           'ort_col014_var',
-                           'ort_col015_var',
-                           " FROM insert_ort
-                               RETURNING ort_id;"), sep=" ")
+                    VALUES (nextval('featureofinterestid_seq'), 1,",
+                    Ort_data[ort,reqColOrt$id], ",",
+                    "'", Ort_data[ort,reqColOrt$name], "'", ",",
+                    " ST_GeomFromText('POINT ('||",
+                    Ort_data[ort,reqColOrt$lat],
+                    "|| ' ' ||",
+                    Ort_data[ort,reqColOrt$lon],
+                    "|| ')', 4326)) 
+                    RETURNING featureofinterestid as ort_id
+                    )
+                    INSERT INTO ort_data (featureofinterestid, rndid, ", paste0(ortDataCols[,1], collapse=', '), ")
+                    SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
+                    'ort_col003_var',
+                    'ort_col004_var',
+                    'ort_col005_var',
+                    'ort_col006_var', 
+                    'ort_col007_var',
+                    'ort_col008_var',
+                    'ort_col009_var',
+                    'ort_col010_var',
+                    'ort_col011_var',
+                    'ort_col012_var',
+                    'ort_col013_var',
+                    'ort_col014_var',
+                    'ort_col015_var',
+                    " FROM insert_ort
+                    RETURNING ort_id;");
+      dbSendQuery(db, query)
     }
   }
   
