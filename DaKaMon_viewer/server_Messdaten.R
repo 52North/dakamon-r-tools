@@ -3,7 +3,7 @@
 #########
 # Tab 1 #
 #########
-
+ortData <- NULL
 db <- connectToDB()
 
 # load all Entwässerungssysteme from DB
@@ -90,29 +90,30 @@ if (nrow(ort) > 0) {
 #####################
 # load all PNS for all selected Orte from DB
 
-pnsData <- reactive({
-  db <- connectToDB()
-  
-  pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
-  pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
-  
-  pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
-  
-  pns <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", 
-                               paste0(pnsColColumns, collapse=", "),
-                               " FROM featureofinterest foi
+if(!is.null(ortData)) {
+  pnsData <- reactive({
+    db <- connectToDB()
+    
+    pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
+    pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
+    
+    pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    
+    pns <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", 
+                                 paste0(pnsColColumns, collapse=", "),
+                                 " FROM featureofinterest foi
                                RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
                                LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
                                WHERE fr.parentfeatureid in (", 
-                               paste(ortData[sOrt(),1], collapse=", "), ")"))
-  dbDisconnect(db)
-  
-  if (nrow(pns) > 0)
-    colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
-  
-  pns[,-1]
-})
+                                 paste(ortData[sOrt(),1], collapse=", "), ")"))
+    dbDisconnect(db)
+    
+    if (nrow(pns) > 0)
+      colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
+    
+    pns[,-1]
+  })
 
 output$tablePNS <- renderDT({
   showTab <- pnsData()
@@ -163,7 +164,9 @@ output$exportKaVsRData <- downloadHandler(
     save(df, file = file)
   }
 )
-
+} else {
+  output$selTextPNS <- renderText("Bitte zunächst mindestens einen Ort auswählen.")
+}
 
 
 #####################
