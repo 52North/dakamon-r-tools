@@ -163,12 +163,13 @@ observeEvent(input$storeDB, {
   
   ## add missign columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
-  misCols <- which(sapply(paste0("pns_", PNS_header), # TODO drop ID, parent identifier
+  pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
+  misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
   
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("pns_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0(sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(PNS_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
@@ -177,20 +178,25 @@ observeEvent(input$storeDB, {
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE pns_data ADD COLUMN ", colId, " ", coltype, ";"))
       
-      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
-                               VALUES ('", paste(colId, PNS_header[misCols[i]], sep="', '"),"')"))
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                               VALUES ('", paste(colId, 'pns', PNS_header[misCols[i]], sep="', '"),"')"))
     }
   }
   
   # if there are already PNSe in the DB that are again in the CSV
-  if (nrow(checkDBPNS$PNSInDB) > 0) {
-    ## UPDATE FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
-    dbSendQuery(db, paste0("with update_pns as (
+  for (pns in 1:nrow(PNS_data)) {
+    if (nrow(checkDBPNS$PNSInDB) > 0) {
+      query = paste("with update_pns as (
       UPDATE featureofinterest 
       	SET
-      		name = name_var,
-      		geom =  ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326)
-      WHERE identifier = var
+      		 name = '", PNS_data[pns,reqColPNS$name],
+           "', geom = ST_GeomFromText('POINT (",
+                     PNS_data[pns,reqColPNS$lat],
+                     " ",
+                     PNS_data[pns,reqColPNS$lon],
+                     ")', 4326))  
+          WHERE identifier = '", PNS_data[pns,reqColPNS$id],
+          "' RETURNING featureofinterestid
       RETURNING featureofinterestid
       )
       UPDATE pns_data 
@@ -201,43 +207,50 @@ observeEvent(input$storeDB, {
       		pns_col006 = pns_col006_var,
       		pns_col007 = pns_col007_var
       WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
-      RETURNING featureofinterestid;"))
-    
-    ## if pns - foi relation does not exist, insert relation ## 
-    dbSendQuery(db, paste0("INSERT INTO featurerelation
+      RETURNING featureofinterestid;")
+      updatedId <- dbSendQuery(db, query)
+      ## if pns - foi relation does not exist, insert relation ## 
+      query = paste("INSERT INTO featurerelation
         VALUES 
       	(SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'parent_identifier_var',
-      			featureofinterestid);"))
-  } else {
-    ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
-    dbSendQuery(db, paste0("with insert_pns as (
-    INSERT INTO featureofinterest
-         (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
-         VALUES 
-         (nextval('featureofinterestid_seq'),
-         1,
-         'identifier_var',
-         'name_var',
-         ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326))
-         RETURNING featureofinterestid
-  ), insert_pns_rel as (
-         INSERT INTO featurerelation
-         INSERT INTO featurerelation 
-         SELECT insert_ort.featureofinterestid, insert_pns.featureofinterestid
-         FROM insert_ort, insert_pns
-         RETURNING childfeatureid
-    )
-   INSERT INTO pns_data 
-   SELECT featureofinterestid, 
-   pseudo_encrypt(nextval('rndIdSeq')::int),
-   'pns_col003_var',
-   'pns_col004_var',
-   'pns_col005_var',
-   pns_col006_var,
-   pns_col007_var
-   FROM insert_pns
-   RETURNING featureofinterestid;"))
+      			featureofinterestid);")
+      dbSendQuery(db, query)
+    } else {
+      ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
+      query = paste0("with insert_pns as (
+                    INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
+                    VALUES (nextval('featureofinterestid_seq'), 1,'",
+                    PNS_data[pns,reqColPNS$id], "',",
+                    "'", PNS_data[pns,reqColPNS$name], "'", ",",
+                    " ST_GeomFromText('POINT (",
+                    PNS_data[pns,reqColPNS$lat],
+                    " ",
+                    PNS_data[pns,reqColPNS$lon],
+                    ")', 4326)) 
+                    RETURNING featureofinterestid as pns_id
+                    ), query_ort as (
+                        SELECT featureofinterestid as ort_id FROM featureofinterest
+                        WHERE identifier = '", PNS_data[pns,reqColPNS$geo], 
+                    "'), insert_pns_rel as (
+                     INSERT INTO featurerelation 
+                     SELECT query_ort.ort_id, insert_pns.pns_id
+                     FROM insert_pns, query_ort
+                     RETURNING childfeatureid
+                      )
+                     INSERT INTO pns_data (featureofinterestid, rndid, ", paste0(pnsDataCols[,1], collapse=', '), ")
+                    SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
+                      
+                     "'pns_col003_var',
+                     'pns_col004_var',
+                     'pns_col005_var',
+                     pns_col006_var,
+                     pns_col007_var
+                     FROM insert_pns
+                     RETURNING featureofinterestid;", sep="")
+      dbSendQuery(db, query)
+    }
   }
+
   
   showModal(modalDialog(
     title = "Vorgang abgeschlossen.",

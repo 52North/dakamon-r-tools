@@ -240,6 +240,7 @@ observeEvent(input$dataCsvFile, {
   valiData$validated <- TRUE
 })
 
+# TODO check name in app.R
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
     if (is.null(valiData$txt)) {
