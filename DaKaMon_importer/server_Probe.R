@@ -106,6 +106,7 @@ observeEvent(input$checkDB, {
 
 
 # output of DB consistency check as html - or action button
+# TODO check name in app.R
 output$ProbeDBConsistencyOut <- renderUI({
   if (checkDBProbe$checked) {
     if (is.null(checkDBProbe$txt)) {
