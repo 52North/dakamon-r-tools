@@ -75,8 +75,7 @@ ui <- navbarPage("Datenimport",
                                          csvInfo,  
                                          checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("ProbeValidationOut"),
-                                         uiOutput("ProbeDBConsistencyTxtOut"),
-                                         uiOutput("ProbeDBConsistencyActionOut"), # DBConsistencyActionOut
+                                         uiOutput("ProbeDBConsistencyOut"), # DBConsistencyActionOut
                                          width = 2),
                                        mainPanel(dataTableOutput('tableProbe'))
                                      )),
