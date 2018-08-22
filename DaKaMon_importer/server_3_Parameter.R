@@ -192,8 +192,8 @@ observeEvent(input$storeDBParameter, {
   for (param in 1:nrow(PAR_data)) {
     # if there are already PARe in the DB that are again in the CSV
     if (nrow(checkDBPAR$PARInDB) > 0) {
-      # TODO switch to workflow with dynamic columns
       ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
+      # TODO switch to workflow with dynamic columns
       dbSendQuery(db, paste0("with update_param as (
         UPDATE observableproperty
         SET

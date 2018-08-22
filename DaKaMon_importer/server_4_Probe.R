@@ -49,6 +49,7 @@ observeEvent(input$csvFileProbe, {
   valiProbe$validated <- TRUE
 })
 
+
 # write txt feedback as html list - or action button
 
 output$ProbeValidationOut <- renderUI({
@@ -62,6 +63,7 @@ output$ProbeValidationOut <- renderUI({
     return()
   }
 })
+
 
 ##########################
 ## check DB consistency ##
@@ -118,6 +120,7 @@ output$ProbeDBConsistencyOut <- renderUI({
     return()
   }
 })
+
 
 # plot table with CSV
 output$tableProbe <- renderDataTable({
