@@ -168,12 +168,14 @@ observeEvent(input$storeDBParameter, {
 
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
-  misCols <- which(sapply(paste0("param_", PAR_header), # TODO drop ID, parent identifier
+  paramDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
+  misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
 
   if (length(misCols > 0)) {
+    # TODO adjust to new column_metadata workflow
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("param_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0(sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(PAR_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
@@ -181,17 +183,19 @@ observeEvent(input$storeDBParameter, {
 
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE parameter_data ADD COLUMN ", colId, " ", coltype, ";"))
-      
-      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
-                               VALUES ('", paste(colId, PAR_header[misCols[i]], sep="', '"),"')"))
+
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                               VALUES ('", paste(colId, 'param', PAR_header[misCols[i]], sep="', '"),"')"))
     }
   }
-  
-  # if there are already PARe in the DB that are again in the CSV
-  if (nrow(checkDBPAR$PARInDB) > 0) {
-    ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
-    dbSendQuery(db, paste0("with update_param as (
-        UPDATE observableproperty 
+
+  for (param in 1:nrow(PAR_data)) {
+    # if there are already PARe in the DB that are again in the CSV
+    if (nrow(checkDBPAR$PARInDB) > 0) {
+      # TODO switch to workflow with dynamic columns
+      ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
+      dbSendQuery(db, paste0("with update_param as (
+        UPDATE observableproperty
         SET
         name = name_var
         WHERE identifier = var
@@ -206,26 +210,44 @@ observeEvent(input$storeDBParameter, {
       param_col007 = param_col007_var
       WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param)
       RETURNING observablepropertyid;"))
-  } else {
-    dbSendQuery(db, paste0("with insert_param as (
-        INSERT INTO observableproperty 
-        (observablepropertyid, identifier, name) 
-        VALUES 
-        (nextval('observablepropertyid_seq'),
-          'identifier_var',
-          'name_var')
+    } else {
       ## INSERT PAR and data via SQL ##
+      dynamicColumns = paste0(paramDataCols[, 1], collapse = ", ")
+      dynamicValues = ""
+      for (col in paramDataCols[["dede"]]) {
+        value = PAR_data[param, col]
+        if (is.null(value) || is.na(value)) {
+          if (class(value) == "character") {
+            dynamicValues = paste(dynamicValues, "", sep = ", ")
+          } else {
+            dynamicValues = paste(dynamicValues, -1, sep = ", ")
+          }
+        } else {
+          if (class(value) == "character") {
+            value = paste0("'", value, "'")
+          }
+          dynamicValues = paste(dynamicValues, value, sep = ", ")
+        }
+      }
+      insertParams = paste0("(
+        INSERT INTO observableproperty
+        (observablepropertyid, identifier, name)
+        VALUES
+        (nextval('observablepropertyid_seq'), '",
+            PAR_data[param, reqColPAR$id],
+            "', '",
+            PAR_data[param, reqColPAR$name],
+            "')
         RETURNING observablepropertyid
-      )
-      INSERT INTO parameter_data 
-      SELECT  observablepropertyid,
-      'param_col003_var',
-      'param_col004_var',
-      'param_col005_var',
-      'param_col006_var',
-      'param_col007_var'
-      FROM insert_param
-      RETURNING observablepropertyid;"))	
+      )")
+      insertParameterValues = paste0("INSERT INTO parameter_data
+                      (observablepropertyid, ", dynamicColumns, ")
+                      SELECT  observablepropertyid",
+                      dynamicValues,
+                      "FROM insert_param")
+      query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
+      dbSendQuery(db, query)
+    }
   }
 
   showModal(modalDialog(
