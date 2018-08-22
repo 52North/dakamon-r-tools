@@ -13,27 +13,27 @@ decPNS <- decSep
 observeEvent(input$csvFilePNS, {
   valiPNS$validated <- FALSE
   checkDBPNS$checked <- FALSE
-  
+
   # check whether an encoding has been set; fallback: guess the eoncoding using readr
   if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFilePNS$datapath)
     csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
   }
-  
+
   inCSVPNS$csvEncode <- csvEncode
-  
+
   inCSVPNS$df <- read.csv(input$csvFilePNS$datapath,
                           header = TRUE,
                           sep = sepPNS, dec = decPNS,
-                          stringsAsFactors = FALSE, 
+                          stringsAsFactors = FALSE,
                           fileEncoding = inCSVPNS$csvEncode)
-  
+
   inCSVPNS$headAsChar <- colnames(inCSVPNS$df)
-  
-  ## validation of PNS csv-file 
+
+  ## validation of PNS csv-file
   # look for required column names
   # check whether columns have unique names
-  
+
   txt <- NULL
   if (!(reqColPNS$id %in% inCSVPNS$headAsChar) || length(unique(inCSVPNS$df[,reqColPNS$id])) != length(inCSVPNS$df[,reqColPNS$id]))
     txt <- paste0(txt, "<li>Jede Probenahmestelle benötigt eine persistente und eindeutige ID in der Spalte'", reqColPNS$id, "'.</li>")
@@ -41,10 +41,10 @@ observeEvent(input$csvFilePNS, {
     if (!(reqColName %in% inCSVPNS$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
-  
+
   if(length(unique(inCSVPNS$headAsChar)) != length(inCSVPNS$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
-  
+
   valiPNS$txt <- txt
   valiPNS$validated <- TRUE
 })
@@ -72,12 +72,12 @@ output$PNSValidationOut <- renderUI({
 observeEvent(input$checkDBPNS, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add = T)
-  
+
   progress$set(message = "Prüfe bereits registrierte PNSe.", value = 0)
-  
+
   # get all PNSe from the DB that have any of the identifiers in the CSV
   PNSInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('",
                                    paste(inCSVPNS$df[,reqColPNS$id], collapse="', '"),"')"))
@@ -87,11 +87,11 @@ observeEvent(input$checkDBPNS, {
   } else {
     checkDBPNS$txt <- NULL
   }
-  
+
   # TODO: check whether referenced super FoIs exist; if not -> error state: no upload
-  
+
   checkDBPNS$PNSInDB <- PNSInDB
-  
+
   checkDBPNS$checked <- TRUE
 }, ignoreInit=TRUE)
 
@@ -113,21 +113,21 @@ output$PNSDBConsistencyOut <- renderUI({
 output$tablePNS <- renderDataTable({
   if (!is.null(inCSVPNS$df)) {
     showTab <- inCSVPNS$df
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showHead <- paste0(showHead, "</span>")
-    
+
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sPNS=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-    
+
     # if DB consistency has been checked, apply colors
     if (checkDBPNS$checked) {
       rowColors <- rep("white", nrow(showTab))
-      
+
       if (nrow(checkDBPNS$PNSInDB) > 0) {
         rowColors[showTab$ID %in% checkDBPNS$PNSInDB] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
@@ -145,28 +145,28 @@ output$tablePNS <- renderDataTable({
 observeEvent(input$storeDBPNS, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   PNS_data <- inCSVPNS$df
   PNS_header <- inCSVPNS$headAsChar
-  
+
   PNS_empty_cols <- apply(PNS_data, 2, function(x) all(is.na(x)))
-  
+
   PNS_header <- PNS_header[!PNS_empty_cols]
   PNS_data <- PNS_data[,!PNS_empty_cols]
-  
+
   nRowDf <- nrow(PNS_data)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add=T)
-  
+
   progress$set(message = "Füge Probenahmestellen in DB ein.", value = 0)
-  
+
   ## add missign columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
   pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
-  
+
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
       colId <- paste0(sprintf("col%03d", i + length(regCols)))
@@ -174,32 +174,32 @@ observeEvent(input$storeDBPNS, {
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
-      
+
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE pns_data ADD COLUMN ", colId, " ", coltype, ";"))
-      
+
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                VALUES ('", paste(colId, 'pns', PNS_header[misCols[i]], sep="', '"),"')"))
     }
   }
-  
-  # if there are already PNSe in the DB that are again in the CSV
+
+  # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
     if (nrow(checkDBPNS$PNSInDB) > 0) {
       query = paste("with update_pns as (
-      UPDATE featureofinterest 
+      UPDATE featureofinterest
       	SET
       		 name = '", PNS_data[pns,reqColPNS$name],
            "', geom = ST_GeomFromText('POINT (",
                      PNS_data[pns,reqColPNS$lat],
                      " ",
                      PNS_data[pns,reqColPNS$lon],
-                     ")', 4326))  
+                     ")', 4326))
           WHERE identifier = '", PNS_data[pns,reqColPNS$id],
           "' RETURNING featureofinterestid
       RETURNING featureofinterestid
       )
-      UPDATE pns_data 
+      UPDATE pns_data
       	SET
       		pns_col003 = pns_col003_var,
       		pns_col004 = pns_col004_var,
@@ -209,9 +209,9 @@ observeEvent(input$storeDBPNS, {
       WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
       RETURNING featureofinterestid;")
       updatedId <- dbSendQuery(db, query)
-      ## if pns - foi relation does not exist, insert relation ## 
+      ## if pns - foi relation does not exist, insert relation ##
       query = paste("INSERT INTO featurerelation
-        VALUES 
+        VALUES
       	(SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'parent_identifier_var',
       			featureofinterestid);")
       dbSendQuery(db, query)
@@ -251,7 +251,7 @@ observeEvent(input$storeDBPNS, {
     }
   }
 
-  
+
   showModal(modalDialog(
     title = "Vorgang abgeschlossen.",
     "Probenahmestellen erfolgreich angelegt.",
