@@ -157,7 +157,7 @@ server <- function(input, output) {
   
   source("server_Ort.R", local = TRUE, encoding = "UTF-8")$value
   
-  source("server_Probenahme.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
   
   source("server_Parameter.R", local = TRUE, encoding = "UTF-8")$value
   
