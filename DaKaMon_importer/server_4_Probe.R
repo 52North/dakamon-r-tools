@@ -81,7 +81,7 @@ observeEvent(input$checkDBProbe, {
   progress$set(message = "Prüfe bereits registrierte Proben.", value = 0)
 
   # get all Probes from the DB that have any of the identifiers in the CSV
-  if (length(inCSVPAR$df) > 0) {
+  if (length(inCSVProbe$df) > 0) {
     ProbeInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM probe WHERE identifier IN ('",
                                      paste(inCSVProbe$df[,reqColProbe$id], collapse="', '"),"')"))
 
