@@ -49,12 +49,13 @@ observeEvent(input$csvFilePAR, {
   valiPAR$validated <- TRUE
 })
 
+
 # write txt feedback as html list - or action button
 
 output$PARValidationOut <- renderUI({
   if (valiPAR$validated) {
     if (is.null(valiPAR$txt)) {
-      actionButton("checkDB", "Prüfe Datenkonsistenz!")
+      actionButton("checkDBParameter", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPAR$txt, "</ul></div></html"))
     }
@@ -63,13 +64,14 @@ output$PARValidationOut <- renderUI({
   }
 })
 
+
 ##########################
 ## check DB consistency ##
 ##########################
 
 # find existing Parameters
 
-observeEvent(input$checkDB, {
+observeEvent(input$checkDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -102,7 +104,7 @@ observeEvent(input$checkDB, {
 output$PARDBConsistencyOut <- renderUI({
   if (checkDBPAR$checked) {
     if (is.null(checkDBPAR$txt)) {
-      actionButton("storeDB", "Einfügen in DB!")
+      actionButton("storeDBParameter", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPAR$txt, "</li></ul></div></html"))
     }
@@ -110,6 +112,7 @@ output$PARDBConsistencyOut <- renderUI({
     return()
   }
 })
+
 
 # plot table with CSV
 output$tablePAR <- renderDataTable({
@@ -140,11 +143,12 @@ output$tablePAR <- renderDataTable({
   }
 })
 
+
 ###########################################
 ## Insert Parameter/ObservableProperties ##
 ###########################################
 
-observeEvent(input$storeDB, {
+observeEvent(input$storeDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -163,7 +167,7 @@ observeEvent(input$storeDB, {
   
   progress$set(message = "Füge Parameter in DB ein.", value = 0)
   
-  ## add missign columns
+  ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
   misCols <- which(sapply(paste0("param_", PAR_header), # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
