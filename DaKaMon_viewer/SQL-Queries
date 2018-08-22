@@ -80,7 +80,7 @@ probeColColumns <- paste0("pro.", grep("col*", probeDataProbeMetaData$columnid, 
 Query alle Proben mit PNS-Identifier
 --------------------------------------
 dbGetQuery(db, paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", paste0(probeColColumns, collapse=", "), 
-                        FROM probe pro
+                        " FROM probe pro
                         LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id" ))
 
 Query alle Proben mit PNS-Id
@@ -91,7 +91,7 @@ dbGetQuery(db, "SELECT * FROM probe"))
 Query alle Proben mit Filter nach PNS
 -------------------------------------
 dbGetQuery(db, paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", paste0(probeColColumns, collapse=", "), 
-                        FROM probe pro
+                        " FROM probe pro
                         LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
                         WHERE pns.featureofinterestid IN (...)" ))
 
