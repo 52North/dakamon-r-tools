@@ -13,27 +13,27 @@ decPAR <- decSep
 observeEvent(input$csvFilePAR, {
   valiPAR$validated <- FALSE
   checkDBPAR$checked <- FALSE
-  
+
   # check whether an encoding has been set; fallback: guess the eoncoding using readr
   if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFilePAR$datapath)
     csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
   }
-  
+
   inCSVPAR$csvEncode <- csvEncode
-  
+
   inCSVPAR$df <- read.csv(input$csvFilePAR$datapath,
                           header = TRUE,
                           sep = sepPAR, dec = decPAR,
-                          stringsAsFactors = FALSE, 
+                          stringsAsFactors = FALSE,
                           fileEncoding = inCSVPAR$csvEncode)
-  
+
   inCSVPAR$headAsChar <- colnames(inCSVPAR$df)
-  
-  ## validation of PAR csv-file 
+
+  ## validation of PAR csv-file
   # look for required column names
   # check whether columns have unique names
-  
+
   txt <- NULL
   if (!(reqColPAR$id %in% inCSVPAR$headAsChar) || length(unique(inCSVPAR$df[,reqColPAR$id])) != length(inCSVPAR$df[,reqColPAR$id]))
     txt <- paste0(txt, "<li>Jeder Parameter benötigt eine persistente und eindeutige ID in der Spalte'", reqColPAR$id, "'.</li>")
@@ -41,10 +41,10 @@ observeEvent(input$csvFilePAR, {
     if (!(reqColName %in% inCSVPAR$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
-  
+
   if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
-  
+
   valiPAR$txt <- txt
   valiPAR$validated <- TRUE
 })
@@ -74,27 +74,27 @@ output$PARValidationOut <- renderUI({
 observeEvent(input$checkDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add = T)
-  
+
   progress$set(message = "Prüfe bereits registrierte Parameter.", value = 0)
-  
+
   # get all PARs from the DB that have any of the identifiers in the CSV
   if (length(inCSVPAR$df) > 0) {
     PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
                                    paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
-  
+
     if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
       checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
                               paste0(PARInDB$identifier, collapse="</li><li>"))
     } else {
       checkDBPAR$txt <- NULL
   }
-  
+
     checkDBPAR$PARInDB <- PARInDB
   }
-  
+
   checkDBPAR$checked <- TRUE
 }, ignoreInit=TRUE)
 
@@ -117,21 +117,21 @@ output$PARDBConsistencyOut <- renderUI({
 output$tablePAR <- renderDataTable({
   if (!is.null(inCSVPAR$df)) {
     showTab <- inCSVPAR$df
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showHead <- paste0(showHead, "</span>")
-    
+
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sPAR=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-    
+
     # if DB consistency has been checked, apply colors
     if (checkDBPAR$checked) {
       rowColors <- rep("white", nrow(showTab))
-      
+
       if (nrow(checkDBPAR$PARInDB) > 0) {
         rowColors[showTab$ID %in% checkDBPAR$PARInDB] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
@@ -150,27 +150,27 @@ output$tablePAR <- renderDataTable({
 observeEvent(input$storeDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   PAR_data <- inCSVPAR$df
   PAR_header <- inCSVPAR$headAsChar
-  
+
   PAR_empty_cols <- apply(PAR_data, 2, function(x) all(is.na(x)))
-  
+
   PAR_header <- PAR_header[!PAR_empty_cols]
   PAR_data <- PAR_data[,!PAR_empty_cols]
-  
+
   nRowDf <- nrow(PAR_data)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add=T)
-  
+
   progress$set(message = "Füge Parameter in DB ein.", value = 0)
-  
+
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
   misCols <- which(sapply(paste0("param_", PAR_header), # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
-  
+
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
       colId <- paste0("param_", sprintf("col%03d", i + length(regCols)))
@@ -178,7 +178,7 @@ observeEvent(input$storeDBParameter, {
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
-      
+
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE parameter_data ADD COLUMN ", colId, " ", coltype, ";"))
       
@@ -197,7 +197,7 @@ observeEvent(input$storeDBParameter, {
         WHERE identifier = var
         RETURNING observablepropertyid
       )
-      UPDATE parameter_data 
+      UPDATE parameter_data
       SET
       param_col003 = param_col003_var,
       param_col004 = param_col004_var,
@@ -207,7 +207,6 @@ observeEvent(input$storeDBParameter, {
       WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param)
       RETURNING observablepropertyid;"))
   } else {
-    ## INSERT PAR via SQL, returns the id (pkid) of the inserted parameter ##
     dbSendQuery(db, paste0("with insert_param as (
         INSERT INTO observableproperty 
         (observablepropertyid, identifier, name) 
@@ -215,6 +214,7 @@ observeEvent(input$storeDBParameter, {
         (nextval('observablepropertyid_seq'),
           'identifier_var',
           'name_var')
+      ## INSERT PAR and data via SQL ##
         RETURNING observablepropertyid
       )
       INSERT INTO parameter_data 
@@ -227,7 +227,7 @@ observeEvent(input$storeDBParameter, {
       FROM insert_param
       RETURNING observablepropertyid;"))	
   }
-  
+
   showModal(modalDialog(
     title = "Vorgang abgeschlossen",
     paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt."),

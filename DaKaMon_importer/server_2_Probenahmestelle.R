@@ -218,7 +218,7 @@ observeEvent(input$storeDBPNS, {
       			featureofinterestid);")
       dbSendQuery(db, query)
     } else {
-      ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
+      ## INSERT FoI and data via SQL, mind the parental FoI ##
       dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
       dynamicValues = ""
       for (col in pnsDataCols[["dede"]]) {

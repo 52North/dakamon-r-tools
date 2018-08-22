@@ -213,7 +213,7 @@ observeEvent(input$storeDBOrt, {
       WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort)
       RETURNING featureofinterestid;"))
     } else {
-      ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
+      ## INSERT FoI and data via SQL ##
       dynamicColumns = paste0(ortDataCols[, 1], collapse = ", ")
       dynamicValues = ""
       for (col in ortDataCols[["dede"]]) {
