@@ -92,6 +92,9 @@ if (nrow(ort) > 0) {
   dbDisconnect(db)
 }
 
+observeEvent(input$fromOrtToPNS, {
+  updateTabsetPanel(session, "inNavbarpage",selected = "Probenahemstelle(n) auswählen")
+})
 
 
 #####################
@@ -179,6 +182,9 @@ if(!is.null(ortData)) {
   output$selTextPNS <- renderText("Bitte zunächst mindestens einen Ort auswählen.")
 }
 
+observeEvent(input$fromPNStoMessdaten, {
+  updateTabsetPanel(session, "inNavbarpage", selected = "Messdaten anzeigen")
+})
 
 #####################
 ######  TAB 3  ######

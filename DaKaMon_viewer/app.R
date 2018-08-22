@@ -22,8 +22,8 @@ connectToDB <- function() {
 
 ## /tools
 
-ui <-  navbarPage("Datenansicht",
-                  navbarMenu("Messdaten",
+ui <-  navbarPage("Datenansicht", id="inNavbarpage",
+                  navbarMenu("Messdaten", 
                              ## Ort
                              tabPanel("Ort(e) auswählen",
                                       uiOutput("ewsSelInput"),
@@ -34,7 +34,9 @@ ui <-  navbarPage("Datenansicht",
                                       ),
                                       textOutput("selTextOrt"),
                                       downloadButton("exportKaCSV", "Export als csv-Datei."),
-                                      downloadButton("exportKaRData", "Export als RData-Datei.")),
+                                      downloadButton("exportKaRData", "Export als RData-Datei."),
+                                      br(),
+                                      actionButton("fromOrtToPNS", "Weiter...")),
                              ## PNS
                              tabPanel(
                                "Probenahemstelle(n) auswählen",
@@ -45,7 +47,9 @@ ui <-  navbarPage("Datenansicht",
                                ),
                                textOutput("selTextPNS"),
                                downloadButton("exportKaVsCSV", "Export als csv-Datei."),
-                               downloadButton("exportKaVsRData", "Export als RData-Datei.")),
+                               downloadButton("exportKaVsRData", "Export als RData-Datei."),
+                               br(),
+                               actionButton("fromPNStoMessdaten", "Weiter...")),
                              ## Messdaten
                              tabPanel("Messdaten anzeigen",
                                       sidebarLayout(
@@ -99,7 +103,7 @@ ui <-  navbarPage("Datenansicht",
                                       DTOutput("tableLitPubId")))
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   source("server_Messdaten.R", local = TRUE, encoding = "UTF-8")$value
   
