@@ -49,6 +49,7 @@ observeEvent(input$csvFilePAR, {
   valiPAR$validated <- TRUE
 })
 
+
 # write txt feedback as html list - or action button
 
 output$PARValidationOut <- renderUI({
@@ -62,6 +63,7 @@ output$PARValidationOut <- renderUI({
     return()
   }
 })
+
 
 ##########################
 ## check DB consistency ##
@@ -111,6 +113,7 @@ output$PARDBConsistencyOut <- renderUI({
   }
 })
 
+
 # plot table with CSV
 output$tablePAR <- renderDataTable({
   if (!is.null(inCSVPAR$df)) {
@@ -140,6 +143,7 @@ output$tablePAR <- renderDataTable({
   }
 })
 
+
 ###########################################
 ## Insert Parameter/ObservableProperties ##
 ###########################################
@@ -163,7 +167,7 @@ observeEvent(input$storeDBParameter, {
   
   progress$set(message = "Füge Parameter in DB ein.", value = 0)
   
-  ## add missign columns
+  ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
   misCols <- which(sapply(paste0("param_", PAR_header), # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))

@@ -162,7 +162,7 @@ observeEvent(input$storeDBOrt, {
 
   progress$set(message = "Füge Orte in DB ein.", value = 0)
 
-  ## add missign columns
+  ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
   ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   misCols <- which(sapply(Ort_header, # TODO drop ID and Name

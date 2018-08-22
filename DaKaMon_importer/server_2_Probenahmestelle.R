@@ -138,6 +138,7 @@ output$tablePNS <- renderDataTable({
   }
 })
 
+
 #############################
 ## Insert Probenamestellen ##
 #############################
@@ -161,7 +162,7 @@ observeEvent(input$storeDBPNS, {
 
   progress$set(message = "Füge Probenahmestellen in DB ein.", value = 0)
 
-  ## add missign columns
+  ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
   pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
@@ -218,7 +219,6 @@ observeEvent(input$storeDBPNS, {
       dbSendQuery(db, query)
     } else {
       ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
-      # TODO switch to workflow with dynamic columns
       dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
       dynamicValues = ""
       for (col in pnsDataCols[["dede"]]) {
@@ -241,7 +241,7 @@ observeEvent(input$storeDBPNS, {
                     INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
                     VALUES (nextval('featureofinterestid_seq'), 1,'",
                     PNS_data[pns,reqColPNS$id], "',",
-                    "'", PNS_data[pns,reqColPNS$name], "'", ",",
+                    "'", PNS_data[pns,reqColPNS$name], "',",
                     " ST_GeomFromText('POINT (",
                     PNS_data[pns,reqColPNS$lat],
                     " ",
@@ -262,7 +262,7 @@ observeEvent(input$storeDBPNS, {
                     INSERT INTO pns_data (featureofinterestid, rndid, ", dynamicColumns, ")
                     SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int)",
                       dynamicValues,
-                     " FROM insert_pns;", sep="")
+                     " FROM insert_pns;")
       dbSendQuery(db, query)
     }
   }
