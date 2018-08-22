@@ -97,7 +97,7 @@ observeEvent(input$checkDBOrt, {
 
 output$OrtDBConsistencyOut <- renderUI({
   if (checkDBOrt$checked) {
-    if (is.null(checkDBOrt$txt)) {
+    if (is.null(checkDBOrt$txt) || input$owOrt) {
       actionButton("storeDBOrt", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBOrt$txt, "</li></ul></div></html"))
@@ -129,7 +129,7 @@ output$tableOrt <- renderDataTable({
       rowColors <- rep("white", nrow(showTab))
 
       if (nrow(checkDBOrt$OrtInDB) > 0) {
-        rowColors[showTab$ID %in% checkDBOrt$OrtInDB] <- "red"
+        rowColors[showTab$ID %in% checkDBOrt$OrtInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
                               backgroundColor = styleEqual(showTab$ID, rowColors))
       }
@@ -186,7 +186,7 @@ observeEvent(input$storeDBOrt, {
 
   # if there are already Orte in the DB that are again in the CSV
   for (ort in 1:nrow(Ort_data)) {
-    if (nrow(checkDBOrt$OrtInDB) > 0) {
+    if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
       # TODO switch to workflow with dynamic columns UPDATE FoI and data via SQL,
       # returns the id (pkid) of the updated feature ##
       dbSendQuery(db, paste0("with update_ort as (

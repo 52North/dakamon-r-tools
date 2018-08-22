@@ -11,7 +11,7 @@ output$litParamInput <- renderUI(selectInput("litPar", "Parameter",
 
 dbDisconnect(db)
 
-# TODO: load all Literaturwerte containgn the parameter selection input$litPar
+# TODO: load all Literaturwerte containing the parameter selection input$litPar
 
 ## Thematik
 db <- connectToDB()
@@ -24,7 +24,7 @@ output$litThematikInput <- renderUI(selectInput("litThematik", "Thematik",
 
 dbDisconnect(db)
 
-# TODO: load all Literaturwerte containgn the parameter selection input$litThematik
+# TODO: load all Literaturwerte containing the parameter selection input$litThematik
 
 ## Publikation # z.B. alle Werte, die in Kaiser2012a ermittelt wurden, pubId wird vom KIT erstellt und mit csv hoch geladen
 db <- connectToDB()

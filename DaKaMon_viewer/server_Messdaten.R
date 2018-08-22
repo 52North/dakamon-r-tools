@@ -9,7 +9,7 @@ db <- connectToDB()
 # load all Entwässerungssysteme from DB
 colThematik <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'ort' AND dede = 'Thematik' limit 1")
 ews <- dbGetQuery(db, paste0("SELECT DISTINCT ", colThematik, " FROM ort_data"))
-output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ifelse(nrow(ews) == 0, "keine Daten", ews$col)))
+output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,colThematik[1,1]]))
 
 # load all super FoI from DB
 ort <- dbGetQuery(db, "SELECT foi.featureofinterestid, foi.name, foi.identifier 
@@ -45,13 +45,13 @@ if (nrow(ort) > 0) {
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
     
     showHead <- paste0(showHead, "</span>")
-
+    
     datatable(showTab, colnames = showHead, 
-                                         filter="top",
-                                         options = list(paging=FALSE, dom = 'Brt',
-                                                        language=list(url = lngJSON)),
-                                         escape=FALSE)
-    })
+              filter="top",
+              options = list(paging=FALSE, dom = 'Brt',
+                             language=list(url = lngJSON)),
+              escape=FALSE)
+  })
   
   sOrt <- reactive({
     sr <- input$tableOrt_rows_selected
@@ -122,60 +122,59 @@ if(!is.null(ortData)) {
       colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
     
     pns
-    dbDisconnect(db)
   })
   
-
-output$tablePNS <- renderDT({
-
-  showTab <- pnsData()[,-1]
-
-  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(pns))
   
-  showHead <- paste0(showHead, "</span>")
+  output$tablePNS <- renderDT({
+    
+    showTab <- pnsData()[,-1]
+    
+    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+    
+    showHead <- paste0(showHead, "</span>")
+    
+    datatable(showTab, colnames = showHead, filter="top",
+              options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
+                             language=list(url = lngJSON)),
+              escape=FALSE)
+  })
   
-  datatable(showTab, colnames = showHead, filter="top",
-            options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
-                           language=list(url = lngJSON)),
-            escape=FALSE)
-})
-
-sPNS <- reactive({
-  sr <- input$tablePNS_rows_selected
-  if(length(sr) == 0) {
-    input$tablePNS_rows_all
-  } else {
-    sort(sr)
-  }
-})
-
-output$selTextPNS <- renderText({
-  if (length(sPNS()) == 1) {
-    paste("Zeile", sPNS(), "ist ausgewählt.")
-  } else {
-    paste("Zeilen", paste(sPNS(), collapse=", "), "sind ausgewählt.")
-  }
-})
-
-output$exportPnsCSV <- downloadHandler(
-  filename = function() {
-    paste("Probenahmestellen-", Sys.Date(), ".csv", sep="")
-  },
-  content = function(file) {
-    write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", 
-                fileEncoding = "UTF-8", row.names = FALSE)
-  }
-)
-
-output$exportPnsRData <- downloadHandler(
-  filename = function() {
-    paste("Probenahmestellen-", Sys.Date(), ".RData", sep="")
-  },
-  content = function(file) {
-    df <- isolate(pnsData()[sPNS(),])
-    save(df, file = file)
-  }
-)
+  sPNS <- reactive({
+    sr <- input$tablePNS_rows_selected
+    if(length(sr) == 0) {
+      input$tablePNS_rows_all
+    } else {
+      sort(sr)
+    }
+  })
+  
+  output$selTextPNS <- renderText({
+    if (length(sPNS()) == 1) {
+      paste("Zeile", sPNS(), "ist ausgewählt.")
+    } else {
+      paste("Zeilen", paste(sPNS(), collapse=", "), "sind ausgewählt.")
+    }
+  })
+  
+  output$exportPnsCSV <- downloadHandler(
+    filename = function() {
+      paste("Probenahmestellen-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", 
+                  fileEncoding = "UTF-8", row.names = FALSE)
+    }
+  )
+  
+  output$exportPnsRData <- downloadHandler(
+    filename = function() {
+      paste("Probenahmestellen-", Sys.Date(), ".RData", sep="")
+    },
+    content = function(file) {
+      df <- isolate(pnsData()[sPNS(),])
+      save(df, file = file)
+    }
+  )
 } else {
   output$selTextPNS <- renderText("Bitte zunächst mindestens einen Ort auswählen.")
 }
@@ -210,20 +209,21 @@ obsProp <- reactive({
   col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
   op <- NULL
   for (i in 1:length(sPNS())) { # i <- 1
-    op <- rbind(op, 
-                dbGetQuery(db, paste0("SELECT op.observablepropertyid, op.identifier, op.name, 
-                                      s.seriesid, s.unitid, s.featureofinterestid,
-                                      p.identifier AS procId, foi.identifier AS foiid,
-                                      pd.", col, " AS stgrname,  u.unit, pro.identifier As probeid, pro.identifier As probeid, pp.bg, pp.ng
-                                      FROM observableproperty AS op
-                                      LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
-                                      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-                                      LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
-                                      LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
-                                      LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
-                                      LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
-                                      RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                                      WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", col, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")))
+    query <- paste0("SELECT op.observablepropertyid, op.identifier, op.name, 
+                     s.seriesid, s.unitid, s.featureofinterestid,
+                     p.identifier AS procId, foi.identifier AS foiid,
+                     pd.", col, " AS stgrname,  u.unit, pro.identifier As probeid, pro.identifier As probeid, pp.bg, pp.ng
+                     FROM observableproperty AS op
+                     LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
+                     LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+                     LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
+                     LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
+                     LEFT OUTER JOIN unit AS u ON (s.unitid = u.unitid)
+                     LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+                     RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", col, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
+    cat(query)
+    op <- rbind(op, dbGetQuery(db, query))
   }
   dbDisconnect(db)
   

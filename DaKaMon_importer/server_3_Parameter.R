@@ -102,7 +102,7 @@ observeEvent(input$checkDBParameter, {
 # output of DB consistency check as html - or action button
 output$PARDBConsistencyOut <- renderUI({
   if (checkDBPAR$checked) {
-    if (is.null(checkDBPAR$txt)) {
+    if (is.null(checkDBPAR$txt) || input$owPAR) {
       actionButton("storeDBParameter", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPAR$txt, "</li></ul></div></html"))
@@ -133,7 +133,7 @@ output$tablePAR <- renderDataTable({
       rowColors <- rep("white", nrow(showTab))
 
       if (nrow(checkDBPAR$PARInDB) > 0) {
-        rowColors[showTab$ID %in% checkDBPAR$PARInDB] <- "red"
+        rowColors[showTab$ID %in% checkDBPAR$PARInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
                               backgroundColor = styleEqual(showTab$ID, rowColors))
       }

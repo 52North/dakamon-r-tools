@@ -1,7 +1,7 @@
-ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Anlagentyp;Angeschlossenen_EW;GK;Thematik
-KAM_BW_EPP;Kläranalge Eppingen;Eppingen;Scheurlesstraße;52;75301;BW;49,141572;8,925;Kläranlage;18000;5a;MS
-KAM_NW_BHK;Bergheim-Kenten;Bergheim;Im Rauland;;50127;NW;50,940534;6,656646;Kläranlage;107448;4b;MS
-KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48,286496;10,829547;Kläranlage;16000;1 bis 3;MS
-KAM_BW_BON;Bondorf-Hailfingen;Rottenburg-Hailfingen;Trailfingerstraße;73;72108;BW;48,534804;8,875112;Kläranlage;7180;4a;MS
-KAM_SL_BRE;Brebach;Saarbrücken;Saargemünder Straße;20;66130;SL;49,210257;7,029439;Kläranlage;81400;4b;MS
-KAM_HB_HBR;Bremen-Seehausen;Bremen;Seehauser Landstraße;99;28197;HB;53,114704;8,712631;Kläranlage;585000;5;MS
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Anlagentyp;Angeschlossenen_EW;GK;Thematik;Entwässerungssystem
+KAM_BW_EPP;Kläranalge Eppingen;Eppingen;Scheurlesstraße;52;75301;BW;49,141572;8,925;Kläranlage;18000;5a;Kläranalge;MS
+KAM_NW_BHK;Bergheim-Kenten;Bergheim;Im Rauland;;50127;NW;50,940534;6,656646;Kläranlage;107448;4b;Kläranalge;MS
+KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48,286496;10,829547;Kläranlage;16000;1 bis 3;Kläranalge;MS
+KAM_BW_BON;Bondorf-Hailfingen;Rottenburg-Hailfingen;Trailfingerstraße;73;72108;BW;48,534804;8,875112;Kläranlage;7180;4a;Kläranalge;MS
+KAM_SL_BRE;Brebach;Saarbrücken;Saargemünder Straße;20;66130;SL;49,210257;7,029439;Kläranlage;81400;4b;Kläranalge;MS
+KAM_HB_HBR;Bremen-Seehausen;Bremen;Seehauser Landstraße;99;28197;HB;53,114704;8,712631;Kläranlage;585000;5;Kläranalge;MS

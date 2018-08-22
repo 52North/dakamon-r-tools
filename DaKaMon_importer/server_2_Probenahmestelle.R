@@ -99,7 +99,7 @@ observeEvent(input$checkDBPNS, {
 # output of DB consistency check as html - or action button
 output$PNSDBConsistencyOut <- renderUI({
   if (checkDBPNS$checked) {
-    if (is.null(checkDBPNS$txt)) {
+    if (is.null(checkDBPNS$txt) || input$owPNS) {
       actionButton("storeDBPNS", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPNS$txt, "</li></ul></div></html"))
@@ -129,7 +129,8 @@ output$tablePNS <- renderDataTable({
       rowColors <- rep("white", nrow(showTab))
 
       if (nrow(checkDBPNS$PNSInDB) > 0) {
-        rowColors[showTab$ID %in% checkDBPNS$PNSInDB] <- "red"
+        cat(is.null(inCSVPNS$df))
+        rowColors[showTab$ID %in% checkDBPNS$PNSInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
                               backgroundColor = styleEqual(showTab$ID, rowColors))
       }
@@ -186,7 +187,7 @@ observeEvent(input$storeDBPNS, {
 
   # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
-    if (nrow(checkDBPNS$PNSInDB) > 0) {
+    if (PNS_data[1,"ID"] %in% checkDBPNS$PNSInDB$identifier) { # -> UPDATE
       # TODO switch to workflow with dynamic columns
       query = paste("with update_pns as (
       UPDATE featureofinterest
@@ -196,7 +197,7 @@ observeEvent(input$storeDBPNS, {
                      PNS_data[pns,reqColPNS$lat],
                      " ",
                      PNS_data[pns,reqColPNS$lon],
-                     ")', 4326))
+                     ")', 4326)
           WHERE identifier = '", PNS_data[pns,reqColPNS$id],
           "' RETURNING featureofinterestid
       RETURNING featureofinterestid
@@ -217,7 +218,7 @@ observeEvent(input$storeDBPNS, {
       	(SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'parent_identifier_var',
       			featureofinterestid);")
       dbSendQuery(db, query)
-    } else {
+    } else { # -> INSERT
       ## INSERT FoI and data via SQL, mind the parental FoI ##
       dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
       dynamicValues = ""
