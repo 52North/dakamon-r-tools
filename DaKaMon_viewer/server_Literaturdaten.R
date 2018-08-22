@@ -17,7 +17,7 @@ dbDisconnect(db)
 db <- connectToDB()
 
 # load all Literatur Thematiken from DB
-litThematikDf <- dbGetQuery(db, "SELECT DISTINCT theme FROM literatur")
+litThematikDf <- dbGetQuery(db, "SELECT DISTINCT thematik FROM literatur")
 output$litThematikInput <- renderUI(selectInput("litThematik", "Thematik",
                                              litParamDf$theme, 
                                              multiple = TRUE))
@@ -30,7 +30,7 @@ dbDisconnect(db)
 db <- connectToDB()
 
 # load all Literatur PubId from DB
-litPubIdDf <- dbGetQuery(db, "SELECT DISTINCT pubId FROM publikation")
+litPubIdDf <- dbGetQuery(db, "SELECT DISTINCT publikation_id FROM literatur")
 output$litPubIdInput <- renderUI(selectInput("litPubId", "Publikation",
                                              litPubIdDf$pubId, 
                                              multiple = TRUE))
