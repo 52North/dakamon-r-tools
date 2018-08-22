@@ -185,16 +185,18 @@ observeEvent(input$storeDBOrt, {
   }
 
   # if there are already Orte in the DB that are again in the CSV
-  if (nrow(checkDBOrt$OrtInDB) > 0) {
-    ## UPDATE FoI and data via SQL, returns the id (pkid) of the updated feature ##
-    dbSendQuery(db, paste0("with update_ort as (
+  for (ort in 1:nrow(Ort_data)) {
+    if (nrow(checkDBOrt$OrtInDB) > 0) {
+      # TODO switch to workflow with dynamic columns UPDATE FoI and data via SQL,
+      # returns the id (pkid) of the updated feature ##
+      dbSendQuery(db, paste0("with update_ort as (
       UPDATE featureofinterest SET
         name = name_var,
         geom =  ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326)
       WHERE identifier = var
       RETURNING featureofinterestid
-    )
-    UPDATE ort_data SET
+      )
+      UPDATE ort_data SET
       ort_col003 = ort_col003_var,
       ort_col004 = ort_col004_var,
       ort_col005 = ort_col005_var,
@@ -208,50 +210,50 @@ observeEvent(input$storeDBOrt, {
       ort_col013 = ort_col013_var,
       ort_col014 = ort_col014_var,
       ort_col015 = ort_col015_var
-    WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort)
-    RETURNING featureofinterestid;"))
-  } else {
-    ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
-    for (ort in 1:nrow(Ort_data)) {
-      
-      dynamicColumns = paste0(ortDataCols[,1], collapse=', ')
+      WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort)
+      RETURNING featureofinterestid;"))
+    } else {
+      ## INSERT FoI and data via SQL, returns the id (pkid) of the inserted feature ##
+      dynamicColumns = paste0(ortDataCols[, 1], collapse = ", ")
       dynamicValues = ""
       for (col in ortDataCols[["dede"]]) {
-        value = Ort_data[ort,col]
+        value = Ort_data[ort, col]
         if (is.null(value) || is.na(value)) {
           if (class(value) == "character") {
-            dynamicValues = paste(dynamicValues, '', sep=', ')
+            dynamicValues = paste(dynamicValues, "", sep = ", ")
           } else {
-            dynamicValues = paste(dynamicValues, -1, sep=', ')
+            dynamicValues = paste(dynamicValues, -1, sep = ", ")
           }
         } else {
           if (class(value) == "character") {
             value = paste0("'", value, "'")
           }
-          dynamicValues = paste(dynamicValues, value, sep=', ') 
+          dynamicValues = paste(dynamicValues, value, sep = ", ")
         }
       }
 
       insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
-                             VALUES (nextval('featureofinterestid_seq'), 1",
-                            paste0("'", Ort_data[ort,reqColOrt$id], "'"),
-                            paste0("'", Ort_data[ort,reqColOrt$name], "'"),
-                            paste0("ST_GeomFromText('POINT ('|| ", Ort_data[ort,reqColOrt$lat], "|| ' ' ||", Ort_data[ort,reqColOrt$lon], " || ')', 4326)) "), 
-                            sep=", ")
-      
-      insertOrt = paste0("INSERT INTO ort_data (featureofinterestid, rndid, ", dynamicColumns, ")
-                          SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int)", dynamicValues, " FROM insert_ort")
+                   VALUES (nextval('featureofinterestid_seq'), 1",
+        paste0("'", Ort_data[ort, reqColOrt$id], "'"), paste0("'", Ort_data[ort,
+          reqColOrt$name], "'"), paste0("ST_GeomFromText('POINT ('|| ", Ort_data[ort,
+          reqColOrt$lat], "|| ' ' ||", Ort_data[ort, reqColOrt$lon], " || ')', 4326)) "),
+        sep = ", ")
+
+      insertOrt = paste0("INSERT INTO ort_data (featureofinterestid, rndid, ",
+        dynamicColumns, ")
+                SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int)",
+        dynamicValues, " FROM insert_ort")
       query = paste("WITH insert_ort as (", insertFeature, " RETURNING featureofinterestid as ort_id)",
-                    insertOrt, ";");
+        insertOrt, ";")
       dbSendQuery(db, query)
     }
   }
 
 
   showModal(modalDialog(
-    title = "Vorgang abgeschlossen.",
-    "Orte erfolgreich angelegt.",
-    easyClose = TRUE,
-    footer = NULL
+    title = "Vorgang abgeschlossen",
+    "Die Orte wurden erfolgreich in der Datenbank angelegt.",
+    #easyClose = TRUE,
+    footer = modalButton("Schließen")
   ))
 })

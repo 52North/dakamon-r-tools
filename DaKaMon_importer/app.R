@@ -155,15 +155,15 @@ ui <- navbarPage("Datenimport",
 
 server <- function(input, output) {
   
-  source("server_Ort.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_1_Ort.R", local = TRUE, encoding = "UTF-8")$value
   
-  source("server_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_2_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
   
-  source("server_Parameter.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_3_Parameter.R", local = TRUE, encoding = "UTF-8")$value
   
-  source("server_Probe.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_4_Probe.R", local = TRUE, encoding = "UTF-8")$value
   
-  source("server_Messungen.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
   
   # Lit
   # Datei upload
