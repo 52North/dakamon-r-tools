@@ -186,6 +186,7 @@ observeEvent(input$storeDBPNS, {
   # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
     if (nrow(checkDBPNS$PNSInDB) > 0) {
+      # TODO switch to workflow with dynamic columns
       query = paste("with update_pns as (
       UPDATE featureofinterest
       	SET
@@ -217,8 +218,27 @@ observeEvent(input$storeDBPNS, {
       dbSendQuery(db, query)
     } else {
       ## INSERT FoI and data via SQL, mind the parental FoI, returns the id (pkid) of the updated feature ##
-      query = paste0("with insert_pns as (
-                    INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom) 
+      # TODO switch to workflow with dynamic columns
+      dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
+      dynamicValues = ""
+      for (col in pnsDataCols[["dede"]]) {
+        value = PNS_data[pns, col]
+        if (is.null(value) || is.na(value)) {
+          if (class(value) == "character") {
+            dynamicValues = paste(dynamicValues, "", sep = ", ")
+          } else {
+            dynamicValues = paste(dynamicValues, -1, sep = ", ")
+          }
+        } else {
+          if (class(value) == "character") {
+            value = paste0("'", value, "'")
+          }
+          dynamicValues = paste(dynamicValues, value, sep = ", ")
+        }
+      }
+      query = paste0("WITH
+                    insert_pns AS (
+                    INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
                     VALUES (nextval('featureofinterestid_seq'), 1,'",
                     PNS_data[pns,reqColPNS$id], "',",
                     "'", PNS_data[pns,reqColPNS$name], "'", ",",
@@ -226,27 +246,23 @@ observeEvent(input$storeDBPNS, {
                     PNS_data[pns,reqColPNS$lat],
                     " ",
                     PNS_data[pns,reqColPNS$lon],
-                    ")', 4326)) 
-                    RETURNING featureofinterestid as pns_id
-                    ), query_ort as (
-                        SELECT featureofinterestid as ort_id FROM featureofinterest
-                        WHERE identifier = '", PNS_data[pns,reqColPNS$geo], 
-                    "'), insert_pns_rel as (
-                     INSERT INTO featurerelation 
+                    ")', 4326))
+                    RETURNING featureofinterestid AS pns_id
+                    ),
+                    query_ort AS (
+                        SELECT featureofinterestid AS ort_id FROM featureofinterest
+                        WHERE identifier = '", PNS_data[pns,reqColPNS$geo],
+                    "'),
+                    insert_pns_rel AS (
+                     INSERT INTO featurerelation
                      SELECT query_ort.ort_id, insert_pns.pns_id
                      FROM insert_pns, query_ort
                      RETURNING childfeatureid
-                      )
-                     INSERT INTO pns_data (featureofinterestid, rndid, ", paste0(pnsDataCols[,1], collapse=', '), ")
-                    SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
-                      
-                     "'pns_col003_var',
-                     'pns_col004_var',
-                     'pns_col005_var',
-                     pns_col006_var,
-                     pns_col007_var
-                     FROM insert_pns
-                     RETURNING featureofinterestid;", sep="")
+                    )
+                    INSERT INTO pns_data (featureofinterestid, rndid, ", dynamicColumns, ")
+                    SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int)",
+                      dynamicValues,
+                     " FROM insert_pns;", sep="")
       dbSendQuery(db, query)
     }
   }
