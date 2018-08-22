@@ -150,6 +150,7 @@ output$tableProbe <- renderDataTable({
   }
 })
 
+
 #####################
 ## Insert Probe ##
 #####################
@@ -175,64 +176,86 @@ observeEvent(input$storeDBProbe, {
 
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
-  misCols <- which(sapply(paste0("probe_", Probe_header), # TODO drop ID, Probeent identifier
+  probeDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('probe')"))
+  misCols <- which(sapply(Probe_header, # TODO drop ID, Probeent identifier
                           function(x) is.na(match(x, regCols))))
 
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0("probe_", sprintf("col%03d", i + length(regCols)))
+      colId <- paste0(sprintf("col%03d", i + length(regCols)))
       coltype = switch(class(Probe_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
 
       # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE probe_data ADD COLUMN ", colId, " ", coltype, ";"))
+      dbSendQuery(db, paste0("ALTER TABLE probe ADD COLUMN ", colId, " ", coltype, ";"))
 
-      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, dede)
-                               VALUES ('", paste(colId, Probe_header[misCols[i]], sep="', '"),"')"))
+      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                               VALUES ('", paste(colId, 'probe', Probe_header[misCols[i]], sep="', '"),"')"))
     }
   }
 
-  # if there are already Probee in the DB that are again in the CSV
-  if (nrow(checkDBProbe$ProbeInDB) > 0) {
-    ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
-    dbSendQuery(db, paste0("UPDATE probe
-    	SET
-    		probe_col003 = probe_col003_var,
-    		probe_col004 = probe_col004_var,
-    		probe_col005 = probe_col005_var,
-    		probe_col006 = probe_col006_var,
-    		probe_col007 = probe_col007_var,
-    		probe_col008 = probe_col008_var,
-    		probe_col009 = probe_col009_var,
-    		probe_col010 = probe_col010_var,
-    		probe_col011 = probe_col011_var,
-    		probe_col012 = probe_col012_var,
-    		probe_col013 = probe_col013_var,
-    		probe_col014 = probe_col014_var,
-    		probe_col015 = probe_col015_var
-    RETURNING id;	"))
-  } else {
-    ## INSERT Probe via SQL, returns the id (pkid) of the inserted probe ##
-    dbSendQuery(db, paste0("INSERT INTO probe
-      (id, identifier, probe_col003, probe_col004, probe_col005, probe_col006, probe_col007, probe_col008, probe_col009, probe_col010, probe_col011, probe_col012, probe_col013, probe_col014, probe_col015)
-      VALUES  ((nextval('probeid_seq'),
-                'identifier_var',
-                'probe_col003_var',
-                'probe_col004_var',
-                'probe_col005_var',
-                'probe_col006_var',
-                probe_col007_var,
-                probe_col008_var,
-                'probe_col009_var',
-                'probe_col010_var',
-                'probe_col011_var',
-                probe_col012_var,
-                'probe_col013_var',
-                'probe_col014_var',
-                'probe_col015_var')
-               RETURNING id;"))
+  for (probe in 1:nrow(Probe_data)) {
+    # if there are already Probee in the DB that are again in the CSV
+    if (nrow(checkDBProbe$ProbeInDB) > 0) {
+      ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
+      # TODO implement workflow with dynamic columns
+      dbSendQuery(db, paste0("UPDATE probe
+      	SET
+      		probe_col003 = probe_col003_var,
+      		probe_col004 = probe_col004_var,
+      		probe_col005 = probe_col005_var,
+      		probe_col006 = probe_col006_var,
+      		probe_col007 = probe_col007_var,
+      		probe_col008 = probe_col008_var,
+      		probe_col009 = probe_col009_var,
+      		probe_col010 = probe_col010_var,
+      		probe_col011 = probe_col011_var,
+      		probe_col012 = probe_col012_var,
+      		probe_col013 = probe_col013_var,
+      		probe_col014 = probe_col014_var,
+      		probe_col015 = probe_col015_var
+      RETURNING id;	"))
+    } else {
+      ## INSERT Probe via SQL ##
+      # FIXME handling of dynamic values, e.g. to_date('18-07-2018 12:00', 'DD-MM-YYYY HH:MM') and pns_id
+      dynamicColumns = paste0(probeDataCols[, 1], collapse = ", ")
+      dynamicValues = ""
+      for (col in probeDataCols[["dede"]]) {
+        value = Probe_data[probe, col]
+        if (col == reqColProbe$geoSub) {
+          next
+        }
+        if (is.null(value) || is.na(value)) {
+          if (class(value) == "character") {
+            dynamicValues = paste(dynamicValues, "", sep = ", ")
+          } else {
+            dynamicValues = paste(dynamicValues, -1, sep = ", ")
+          }
+        } else {
+          if (class(value) == "character") {
+            value = paste0("'", value, "'")
+          }
+          dynamicValues = paste(dynamicValues, value, sep = ", ")
+        }
+      }
+      get_pns_id = paste0("WITH query_pns AS (
+                          SELECT featureofinterestid AS pns_id
+                          FROM featureofinterest
+                          WHERE identifier = '",
+                          Probe_data[probe, reqColProbe$geoSub],
+                          "')")
+      query = paste0(get_pns_id,
+        "INSERT INTO probe
+        (id, identifier, ", dynamicColumns, ")
+        SELECT nextval('probeid_seq'), '",
+                     Probe_data[probe, reqColProbe$id],
+                     "', pns_id",
+                     dynamicValues,
+                     " FROM query_pns;")
+      dbSendQuery(db, query)
+    }
   }
 
   showModal(modalDialog(

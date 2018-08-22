@@ -63,7 +63,7 @@ reqColPAR <- list(id="ID",
 
 
 reqColProbe <- list(id="ID",
-                    geoSub="PNSID",
+                    geoSub="PNS_ID",
                     colDate="Probenahmedatum",
                     eventTiemBegin="Ereignisbeginn",
                     eventTimeEnd="Ereignisende",
