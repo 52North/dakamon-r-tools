@@ -1,4 +1,4 @@
-ID;Name;Stoffgruppe;Kürzel;CAS-Nr.;Wasserlöslichkeit;Kow
+ID;Name;Stoffgruppe;Kürzel;CAS_Nr.;Wasserlöslichkeit;Kow
 Nitrat;Nitrat;N-Verbindungen;;1;ja;3
 Ammonium;Ammonium;N-Verbindungen;;2;ja;2
 Blei;Blei;Schwermetalle;Pb;3;nein;6
