@@ -7,8 +7,9 @@ ortData <- NULL
 db <- connectToDB()
 
 # load all Entwässerungssysteme from DB
-ews <- dbGetQuery(db, "SELECT DISTINCT col013 FROM ort_data")
-output$ewsSelInput <- renderUI(selectInput("ews", "Entwässerungssystem", ifelse(nrow(ews) == 0, "keine Daten", ews$col013)))
+colThematik <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'ort' AND dede = 'Thematik' limit 1")
+ews <- dbGetQuery(db, paste0("SELECT DISTINCT ", colThematik, " FROM ort_data"))
+output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ifelse(nrow(ews) == 0, "keine Daten", ews$col)))
 
 # load all super FoI from DB
 ort <- dbGetQuery(db, "SELECT foi.featureofinterestid, foi.name, foi.identifier 
@@ -18,37 +19,44 @@ dbDisconnect(db)
 
 # if any
 if (nrow(ort) > 0) {
-  db <- connectToDB()
+  ortData <- reactive({
+    db <- connectToDB()
+    
+    ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
+    ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
+    ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
+    ortData <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+                                     " FROM featureofinterest foi
+                                     RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
+                                     WHERE foi.featureofinterestid IN (", 
+                                     paste0(ort$featureofinterestid, collapse=", "), ")
+                                     AND od.", colThematik, " IN ('MS')"))
+    
+    
+    if (nrow(ortData) > 0)
+      colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
+    
+    ortData
+  })
   
-  ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
-  ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
-  ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
-  ortData <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
-                                   " FROM featureofinterest foi
-                                   RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
-                                   WHERE foi.featureofinterestid IN (", 
-                                   paste0(ort$featureofinterestid, collapse=", "), ")"))
-  
-  
-  if (nrow(ortData) > 0)
-    colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
-  
-  showTab <- ortData[,-1]
-  
-  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-  
-  showHead <- paste0(showHead, "</span>")
-  
-  output$tableOrt  <- renderDT(datatable(showTab, colnames = showHead, 
+  output$tableOrt  <- renderDT({
+    showTab <- ortData()[,-1]
+    
+    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+    
+    showHead <- paste0(showHead, "</span>")
+
+    datatable(showTab, colnames = showHead, 
                                          filter="top",
                                          options = list(paging=FALSE, dom = 'Brt',
                                                         language=list(url = lngJSON)),
-                                         escape=FALSE))
+                                         escape=FALSE)
+    })
   
   sOrt <- reactive({
-    sr <- input$tableFoi_rows_selected
+    sr <- input$tableOrt_rows_selected
     if(is.null(sr)) {
-      input$tableFoi_rows_all
+      input$tableOrt_rows_all
     } else {
       sort(sr)
     }
@@ -81,6 +89,7 @@ if (nrow(ort) > 0) {
       save(df, file = file)
     }
   )
+  dbDisconnect(db)
 }
 
 
@@ -106,19 +115,22 @@ if(!is.null(ortData)) {
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
                                LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
                                WHERE fr.parentfeatureid in (", 
-                                 paste(ortData[sOrt(),1], collapse=", "), ")"))
+                                 paste(ortData()[sOrt(),1], collapse=", "), ")"))
     dbDisconnect(db)
     
     if (nrow(pns) > 0)
       colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
     
-    pns[,-1]
+    pns
+    dbDisconnect(db)
   })
+  
 
 output$tablePNS <- renderDT({
-  showTab <- pnsData()
-  
-  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+
+  showTab <- pnsData()[,-1]
+
+  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(pns))
   
   showHead <- paste0(showHead, "</span>")
   
@@ -129,9 +141,9 @@ output$tablePNS <- renderDT({
 })
 
 sPNS <- reactive({
-  sr <- input$table2_rows_selected
+  sr <- input$tablePNS_rows_selected
   if(length(sr) == 0) {
-    input$table2_rows_all
+    input$tablePNS_rows_all
   } else {
     sort(sr)
   }
@@ -145,7 +157,7 @@ output$selTextPNS <- renderText({
   }
 })
 
-output$exportKaVsCSV <- downloadHandler(
+output$exportPnsCSV <- downloadHandler(
   filename = function() {
     paste("Probenahmestellen-", Sys.Date(), ".csv", sep="")
   },
@@ -155,7 +167,7 @@ output$exportKaVsCSV <- downloadHandler(
   }
 )
 
-output$exportKaVsRData <- downloadHandler(
+output$exportPnsRData <- downloadHandler(
   filename = function() {
     paste("Probenahmestellen-", Sys.Date(), ".RData", sep="")
   },
