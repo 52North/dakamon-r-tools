@@ -54,7 +54,7 @@ observeEvent(input$csvFilePAR, {
 output$PARValidationOut <- renderUI({
   if (valiPAR$validated) {
     if (is.null(valiPAR$txt)) {
-      actionButton("checkDB", "Prüfe Datenkonsistenz!")
+      actionButton("checkDBParameter", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPAR$txt, "</ul></div></html"))
     }
@@ -69,7 +69,7 @@ output$PARValidationOut <- renderUI({
 
 # find existing Parameters
 
-observeEvent(input$checkDB, {
+observeEvent(input$checkDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -102,7 +102,7 @@ observeEvent(input$checkDB, {
 output$PARDBConsistencyOut <- renderUI({
   if (checkDBPAR$checked) {
     if (is.null(checkDBPAR$txt)) {
-      actionButton("storeDB", "Einfügen in DB!")
+      actionButton("storeDBParameter", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPAR$txt, "</li></ul></div></html"))
     }
@@ -144,7 +144,7 @@ output$tablePAR <- renderDataTable({
 ## Insert Parameter/ObservableProperties ##
 ###########################################
 
-observeEvent(input$storeDB, {
+observeEvent(input$storeDBParameter, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   

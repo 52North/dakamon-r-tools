@@ -54,7 +54,7 @@ observeEvent(input$csvFileOrt, {
 output$OrtValidationOut <- renderUI({
   if (valiOrt$validated) {
     if (is.null(valiOrt$txt)) {
-      actionButton("checkDB", "Prüfe Datenkonsistenz!")
+      actionButton("checkDBOrt", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiOrt$txt, "</ul></div></html"))
     }
@@ -69,7 +69,7 @@ output$OrtValidationOut <- renderUI({
 
 # find existing Orte
 
-observeEvent(input$checkDB, {
+observeEvent(input$checkDBOrt, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -98,7 +98,7 @@ observeEvent(input$checkDB, {
 output$OrtDBConsistencyOut <- renderUI({
   if (checkDBOrt$checked) {
     if (is.null(checkDBOrt$txt)) {
-      actionButton("storeDB", "Einfügen in DB!")
+      actionButton("storeDBOrt", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBOrt$txt, "</li></ul></div></html"))
     }
@@ -140,7 +140,7 @@ output$tableOrt <- renderDataTable({
 ## Insert Feautres ##
 #####################
 
-observeEvent(input$storeDB, {
+observeEvent(input$storeDBOrt, {
   #db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)

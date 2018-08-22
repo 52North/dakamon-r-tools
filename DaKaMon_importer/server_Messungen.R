@@ -244,7 +244,7 @@ observeEvent(input$dataCsvFile, {
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
     if (is.null(valiData$txt)) {
-      actionButton("dataCheckDB", "Prüfe Datenkonsistenz!")
+      actionButton("checkDBData", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiData$txt, "</ul></div></html"))
     }
@@ -260,7 +260,7 @@ output$dataValidationOut <- renderUI({
 # check whether the combination of ProbeId and Parameter already corresponds to some time series data
 # -> upload/update; handle BG and NG in data column -> replace with 0 or -99, -9999, or alike to have pure numbers
 
-observeEvent(input$dataCheckDB, {
+observeEvent(input$checkDBData, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -297,7 +297,7 @@ output$dataDBConsistencyOut <- renderUI({ #
     }
     if (all(inCSVData$obsInDB < 2)) {
       if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
-        actionButton("dataStoreDB", "Speichere in DB!")
+        actionButton("storeDBData", "Speichere in DB!")
       } else {
         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Einige Daten sind bereits in der DB (siehe gelbe Zellen).</div></html>")
       }
@@ -362,7 +362,7 @@ output$tableData <- renderDataTable({
 #   - clean and write csv-file for SOS importer
 #   - run multi feeder: java -jar 52n-sos-importer-feeder-bin.jar -c //FOLDER//
 
-observeEvent(input$dataStoreDB, {
+observeEvent(input$storeDBData, {
   if (!is.null(inCSVData$df)) {
     db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
     on.exit(dbDisconnect(db), add=T)

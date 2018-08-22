@@ -54,7 +54,7 @@ observeEvent(input$csvFileProbe, {
 output$ProbeValidationOut <- renderUI({
   if (valiProbe$validated) {
     if (is.null(valiProbe$txt)) {
-      actionButton("checkDB", "Prüfe Datenkonsistenz!")
+      actionButton("checkDBProbe", "Prüfe Datenkonsistenz!")
     } else {
       HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiProbe$txt, "</ul></div></html"))
     }
@@ -69,7 +69,7 @@ output$ProbeValidationOut <- renderUI({
 
 # find existing Proben; check whether the PNSID exists
 
-observeEvent(input$checkDB, {
+observeEvent(input$checkDBProbe, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
@@ -110,7 +110,7 @@ observeEvent(input$checkDB, {
 output$ProbeDBConsistencyOut <- renderUI({
   if (checkDBProbe$checked) {
     if (is.null(checkDBProbe$txt)) {
-      actionButton("storeDB", "Einfügen in DB!")
+      actionButton("storeDBProbe", "Einfügen in DB!")
     } else {
       HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBProbe$txt, "</li></ul></div></html"))
     }
@@ -152,7 +152,7 @@ output$tableProbe <- renderDataTable({
 ## Insert Probe ##
 #####################
 
-observeEvent(input$storeDB, {
+observeEvent(input$storeDBProbe, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
   
