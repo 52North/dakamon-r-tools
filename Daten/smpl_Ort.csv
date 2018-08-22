@@ -1,4 +1,4 @@
-ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Entwässerungssystem;Angeschlossenen_EW;GK;System
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Anlagentyp;Angeschlossenen_EW;GK;Thematik
 KAM_BW_EPP;Kläranalge Eppingen;Eppingen;Scheurlesstraße;52;75301;BW;49,141572;8,925;Kläranlage;18000;5a;MS
 KAM_NW_BHK;Bergheim-Kenten;Bergheim;Im Rauland;;50127;NW;50,940534;6,656646;Kläranlage;107448;4b;MS
 KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48,286496;10,829547;Kläranlage;16000;1 bis 3;MS
