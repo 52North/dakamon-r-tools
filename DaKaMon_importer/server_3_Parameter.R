@@ -230,9 +230,8 @@ observeEvent(input$storeDBParameter, {
   }
   
   showModal(modalDialog(
-    title = "Vorgang abgeschlossen.",
-    "Parameter erfolgreich angelegt.",
-    easyClose = TRUE,
-    footer = NULL
+    title = "Vorgang abgeschlossen",
+    paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt."),
+    footer = modalButton("Ok")
   ))
 })

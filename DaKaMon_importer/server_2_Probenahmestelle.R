@@ -269,9 +269,8 @@ observeEvent(input$storeDBPNS, {
 
 
   showModal(modalDialog(
-    title = "Vorgang abgeschlossen.",
-    "Probenahmestellen erfolgreich angelegt.",
-    easyClose = TRUE,
-    footer = NULL
+    title = "Vorgang abgeschlossen",
+    paste0(nrow(PNS_data), " Probenahmestellen wurden erfolgreich in der Datenbank angelegt."),
+    footer = modalButton("Ok")
   ))
 })

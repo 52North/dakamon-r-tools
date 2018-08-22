@@ -234,9 +234,8 @@ observeEvent(input$storeDBProbe, {
   }
 
   showModal(modalDialog(
-    title = "Vorgang abgeschlossen.",
-    "Proben erfolgreich angelegt.",
-    easyClose = TRUE,
-    footer = NULL
+    title = "Vorgang abgeschlossen",
+    paste0(nrow(Probe_data), " Proben wurden erfolgreich in der Datenbank angelegt."),
+    footer = modalButton("Ok")
   ))
 })

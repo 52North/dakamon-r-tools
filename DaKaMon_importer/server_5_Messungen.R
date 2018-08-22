@@ -540,9 +540,8 @@ observeEvent(input$storeDBData, {
   }
 
   showModal(modalDialog(
-    title = "Vorgang abgeschlossen.",
-    "Zeitreihendaten in der DB abgelegt.",
-    easyClose = TRUE,
-    footer = NULL
+    title = "Vorgang abgeschlossen",
+    "Die Messdaten wurden erfolgreich in der Datenbank abgelegt.",
+    footer = modalButton("Ok")
   ))
 }, ignoreInit=TRUE)

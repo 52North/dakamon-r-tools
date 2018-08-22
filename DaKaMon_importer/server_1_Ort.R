@@ -252,8 +252,7 @@ observeEvent(input$storeDBOrt, {
 
   showModal(modalDialog(
     title = "Vorgang abgeschlossen",
-    "Die Orte wurden erfolgreich in der Datenbank angelegt.",
-    #easyClose = TRUE,
-    footer = modalButton("Schließen")
+    paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt."),
+    footer = modalButton("Ok")
   ))
 })
