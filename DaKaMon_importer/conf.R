@@ -45,6 +45,16 @@ dbPort <- "5432"
 dbUser <- "postgres"
 dbPassword <- "postgres"
 dbName <- "sos"
+# Documentation: https://www.postgresql.org/docs/9.6/static/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE
+dbTimestampPattern<- "DD-MM-YYYY HH24:MI"
+
+#
+# TIMESTAMPS
+#
+# Documentation:
+# - https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html
+# - http://www.jdatalab.com/data_science_and_data_mining/2017/03/20/regular-expression-R.html
+timestampRegExPattern <- "^[[:digit:]]{2}-[[:digit:]]{2}-[[:digit:]]{4} [[:digit:]]{2}:[[:digit:]]{2}$"
 
 # FIXME verbose <- local vs. verbose <- TRUE (above) !?
 verbose <- local

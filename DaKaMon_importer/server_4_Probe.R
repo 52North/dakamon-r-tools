@@ -219,15 +219,13 @@ observeEvent(input$storeDBProbe, {
       RETURNING id;	"))
     } else {
       ## INSERT Probe via SQL ##
-      # FIXME handling of dynamic values, e.g. to_date('18-07-2018 12:00', 'DD-MM-YYYY HH:MM') and pns_id
-      dynamicColumns = paste0(probeDataCols[, 1], collapse = ", ")
+      dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
       dynamicValues = ""
-      for (col in probeDataCols[["dede"]]) { # col <- "PNS_ID"
-        value = Probe_data[probe, col]
-        cat(value, "\n")
+      for (col in probeColumnMappings[["dede"]]) {
         if (col == reqColProbe$geoSub) {
           dynamicValues = paste(dynamicValues, "(SELECT pns_id FROM query_pns)", sep = ", ")
         } else {
+          value = Probe_data[probe, col]
           if (is.null(value) || is.na(value)) {
             if (class(value) == "character") {
               dynamicValues = paste(dynamicValues, "", sep = ", ")
@@ -236,8 +234,11 @@ observeEvent(input$storeDBProbe, {
             }
           } else {
             if (class(value) == "character") {
-              # if (!(col %in% unlist(reqColProbe[c("eventTimeEnd", "eventTiemBegin", "colDate")])))
+              if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
+                value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
+              } else {
                 value = paste0("'", value, "'")
+              }
             }
             dynamicValues = paste(dynamicValues, value, sep = ", ")
           }
