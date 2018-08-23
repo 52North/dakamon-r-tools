@@ -30,7 +30,7 @@ if (nrow(ort) > 0) {
                                      RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                      WHERE foi.featureofinterestid IN (", 
                                      paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.", colThematik, " IN ('MS')"))
+                                     AND od.", colThematik, " IN (", paste0("'", input$ews, "'" ,collapse=", ") ,")"))
     
     
     if (nrow(ortData) > 0)
@@ -246,7 +246,11 @@ data <- reactive({
     
     resDf <- NULL
     
+    columnCount <- 4
+    
     for (foi in pnsData()[sPNS(), "ID"]) {
+     
+      
       selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
       
       if(length(selObsPropFoi$seriesid) == 0) next;
@@ -260,52 +264,75 @@ data <- reactive({
       
       uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
       
-      # for each time stamp, get the corresponding data and store it in resDfRow
-      for (ft in as.character(foiTimes)) { # ft <- foiTimes[1] 
-        resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-        colnames(resDfRow) <- c("id", "date", uObsPropSelId)
-        
-        resDfRow$id <- foi
-        resDfRow$date <- ft
-        
-        res <- fromJSON(rawToChar(POST(paste0(SOSWebApp, "service"), 
-                                       body = SOSgetObsByFoITime(input$selObsPhen, gsub(pattern = " ", replacement = "T", paste0(ft, ".000")), foi),
-                                       content_type_xml(), accept_json())$content))
-        for (obs in res$observations) { 
-          if (input$repBG & obs$result$value < obsProp()[obsProp()$identifier == obs$observableProperty & obsProp()$foiid  == foi,]$bg) {
-            resDfRow[obs$observableProperty] <- BGchar
+      resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+      colnames(resDfRow) <- c("pns", "pdate", "ebdate", "eedate", uObsPropSelId)
+      
+      resDfRow$pns <- foi
+      
+      query <- paste0("SELECT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime, o.unitid, nv.value, op.identifier as observableProperty, pp.bg 
+                  FROM observation o
+                      LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+                      LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+                      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+                      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+                      LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+                      RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+                      WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")")
+      
+      if (!is.null(input$selObsPhen))
+        query <- paste0(query, " AND op.identifier IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
+      
+      query <- paste0(query, " AND (o.phenomenontimestart >= to_timestamp('", as.character(min(foiTimes)), "','YYYY-mm-DD HH24:MI:SS') 
+                      AND (o.phenomenontimestart <= to_timestamp('", as.character(min(foiTimes)), "','YYYY-mm-DD HH24:MI:SS') 
+                      OR o.phenomenontimeend <= to_timestamp('", as.character(min(foiTimes)), "','YYYY-mm-DD HH24:MI:SS'))) " )
+
+      res <- dbGetQuery(db, query)
+      
+      for (obs in 1:nrow(res)) {
+        resDfRow$pdate <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
+        resDfRow$ebdate <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
+        resDfRow$eedate <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
+        #if (input$repBG & res$value[i] < obsProp()[obsProp()$identifier == res$observableproperty[i] & obsProp()$foiid  == foi,]$bg) {
+        if (res[obs, "value"] < obsProp()[obsProp()$identifier == res[obs, "observableproperty"] & obsProp()$foiid  == foi,]$bg) {
+          if (input$repBG == 'BG') {
+          resDfRow[res[obs, "observableproperty"]] <- res[obs, "bg"]
+          } else if (input$repBG == 'BG/2') {
+            resDfRow[res[obs, "observableproperty"]] <- res[obs, "bg"]/2
           } else {
-            resDfRow[obs$observableProperty] <- obs$result$value
+            resDfRow[res[obs, "observableproperty"]] <- input$repBG
           }
+        } else {
+          resDfRow[res[obs, "observableproperty"]] <- res[obs, "value"]
         }
-        colnames(resDfRow) <- c("ID", "Datum", unique(obsProp()[obsPropSel, "name"]))
-        
-        resDf <- rbind(resDf, resDfRow)
       }
+      colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", unique(obsProp()[obsPropSel, "name"]))
+      
+      resDf <- rbind(resDf, resDfRow)
+      
     }
     dbDisconnect(db)
     
-    resDf$Datum <- as.Date(resDf$Datum)
+    #resDf$Datum <- as.Date(resDf$Datum)
     
     if (input$randomId) {
       db <- connectToDB()
       dbIdMap <- dbGetQuery(db, paste0("SELECT f.identifier, od.rndid FROM ort_data od 
                                        LEFT OUTER JOIN featureofinterest f ON od.featureofinterestid = f.featureofinterestid
-                                       WHERE f.identifier IN ('", paste(resDf$ID, collapse="', '"), "')
+                                       WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')
                                        UNION
                                        SELECT f.identifier, pnsd.rndid FROM pns_data pnsd 
                                        LEFT OUTER JOIN featureofinterest f ON pnsd.featureofinterestid = f.featureofinterestid
-                                       WHERE f.identifier IN ('", paste(resDf$ID, collapse="', '"), "')"))
-      resDf$ID <- dbIdMap[match(resDf$ID, dbIdMap$id), 2]
+                                       WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
+      resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), columnCount]
       dbDisconnect(db)
     }
     
-    resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-    colnames(resUom) <- c("ID", "Datum", uObsPropSelId)
-    resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-    colnames(resBg) <- c("ID", "Datum", uObsPropSelId)
-    resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+2))
-    colnames(resStgr) <- c("ID", "Datum", uObsPropSelId)
+    resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+    colnames(resUom) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
+    resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+    colnames(resBg) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
+    resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+    colnames(resStgr) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
     
     for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
       frid <- match(obsPropId, obsProp()$identifier)
