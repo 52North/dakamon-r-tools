@@ -167,7 +167,7 @@ observeEvent(input$storeDBParameter, {
   progress$set(message = "Füge Parameter in DB ein.", value = 0)
 
   ## add missing columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('param', 'global')"))[,1]
   paramDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
   misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))

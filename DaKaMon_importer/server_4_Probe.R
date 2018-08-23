@@ -13,27 +13,27 @@ decProbe <- decSep
 observeEvent(input$csvFileProbe, {
   valiProbe$validated <- FALSE
   checkDBProbe$checked <- FALSE
-  
+
   # check whether an encoding has been set; fallback: guess the eoncoding using readr
   if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFileProbe$datapath)
     csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
   }
-  
+
   inCSVProbe$csvEncode <- csvEncode
-  
+
   inCSVProbe$df <- read.csv(input$csvFileProbe$datapath,
                             header = TRUE,
                             sep = sepProbe, dec = decProbe,
                             stringsAsFactors = FALSE,
                             fileEncoding = inCSVProbe$csvEncode)
-  
+
   inCSVProbe$headAsChar <- colnames(inCSVProbe$df)
-  
+
   ## validation of Probe csv-file
   # look for required column names
   # check whether columns have unique names
-  
+
   txt <- NULL
   if (!(reqColProbe$id %in% inCSVProbe$headAsChar) || length(unique(inCSVProbe$df[,reqColProbe$id])) != length(inCSVProbe$df[,reqColProbe$id]))
     txt <- paste0(txt, "<li>Jede Probe benötigt eine persistente und eindeutige ID in der Spalte'", reqColProbe$id, "'.</li>")
@@ -41,10 +41,10 @@ observeEvent(input$csvFileProbe, {
     if (!(reqColName %in% inCSVProbe$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
-  
+
   if(length(unique(inCSVProbe$headAsChar)) != length(inCSVProbe$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
-  
+
   valiProbe$txt <- txt
   valiProbe$validated <- TRUE
 })
@@ -74,31 +74,31 @@ output$ProbeValidationOut <- renderUI({
 observeEvent(input$checkDBProbe, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add = T)
-  
+
   progress$set(message = "Prüfe bereits registrierte Proben.", value = 0)
-  
+
   # get all Probes from the DB that have any of the identifiers in the CSV
   if (length(inCSVProbe$df) > 0) {
     ProbeInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM probe WHERE identifier IN ('",
                                        paste(inCSVProbe$df[,reqColProbe$id], collapse="', '"),"')"))
-    
+
     if (!is.null(ProbeInDB) && length(ProbeInDB) > 0 && nrow(ProbeInDB) > 0) {
       checkDBProbe$txt <- paste("Folgende Proben sind bereits in der DB: <ul><li>",
                                 paste0(ProbeInDB$identifier, collapse="</li><li>"))
     } else {
       checkDBProbe$txt <- NULL
     }
-    
+
     checkDBProbe$ProbeInDB <- ProbeInDB
-    
+
     # check PNS ids
     PNSInDB <- dbGetQuery(db, paste0("SELECT identifier FROM featureofinterest WHERE identifier IN ('",
                                      paste(inCSVProbe$df[,reqColProbe$geoSub], collapse="', '"),"')"))
     misPNSIDs <- which(!(inCSVProbe$df[,reqColProbe$geoSub] %in% PNSInDB$identifier))
-    
+
     if(length(misPNSIDs) > 0) # error state: no upload
       checkDBProbe$txt <- paste("Folgende Probenahestellen fehlen in der DB: <ul><li>",
                                 paste0(inCSVProbe$df[misPNSIDs, reqColProbe$geoSub], collapse="</li><li>"))
@@ -125,21 +125,21 @@ output$ProbeDBConsistencyOut <- renderUI({
 output$tableProbe <- renderDataTable({
   if (!is.null(inCSVProbe$df)) {
     showTab <- inCSVProbe$df
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showHead <- paste0(showHead, "</span>")
-    
+
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sProbe=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-    
+
     # if DB consistency has been checked, apply colors
     if (checkDBProbe$checked) {
       rowColors <- rep("white", nrow(showTab))
-      
+
       if (nrow(checkDBProbe$ProbeInDB) > 0) {
         rowColors[showTab$ID %in% checkDBProbe$ProbeInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
@@ -158,44 +158,44 @@ output$tableProbe <- renderDataTable({
 observeEvent(input$storeDBProbe, {
   db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   on.exit(dbDisconnect(db), add=T)
-  
+
   Probe_data <- inCSVProbe$df
   Probe_header <- inCSVProbe$headAsChar
-  
+
   Probe_empty_cols <- apply(Probe_data, 2, function(x) all(is.na(x)))
-  
+
   Probe_header <- Probe_header[!Probe_empty_cols]
   Probe_data <- Probe_data[,!Probe_empty_cols]
-  
+
   nRowDf <- nrow(Probe_data)
-  
+
   progress <- shiny::Progress$new()
   on.exit(progress$close(), add=T)
-  
+
   progress$set(message = "Füge Proben in DB ein.", value = 0)
-  
+
   ## add missing columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
-  probeDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('probe')"))
-  misCols <- which(sapply(Probe_header, # TODO drop ID, Probeent identifier
-                          function(x) is.na(match(x, regCols))))
-  
-  if (length(misCols) > 0) {
-    for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0(sprintf("col%03d", i + length(regCols)))
-      coltype = switch(class(Probe_data[,misCols[i]]),
+  registeredColumns <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('probe', 'global')"))[,1]
+  probeColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('probe')"))
+  missingColumns <- which(sapply(Probe_header, # TODO drop ID, Probeent identifier
+                          function(x) is.na(match(x, registeredColumns))))
+
+  if (length(missingColumns > 0)) {
+    for (i in 1:length(missingColumns)) {# i <- 1
+      colId <- paste0(sprintf("col%03d", i + length(registeredColumns)))
+      coltype = switch(class(Probe_data[, missingColumns[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
-      
+
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE probe ADD COLUMN ", colId, " ", coltype, ";"))
-      
+
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
-                               VALUES ('", paste(colId, 'probe', Probe_header[misCols[i]], sep="', '"),"')"))
+                               VALUES ('", paste(colId, 'probe', Probe_header[missingColumns[i]], sep="', '"),"')"))
     }
   }
-  
+
   for (probe in 1:nrow(Probe_data)) { # probe <- 1
     # if there are already Probee in the DB that are again in the CSV
     if (nrow(checkDBProbe$ProbeInDB) > 0) {
@@ -219,15 +219,13 @@ observeEvent(input$storeDBProbe, {
       RETURNING id;	"))
     } else {
       ## INSERT Probe via SQL ##
-      # FIXME handling of dynamic values, e.g. to_date('18-07-2018 12:00', 'DD-MM-YYYY HH:MM') and pns_id
-      dynamicColumns = paste0(probeDataCols[, 1], collapse = ", ")
+      dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
       dynamicValues = ""
-      for (col in probeDataCols[["dede"]]) { # col <- "PNS_ID"
-        value = Probe_data[probe, col]
-        cat(value, "\n")
+      for (col in probeColumnMappings[["dede"]]) {
         if (col == reqColProbe$geoSub) {
           dynamicValues = paste(dynamicValues, "(SELECT pns_id FROM query_pns)", sep = ", ")
         } else {
+          value = Probe_data[probe, col]
           if (is.null(value) || is.na(value)) {
             if (class(value) == "character") {
               dynamicValues = paste(dynamicValues, "", sep = ", ")
@@ -236,8 +234,11 @@ observeEvent(input$storeDBProbe, {
             }
           } else {
             if (class(value) == "character") {
-              # if (!(col %in% unlist(reqColProbe[c("eventTimeEnd", "eventTiemBegin", "colDate")])))
+              if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
+                value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
+              } else {
                 value = paste0("'", value, "'")
+              }
             }
             dynamicValues = paste(dynamicValues, value, sep = ", ")
           }
@@ -260,7 +261,7 @@ observeEvent(input$storeDBProbe, {
       dbSendQuery(db, query)
     }
   }
-  
+
   showModal(modalDialog(
     title = "Vorgang abgeschlossen",
     paste0(nrow(Probe_data), " Proben wurden erfolgreich in der Datenbank angelegt."),

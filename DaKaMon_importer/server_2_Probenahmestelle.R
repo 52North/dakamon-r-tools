@@ -164,7 +164,7 @@ observeEvent(input$storeDBPNS, {
   progress$set(message = "Füge Probenahmestellen in DB ein.", value = 0)
 
   ## add missing columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata"))[,1]
+  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pns', 'global')"))[,1]
   pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
