@@ -1,6 +1,6 @@
-ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisvolumen;Situation;Probenahmetechnik;Probenahmeart;Probenvolumen;Labor;Labor_Nr.
-PRO-001;KAM_BW_BON_Ablauf;2018-07-18 12:00;2018-01-15 12:00;2018-01-17 12:00;25;52;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;Lab1;Lab1-123
-PRO-002;KAM_BW_EPP_Zulauf;2018-07-18 12:00;2018-02-15 12:00;2018-02-17 12:00;5;542;RW;automatischer Probenehmer;24h-Mischprobe;7;Lab1;Lab1-124
-PRO-003;KAM_BW_EPP_Ablauf;2018-07-18 12:00;2018-03-15 12:00;2018-03-17 12:00;24;3425;TW;Feststoffsammler;Homogenisierte Mischprobe;2;Lab2;Lab2-005
-PRO-004;KAM_BW_EPP_PS;2018-07-18 12:00;2018-04-15 12:00;2018-04-17 12:00;25;152;TW;Feststoffsammler;Überstandswasser;2;Lab2;Lab2-006
-PRO-005;KAM_BW_EPP_USS;2018-07-18 12:00;2018-05-15 12:00;2018-05-17 12:00;25;525;TW;Feststoffsammler;Feststoffprobe;15;Lab2;Lab2-007
+ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisvolumen;Ereignisvolumeneinheit;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
+PRO-001;KAM_BW_BON_Ablauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
+PRO-002;KAM_BW_EPP_Zulauf;18-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;5;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
+PRO-003;KAM_BW_EPP_Ablauf;18-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;24;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
+PRO-004;KAM_BW_EPP_PS;18-07-2018 12:00;15-04-2018 12:00;17-04-2018 12:00;25;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
+PRO-005;KAM_BW_EPP_USS;18-07-2018 12:00;15-05-2018 12:00;17-05-2018 12:00;25;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
