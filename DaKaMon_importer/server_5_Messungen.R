@@ -197,6 +197,7 @@ inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
 CheckDBData <- reactiveValues(checked = FALSE)
 
+
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
   CheckDBData$checked <- FALSE
@@ -240,6 +241,7 @@ observeEvent(input$dataCsvFile, {
   valiData$validated <- TRUE
 })
 
+
 # TODO check name in app.R
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
@@ -252,6 +254,7 @@ output$dataValidationOut <- renderUI({
     return()
   }
 })
+
 
 ########################
 ## DB consistency checks
@@ -290,6 +293,7 @@ observeEvent(input$checkDBData, {
   CheckDBData$checked <- TRUE
 }, ignoreInit=TRUE)
 
+
 output$dataDBConsistencyOut <- renderUI({ #
   if (CheckDBData$checked) {
     if (!is.null(CheckDBData$txt)) {
@@ -316,6 +320,7 @@ output$dataDBConsistencyOut <- renderUI({ #
     HTML("")
   }
 })
+
 
 #####################
 ## print datatable ##
@@ -352,6 +357,7 @@ output$tableData <- renderDataTable({
     showDT
   }
 })
+
 
 ######################
 ## store data in DB ##
@@ -478,8 +484,6 @@ observeEvent(input$storeDBData, {
       system(paste0("java -jar ", feederPath, " -m ", feedTmpConfigDirectory, " 0 ", feedNumberOfParallelImports))
     }
 
-    progress$close()
-
     ## add Stoffgruppe and link observablepropertyrelation
     # remove missing or "NA"
     inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- "ohne"
@@ -541,7 +545,7 @@ observeEvent(input$storeDBData, {
 
   showModal(modalDialog(
     title = "Vorgang abgeschlossen",
-    "Die Messdaten wurden erfolgreich in der Datenbank abgelegt.",
+    "Die Messdaten wurden erfolgreich in der Datenbank angelegt.",
     footer = modalButton("Ok")
   ))
 }, ignoreInit=TRUE)
