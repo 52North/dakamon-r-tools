@@ -94,13 +94,21 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                   navbarMenu("Literaturdaten",
                              tabPanel("Parameter",
                                       uiOutput("litParamInput"),
-                                      DTOutput("tableLitParam")),
+                                      DTOutput("tableLitParam"),
+                                      br(),
+                                      actionButton("fromParamtoThematik", "Weiter...")),
                              tabPanel("Thematik", # Thematik (vorherEntwässerungssystem) (Gewässer, Kläranlagen, etc.)
                                       uiOutput("litThematikInput"),
-                                      DTOutput("tableLitThematik")),
+                                      DTOutput("tableLitThematik"),
+                                      br(),
+                                      actionButton("fromThematikToPub", "Weiter...")),
                              tabPanel("Publikation", # pubId
                                       uiOutput("litPubIdInput"),
-                                      DTOutput("tableLitPubId")))
+                                      DTOutput("tableLitPubId"),
+                                      actionButton("fromPubToLit", "Weiter...")),
+                            tabPanel("Literatur", # literatur
+                                     uiOutput("litInput"),
+                                     DTOutput("tableLit")))
 )
 
 server <- function(input, output, session) {

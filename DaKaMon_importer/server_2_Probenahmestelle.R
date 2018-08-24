@@ -70,7 +70,7 @@ output$PNSValidationOut <- renderUI({
 # find existing PNSe
 
 observeEvent(input$checkDBPNS, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
 
   progress <- shiny::Progress$new()
@@ -145,7 +145,7 @@ output$tablePNS <- renderDataTable({
 #############################
 
 observeEvent(input$storeDBPNS, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
 
   PNS_data <- inCSVPNS$df
@@ -183,13 +183,36 @@ observeEvent(input$storeDBPNS, {
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                VALUES ('", paste(colId, 'pns', PNS_header[misCols[i]], sep="', '"),"')"))
     }
+    pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   }
 
   # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
-    if (PNS_data[1,"ID"] %in% checkDBPNS$PNSInDB$identifier) { # -> UPDATE
+    dynamicDf <- NULL
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(pnsDataCols)))
+    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+    for (col in 1:nrow(pnsDataCols)) {
+      dynamicDfRow$columnid <- pnsDataCols[col, "columnid"]
+      dynamicDfRow$dede <- pnsDataCols[col, "dede"]
+      value = PNS_data[col, pnsDataCols[col, "dede"]]
+      if (is.null(value) || is.na(value)) {
+        #if (class(value) == "character") {
+        #  dynamicDfRow$value =  "''"
+        #} else {
+        #  dynamicDfRow$value = -1
+        #}
+        dynamicDfRow$value = "EMPTY"
+      } else {
+        if (class(value) == "character") {
+          value = paste0("'", value, "'")
+        }
+        dynamicDfRow$value = value
+      }
+      dynamicDf <- rbind(dynamicDf, dynamicDfRow)
+    }
+    if (PNS_data[pns,"ID"] %in% checkDBPNS$PNSInDB$identifier) { # -> UPDATE
       # TODO switch to workflow with dynamic columns
-      query = paste("with update_pns as (
+      query = paste0("with update_pns as (
       UPDATE featureofinterest
       	SET
       		 name = '", PNS_data[pns,reqColPNS$name],
@@ -200,43 +223,23 @@ observeEvent(input$storeDBPNS, {
                      ")', 4326)
           WHERE identifier = '", PNS_data[pns,reqColPNS$id],
           "' RETURNING featureofinterestid
-      RETURNING featureofinterestid
       )
       UPDATE pns_data
-      	SET
-      		pns_col003 = pns_col003_var,
-      		pns_col004 = pns_col004_var,
-      		pns_col005 = pns_col005_var,
-      		pns_col006 = pns_col006_var,
-      		pns_col007 = pns_col007_var
-      WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
-      RETURNING featureofinterestid;")
-      updatedId <- dbSendQuery(db, query)
+      	SET ",
+          paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+      " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
+      RETURNING featureofinterestid as pns_id;")
+      
+      updatedId <- dbGetQuery(db, query)
       ## if pns - foi relation does not exist, insert relation ##
       query = paste("INSERT INTO featurerelation
-        VALUES
-      	(SELECT featureofinterestid FROM featureofinterest WHERE identifier = 'parent_identifier_var',
-      			featureofinterestid);")
+      	(SELECT featureofinterestid, ", updatedId$pns_id," FROM featureofinterest 
+                    WHERE identifier = '", PNS_data[pns,reqColPNS$geo],"');")
       dbSendQuery(db, query)
     } else { # -> INSERT
       ## INSERT FoI and data via SQL, mind the parental FoI ##
       dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
-      dynamicValues = ""
-      for (col in pnsDataCols[["dede"]]) {
-        value = PNS_data[pns, col]
-        if (is.null(value) || is.na(value)) {
-          if (class(value) == "character") {
-            dynamicValues = paste(dynamicValues, "", sep = ", ")
-          } else {
-            dynamicValues = paste(dynamicValues, -1, sep = ", ")
-          }
-        } else {
-          if (class(value) == "character") {
-            value = paste0("'", value, "'")
-          }
-          dynamicValues = paste(dynamicValues, value, sep = ", ")
-        }
-      }
+      dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
       query = paste0("WITH
                     insert_pns AS (
                     INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
@@ -261,7 +264,7 @@ observeEvent(input$storeDBPNS, {
                      RETURNING childfeatureid
                     )
                     INSERT INTO pns_data (featureofinterestid, rndid, ", dynamicColumns, ")
-                    SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int)",
+                    SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int), ",
                       dynamicValues,
                      " FROM insert_pns;")
       dbSendQuery(db, query)

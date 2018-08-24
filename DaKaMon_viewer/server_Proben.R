@@ -28,9 +28,9 @@ output$probenPNSInput <- renderUI(selectInput("probenPNS", "Probenahmestelle:",
 
 # Alle Proben/Global Spaltennamen
 allProben <- reactive({
-  if (!is.null(input$probenPNS)) {
+  
     db <- connectToDB()
-    
+
     # Alle Probe/Global Spaltennamen
     probeDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe', 'global')"))
     
@@ -45,7 +45,8 @@ allProben <- reactive({
                    " FROM probe pro 
                    LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id") # FIXME: in meiner tAbelle taucht nur col047 für pns_id auf ..?
     
-    query <- paste0(query, " WHERE pns.identifier IN (", paste0("'", input$probenPNS, "'" ,collapse=", ") ,")")
+    if (!is.null(input$probenPNS))
+      query <- paste0(query, " WHERE pns.identifier IN (", paste0("'", input$probenPNS, "'" ,collapse=", ") ,")")
     
     allPro <- dbGetQuery(db, query)
     
@@ -55,9 +56,6 @@ allProben <- reactive({
       colnames(allPro) <- probeDataMetaData$dede[match(colnames(allPro), probeDataMetaData$columnid)]
     
     allPro 
-  } else {
-    data.frame()
-  }
 })
 
 output$tableProben  <- renderDT({

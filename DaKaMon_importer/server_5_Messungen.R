@@ -265,7 +265,7 @@ output$dataValidationOut <- renderUI({
 # -> upload/update; handle BG and NG in data column -> replace with 0 or -99, -9999, or alike to have pure numbers
 
 observeEvent(input$checkDBData, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
 
   # check whether the ProbeIDs exist
@@ -371,7 +371,7 @@ output$tableData <- renderDataTable({
 
 observeEvent(input$storeDBData, {
   if (!is.null(inCSVData$df)) {
-    db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+    db <- connectToDB()
     on.exit(dbDisconnect(db), add=T)
 
     # FIXME where is the value inCSVData$obsIdsInDB set?
