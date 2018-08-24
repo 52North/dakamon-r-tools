@@ -422,14 +422,7 @@ observeEvent(input$storeDBData, {
     #convert value column to numeric values
     Messungen_data[,valueIndex] <- as.numeric(Messungen_data[,valueIndex])
 
-    # DONE bis hier
-
-    #
-    # CREATE FEEDER CONFIGURATIONS
-    #
-    # each row requires its own configuration
-    #
-    # Notizen
+    # notes
     # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
     # - obsProp: parameter (observableProperty.identifier)
     # - feature: PNS + sup: ort (probe->pns_id->feature-identifier&geom) + featurerelation: child featureid =: pns_id, parentfeatureid =: ort_id
@@ -442,8 +435,8 @@ observeEvent(input$storeDBData, {
     probeIdIndex <- match(reqColData$probeId, reqColData)
     proben <- Messungen_data[,probeIdIndex]
     probenQuerySection <- paste0(proben, collapse = "','")
-    # FIXME col015 and col016 musst be replaced by reqColProbe$LabId & reqColProbe$LabName
-    sensors <- dbGetQuery(db, paste0("SELECT probe.identifier AS probeid, probe.col015 AS sensorId, probe.col016 AS sensorName
+    # FIXME col033 and col034 musst be replaced by reqColProbe$LabId & reqColProbe$LabName
+    sensors <- dbGetQuery(db, paste0("SELECT probe.identifier AS probeid, probe.pns_id, probe.col033 AS sensorId, probe.col034 AS sensorName
                                     FROM probe
                                     WHERE probe.identifier IN ('",
                                     probenQuerySection,
@@ -491,6 +484,7 @@ observeEvent(input$storeDBData, {
     # ORDER BY
     #   my_pns_id.pns_id ASC
     #
+    # FIXME col001 and col002 musst be replaced by reqColOrt$lat & reqColOrt$lon
     pnsQuery <- paste0("WITH
                        my_pns_id AS (
                          SELECT DISTINCT probe.pns_id
@@ -520,7 +514,36 @@ observeEvent(input$storeDBData, {
       # Fill probe_parameter table
       #
       # probe_id (in CSV, col#1), parameter_id, pp_unit (in CSV, col), bg, ng
+      # TODO continue here
+      #
+      # INSERT DATA
+      #
+      # probe id, parameter id pp unit bg ng
+      # -- insert probe_parameter
+      # WITH query_pro AS (
+      #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
+      # ),
+      # query_para AS (
+      #   SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
+      # ),
+      # insert_unit AS (
+      #   INSERT INTO unit
+      #   (unitid, unit)
+      #   VALUES(nextval('unitid_seq'),
+      #          'pro_para_col003_var'
+      #   )
+      #   ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
+      #   RETURNING unitid as unit_id
+      # )
+      # INSERT INTO probe_parameter
+      # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
 
+
+      #
+      # CREATE FEEDER CONFIGURATIONS
+      #
+      # each row requires its own configuration
+      #
       cat(confColumnAssignments)
       confColumnAssignments <- paste(confColumnAssignments,
                           confColumnAssignment(colId = i-2,
@@ -569,14 +592,16 @@ observeEvent(input$storeDBData, {
                                sep="\n")
       }
 
-      feedCSV <- tempfile(pattern = "feed-csv-", tmpdir(check = TRUE), fileext = ".csv")
+      feedTmpConfigDirectory <- tempdir(check = TRUE)
+
+      feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
 
       write.table(Messungen_data[Messungen_data[,reqColData$id] == uFoI,-1], feedCSV,
                   sep = dataSeparator, dec = dataDecimalSeparator,
                   row.names = FALSE, col.names=TRUE,
                   fileEncoding="UTF-8")
 
-      feedConf <- tempfile(pattern = "feed-",  tmpdir(check = TRUE), fileext = "-config.xml")
+      feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
       writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
                        confCsvMetaInit(),
@@ -598,28 +623,7 @@ observeEvent(input$storeDBData, {
       system2("java", args = c("-jar", feederPath, "-m", feedTmpConfigDirectory, "0", feedNumberOfParallelImports))
     }
 
-    #
-    # INSERT DATA
-    #
-    # probe id, parameter id pp unit bg ng
-    # -- insert probe_parameter
-    # WITH query_pro AS (
-    #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
-    # ),
-    # query_para AS (
-    #   SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
-    # ),
-    # insert_unit AS (
-    #   INSERT INTO unit
-    #   (unitid, unit)
-    #   VALUES(nextval('unitid_seq'),
-    #          'pro_para_col003_var'
-    #   )
-    #   ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
-    #   RETURNING unitid as unit_id
-    # )
-    # INSERT INTO probe_parameter
-    # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
+
 
 
     ## add Stoffgruppe and link observablepropertyrelation
