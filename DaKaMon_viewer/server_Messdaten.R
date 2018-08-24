@@ -304,10 +304,11 @@ data <- reactive({
         } else {
           resDfRow[res[obs, "observableproperty"]] <- res[obs, "value"]
         }
+        resDf <- rbind(resDf, resDfRow)
       }
       colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", unique(obsProp()[obsPropSel, "name"]))
       
-      resDf <- rbind(resDf, resDfRow)
+      
       
     }
     dbDisconnect(db)

@@ -138,9 +138,9 @@ output$tableOrt <- renderDataTable({
   }
 })
 
-#####################
-## Insert Feautres ##
-#####################
+############################
+## Insert/Update Features ##
+############################
 
 observeEvent(input$storeDBOrt, {
   #db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
@@ -186,58 +186,56 @@ observeEvent(input$storeDBOrt, {
 
   # if there are already Orte in the DB that are again in the CSV
   for (ort in 1:nrow(Ort_data)) {
+    dynamicDf <- NULL
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortDataCols)))
+    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+    for (col in 1:nrow(ortDataCols)) {
+      dynamicDfRow$columnid <- ortDataCols[col, "columnid"]
+      dynamicDfRow$dede <- ortDataCols[col, "dede"]
+      value = Ort_data[col, ortDataCols[col, "dede"]]
+      if (is.null(value) || is.na(value)) {
+        #if (class(value) == "character") {
+        #  dynamicDfRow$value =  "''"
+        #} else {
+        #  dynamicDfRow$value = -1
+        #}
+        dynamicDfRow$value = "EMPTY"
+      } else {
+        if (class(value) == "character") {
+          value = paste0("'", value, "'")
+        }
+        dynamicDfRow$value = value
+      }
+      dynamicDf <- rbind(dynamicDf, dynamicDfRow)
+    }
     if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
       # TODO switch to workflow with dynamic columns UPDATE FoI and data via SQL,
       # returns the id (pkid) of the updated feature ##
-      dbSendQuery(db, paste0("with update_ort as (
-      UPDATE featureofinterest SET
-        name = name_var,
-        geom =  ST_GeomFromText('POINT (' || lat_var || ' ' || lon_var || ')', 4326)
-      WHERE identifier = var
-      RETURNING featureofinterestid
+      updateFeature = paste("with update_ort as (
+        UPDATE featureofinterest SET
+        name = ", paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", 
+        geom = ", paste0("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat], 
+                       " ", Ort_data[ort, reqColOrt$lon], ")', 4326) "),
+        " WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
+        " RETURNING featureofinterestid
+        )
+        UPDATE ort_data SET ", 
+        paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+        " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort);"
       )
-      UPDATE ort_data SET
-      ort_col003 = ort_col003_var,
-      ort_col004 = ort_col004_var,
-      ort_col005 = ort_col005_var,
-      ort_col006 = ort_col006_var,
-      ort_col007 = ort_col007_var,
-      ort_col008 = ort_col008_var,
-      ort_col009 = ort_col009_var,
-      ort_col010 = ort_col010_var,
-      ort_col011 = ort_col011_var,
-      ort_col012 = ort_col012_var,
-      ort_col013 = ort_col013_var,
-      ort_col014 = ort_col014_var,
-      ort_col015 = ort_col015_var
-      WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort)
-      RETURNING featureofinterestid;"))
+      dbSendQuery(db, updateFeature)
     } else {
       ## INSERT FoI and data via SQL ##
-      dynamicColumns = paste0(ortDataCols[, 1], collapse = ", ")
-      dynamicValues = ""
-      for (col in ortDataCols[["dede"]]) {
-        value = Ort_data[ort, col]
-        if (is.null(value) || is.na(value)) {
-          if (class(value) == "character") {
-            dynamicValues = paste(dynamicValues, "", sep = ", ")
-          } else {
-            dynamicValues = paste(dynamicValues, -1, sep = ", ")
-          }
-        } else {
-          if (class(value) == "character") {
-            value = paste0("'", value, "'")
-          }
-          dynamicValues = paste(dynamicValues, value, sep = ", ")
-        }
-      }
+      dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
+      dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
 
       insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
                    VALUES (nextval('featureofinterestid_seq'), 1",
-        paste0("'", Ort_data[ort, reqColOrt$id], "'"), paste0("'", Ort_data[ort,
-          reqColOrt$name], "'"), paste0("ST_GeomFromText('POINT ('|| ", Ort_data[ort,
-          reqColOrt$lat], "|| ' ' ||", Ort_data[ort, reqColOrt$lon], " || ')', 4326)) "),
-        sep = ", ")
+        paste0("'", Ort_data[ort, reqColOrt$id], "'"), 
+        paste0("'", Ort_data[ort, reqColOrt$name], "'"), 
+        paste0("ST_GeomFromText('POINT ('", Ort_data[ort, reqColOrt$lat], " ",
+                Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
+                sep = ", ")
 
       insertOrt = paste0("INSERT INTO ort_data (featureofinterestid, rndid, ",
         dynamicColumns, ")
