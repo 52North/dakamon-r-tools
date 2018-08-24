@@ -233,13 +233,13 @@ observeEvent(input$storeDBOrt, {
                    VALUES (nextval('featureofinterestid_seq'), 1",
         paste0("'", Ort_data[ort, reqColOrt$id], "'"), 
         paste0("'", Ort_data[ort, reqColOrt$name], "'"), 
-        paste0("ST_GeomFromText('POINT ('", Ort_data[ort, reqColOrt$lat], " ",
+        paste0("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat], " ",
                 Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
                 sep = ", ")
 
       insertOrt = paste0("INSERT INTO ort_data (featureofinterestid, rndid, ",
         dynamicColumns, ")
-                SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int)",
+                SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
         dynamicValues, " FROM insert_ort")
       query = paste("WITH insert_ort as (", insertFeature, " RETURNING featureofinterestid as ort_id)",
         insertOrt, ";")
