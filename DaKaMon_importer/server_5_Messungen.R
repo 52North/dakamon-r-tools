@@ -595,7 +595,7 @@ observeEvent(input$storeDBData, {
     }
 
     if (length(uFOIs) > 0) {
-      system(paste0("java -jar ", feederPath, " -m ", feedTmpConfigDirectory, " 0 ", feedNumberOfParallelImports))
+      system2("java", args = c("-jar", feederPath, "-m", feedTmpConfigDirectory, "0", feedNumberOfParallelImports))
     }
 
     #
