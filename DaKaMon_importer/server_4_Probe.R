@@ -169,7 +169,7 @@ observeEvent(input$storeDBProbe, {
 
   nRowDf <- nrow(Probe_data)
 
-  progress <- shiny::Progress$new()
+  progress <- shiny::Progress$new(min = 0, max = nrow(Probe_data))
   on.exit(progress$close(), add=T)
 
   progress$set(message = "Füge Proben in DB ein.", value = 0)
@@ -222,26 +222,22 @@ observeEvent(input$storeDBProbe, {
       dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
       dynamicValues = ""
       for (col in probeColumnMappings[["dede"]]) {
-        if (col == reqColProbe$geoSub) {
-          dynamicValues = paste(dynamicValues, "(SELECT pns_id FROM query_pns)", sep = ", ")
-        } else {
-          value = Probe_data[probe, col]
-          if (is.null(value) || is.na(value)) {
-            if (class(value) == "character") {
-              dynamicValues = paste(dynamicValues, "", sep = ", ")
-            } else {
-              dynamicValues = paste(dynamicValues, -1, sep = ", ")
-            }
+        value = Probe_data[probe, col]
+        if (is.null(value) || is.na(value)) {
+          if (class(value) == "character") {
+            dynamicValues = paste(dynamicValues, "", sep = ", ")
           } else {
-            if (class(value) == "character") {
-              if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
-                value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
-              } else {
-                value = paste0("'", value, "'")
-              }
-            }
-            dynamicValues = paste(dynamicValues, value, sep = ", ")
+            dynamicValues = paste(dynamicValues, -1, sep = ", ")
           }
+        } else {
+          if (class(value) == "character") {
+            if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
+              value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
+            } else {
+              value = paste0("'", value, "'")
+            }
+          }
+          dynamicValues = paste(dynamicValues, value, sep = ", ")
         }
       }
       get_pns_id = paste0("WITH query_pns AS (
@@ -252,9 +248,10 @@ observeEvent(input$storeDBProbe, {
                           "')")
       query = paste0(get_pns_id,
                      " INSERT INTO probe
-        (id, identifier, ", dynamicColumns, ")
+        (id, identifier, pns_id, ", dynamicColumns, ")
         VALUES (nextval('probeid_seq'), '",
-                     Probe_data[probe, reqColProbe$id], "'",
+                     Probe_data[probe, reqColProbe$id],
+                     "', (SELECT pns_id FROM query_pns)",
                      dynamicValues,
                      ");")
       dbSendQuery(db, query)
