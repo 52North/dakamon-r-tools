@@ -143,7 +143,6 @@ output$tableOrt <- renderDataTable({
 ############################
 
 observeEvent(input$storeDBOrt, {
-  #db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
   db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
 
@@ -211,7 +210,7 @@ observeEvent(input$storeDBOrt, {
     if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
       # TODO switch to workflow with dynamic columns UPDATE FoI and data via SQL,
       # returns the id (pkid) of the updated feature ##
-      updateFeature = paste("with update_ort as (
+      updateFeature = paste0("with update_ort as (
         UPDATE featureofinterest SET
         name = ", paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", 
         geom = ", paste0("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat], 
