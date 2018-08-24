@@ -257,7 +257,6 @@ observeEvent(input$storeDBProbe, {
                      Probe_data[probe, reqColProbe$id], "'",
                      dynamicValues,
                      ");")
-      cat(query)
       dbSendQuery(db, query)
     }
   }

@@ -70,10 +70,12 @@ confCsvMetaInit <- function() {
          </Column>")
 }
 
-confColumnDef <- function(colId=3, colRClass,
+confColumnAssignment <- function(colId=3, colRClass,
                           FoITempRef, obsPropTempRef, sensorTempRef, uomTempRef,
                           BGlabel=BGlabel,
-                          BGvalue) {
+                          BGvalue=BGencode,
+                          NGlabel=NGlabel,
+                          NGvalue=NGencode) {
   paste0("<Column>
          <Number>", colId, "</Number>
          <Type>MEASURED_VALUE</Type>
@@ -189,13 +191,14 @@ confAddMetaClose <- function() {
 
 ## /tools
 
-sepData <- colSep
-decData <- decSep
+dataSeparator <- colSep
+dataDecimalSeparator <- decSep
 
 # reactive variables
 inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
 CheckDBData <- reactiveValues(checked = FALSE)
+
 
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
@@ -211,7 +214,7 @@ observeEvent(input$dataCsvFile, {
     inCSVData$csvEncode <- csvEncode
 
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = TRUE,
-                             sep = sepData, dec = decData,
+                             sep = dataSeparator, dec = dataDecimalSeparator,
                              stringsAsFactors = FALSE,
                              fileEncoding = inCSVData$csvEncode)
     inCSVData$headAsChar <- colnames(inCSVData$df)
@@ -240,7 +243,7 @@ observeEvent(input$dataCsvFile, {
   valiData$validated <- TRUE
 })
 
-# TODO check name in app.R
+
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
     if (is.null(valiData$txt)) {
@@ -252,6 +255,7 @@ output$dataValidationOut <- renderUI({
     return()
   }
 })
+
 
 ########################
 ## DB consistency checks
@@ -268,27 +272,28 @@ observeEvent(input$checkDBData, {
   # check whether the Parameter exist
   # check whether the combination of ProbeId and Parameter already corresponds to some time series data
 
-
-  dbSendQuery(db, paste0("WITH query_pro AS (
-    SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
-  ),
-  query_para AS (
-    SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
-  ),
-  insert_unit AS (
-    INSERT INTO unit
-    (unitid, unit)
-    VALUES(nextval('unitid_seq'),
-           'pro_para_col003_var'
-    )
-    ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
-    RETURNING unitid as unit_id
-  )
-  INSERT INTO probe_parameter
-  SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
+  # TODO implement messungen check database
+  # dbSendQuery(db, paste0("WITH query_pro AS (
+  #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
+  # ),
+  # query_para AS (
+  #   SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
+  # ),
+  # insert_unit AS (
+  #   INSERT INTO unit
+  #   (unitid, unit)
+  #   VALUES(nextval('unitid_seq'),
+  #          'pro_para_col003_var'
+  #   )
+  #   ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
+  #   RETURNING unitid as unit_id
+  # )
+  # INSERT INTO probe_parameter
+  # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
 
   CheckDBData$checked <- TRUE
 }, ignoreInit=TRUE)
+
 
 output$dataDBConsistencyOut <- renderUI({ #
   if (CheckDBData$checked) {
@@ -316,6 +321,7 @@ output$dataDBConsistencyOut <- renderUI({ #
     HTML("")
   }
 })
+
 
 #####################
 ## print datatable ##
@@ -353,6 +359,7 @@ output$tableData <- renderDataTable({
   }
 })
 
+
 ######################
 ## store data in DB ##
 ######################
@@ -367,6 +374,7 @@ observeEvent(input$storeDBData, {
     db <- connectToDB()
     on.exit(dbDisconnect(db), add=T)
 
+    # FIXME where is the value inCSVData$obsIdsInDB set?
     if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
 
       # delete observations already in the DB
@@ -382,32 +390,147 @@ observeEvent(input$storeDBData, {
       progress$close()
     }
 
-    feedTab <- inCSVData$df
+    Messungen_data <- inCSVData$df
 
-    confColTxt <- NULL
+    confColumnAssignments <- NULL
     confObsPropTxt <- NULL
     confUomTxt <- NULL
 
-    # prepare common conf part
-    for (i in 4:ncol(feedTab)) {
-      colVec <- feedTab[,i]
-
-      # clean detection limits an
-      if (any(colVec == input$dataBGchar, na.rm = TRUE))
-        colVec[colVec == input$dataBGchar]  <- BGencode
-      colVecNum <- as.numeric(colVec)
-      if (any(!is.na(colVecNum))) {
-        colVec <- colVecNum
-        feedTab[,i] <- colVec
+    valueIndex <- match(reqColData$value, reqColData)
+    # convert value column BG, NG values in numbers and the whole column in numeric values
+    if (any(Messungen_data[,valueIndex] == BGchar, na.rm = TRUE)) {
+      column <- Messungen_data[,valueIndex]
+      column[column == BGchar] <- BGencode
+      Messungen_data[,valueIndex] <- column
+    }
+    if (any(Messungen_data[,valueIndex] == NGchar, na.rm = TRUE)) {
+      column <- Messungen_data[,valueIndex]
+      column[column == NGchar] <- NGencode
+      Messungen_data[,valueIndex] <- column
+    }
+    #
+    # FIXME convert "," decimal separator to system separator
+    #
+    if (any(grepl(",", Messungen_data[,valueIndex]))) {
+      column <- Messungen_data[,valueIndex]
+      for (j in 1:length(column)) {
+        column[j] <- gsub(",",".", column[j])
       }
-      cat(confColTxt)
-      confColTxt <- paste(confColTxt,
-                          confColumnDef(colId = i-2, colRClass = class(colVec),
-                                        FoITempRef = "thisFoI",
-                                        obsPropTempRef = paste0("obsProp",i),
-                                        uomTempRef = paste0("uom",i),
-                                        sensorTempRef = paste0("sensor",i),
-                                        BGlabel = "Bestimmungsgrenze", BGvalue = inCSVData$bg[i]),
+      Messungen_data[,valueIndex] <- column
+    }
+
+    #convert value column to numeric values
+    Messungen_data[,valueIndex] <- as.numeric(Messungen_data[,valueIndex])
+
+    # DONE bis hier
+
+    #
+    # CREATE FEEDER CONFIGURATIONS
+    #
+    # each row requires its own configuration
+    #
+    # Notizen
+    # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
+    # - obsProp: parameter (observableProperty.identifier)
+    # - feature: PNS + sup: ort (probe->pns_id->feature-identifier&geom) + featurerelation: child featureid =: pns_id, parentfeatureid =: ort_id
+    #
+    # get sensor information
+    # SELECT probe.col015 AS identifier, probe.col016 AS name
+    # FROM probe
+    # WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
+    #
+    probeIdIndex <- match(reqColData$probeId, reqColData)
+    proben <- Messungen_data[,probeIdIndex]
+    probenQuerySection <- paste0(proben, collapse = "','")
+    # FIXME col015 and col016 musst be replaced by reqColProbe$LabId & reqColProbe$LabName
+    sensors <- dbGetQuery(db, paste0("SELECT probe.identifier AS probeid, probe.col015 AS sensorId, probe.col016 AS sensorName
+                                    FROM probe
+                                    WHERE probe.identifier IN ('",
+                                    probenQuerySection,
+                                    "')"))
+    #
+    # get observed property information
+    # SELECT observableproperty.identifier, observableproperty.name
+    # FROM observableproperty
+    # WHERE observableproperty.identifier IN ('Blei','Amonium')
+    #
+    parameterIndex <- match(reqColData$obsProp, reqColData)
+    parameter <- Messungen_data[,parameterIndex]
+    parameterQuerySection <- paste0(unique(parameter), collapse = "','")
+    observedpropertiesQuery <- paste0("SELECT observablepropertyid, observableproperty.identifier, observableproperty.name
+                                    FROM observableproperty
+                                    WHERE observableproperty.identifier IN ('",
+              parameterQuerySection,
+              "')")
+    observedproperties <- dbGetQuery(db, observedpropertiesQuery)
+    #
+    # get PNS and Ort
+    #
+    # FIXME where to add DISTINCT in the queries
+    #
+    # probeid -> pns_id (=foiId) -> pns_data -> lat, lon; featureofinterest -> identifier, name; feature_relation -> orts_id -> parentfeature-identifier
+    # WITH
+    # my_pns_id AS (
+    #   SELECT DISTINCT probe.pns_id
+    #   FROM probe
+    #   WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
+    # )
+    # SELECT
+    #   my_pns_id.pns_id,
+    #   pns_data.col001 AS pns_lat,
+    #   pns_data.col002 AS pns_lon,
+    #   featureofinterest.identifier AS pns_identifier,
+    #   featureofinterest.name AS pns_name
+    # FROM
+    #   my_pns_id,
+    #   pns_data,
+    #   featureofinterest
+    # WHERE
+    #   my_pns_id.pns_id = pns_data.featureofinterestid AND
+    #   my_pns_id.pns_id = featureofinterest.featureofinterestid
+    # ORDER BY
+    #   my_pns_id.pns_id ASC
+    #
+    pnsQuery <- paste0("WITH
+                       my_pns_id AS (
+                         SELECT DISTINCT probe.pns_id
+                         FROM probe
+                         WHERE probe.identifier IN ('",
+                       probenQuerySection,
+                         "')
+                       )
+                       SELECT
+                       my_pns_id.pns_id,
+                       pns_data.col001 AS pns_lat,
+                       pns_data.col002 AS pns_lon,
+                       featureofinterest.identifier AS pns_identifier,
+                       featureofinterest.name AS pns_name
+                       FROM
+                       my_pns_id,
+                       pns_data,
+                       featureofinterest
+                       WHERE
+                       my_pns_id.pns_id = pns_data.featureofinterestid AND
+                       my_pns_id.pns_id = featureofinterest.featureofinterestid")
+    features <- dbGetQuery(db, pnsQuery)
+    for (i in 1:nrow(Messungen_data)) {
+      row <- Messungen_data[i,]
+
+      #
+      # Fill probe_parameter table
+      #
+      # probe_id (in CSV, col#1), parameter_id, pp_unit (in CSV, col), bg, ng
+
+      cat(confColumnAssignments)
+      confColumnAssignments <- paste(confColumnAssignments,
+                          confColumnAssignment(colId = i-2,
+                                               colRClass = class(columns),
+                                               FoITempRef = "thisFoI",
+                                               obsPropTempRef = paste0("obsProp",i),
+                                               uomTempRef = paste0("uom",i),
+                                               sensorTempRef = paste0("sensor",i),
+                                               BGlabel = BGlabel,
+                                               BGvalue = columns),
                           sep="\n")
 
       confObsPropTxt <- paste(confObsPropTxt,
@@ -428,11 +551,8 @@ observeEvent(input$storeDBData, {
     progress$set(message = "Lade Daten in DB.", value = 0)
 
     # loop over unique FoI
-    uFoIs <- unique(feedTab[,reqColData$id])
+    uFoIs <- unique(Messungen_data[,reqColData$id])
     nUFoIs <- length(uFoIs)
-
-    # temporal directory storing all created csv and config xml files
-    feedTmpConfigDirectory <- tmpdir()
 
     for (uFoI in uFoIs) {
       progress$inc(1/nUFoIs)
@@ -440,8 +560,8 @@ observeEvent(input$storeDBData, {
       confSensorTxt <- NULL
       confFoITxt <- confFoIManualDef("thisFoI", uFoI, uFoI)
 
-      for (i in 4:ncol(feedTab)) {
-        colVec <- feedTab[,i]
+      for (i in 4:ncol(Messungen_data)) {
+        columns <- Messungen_data[,i]
         confSensorTxt <- paste(confSensorTxt,
                                confSensorManualDef(sensorTempRef = paste0("sensor",i),
                                                    foiURI = uFoI, foiName = uFoI,
@@ -449,21 +569,21 @@ observeEvent(input$storeDBData, {
                                sep="\n")
       }
 
-      feedCSV <- tempfile(pattern = "feed-csv-", tmpConfigDirectory, fileext = ".csv")
+      feedCSV <- tempfile(pattern = "feed-csv-", tmpdir(check = TRUE), fileext = ".csv")
 
-      write.table(feedTab[feedTab[,reqColData$id] == uFoI,-1], feedCSV,
-                  sep = sepData, dec = decData,
+      write.table(Messungen_data[Messungen_data[,reqColData$id] == uFoI,-1], feedCSV,
+                  sep = dataSeparator, dec = dataDecimalSeparator,
                   row.names = FALSE, col.names=TRUE,
                   fileEncoding="UTF-8")
 
-      feedConf <- tempfile(pattern = "feed-conf",  tmpConfigDirectory, fileext = "-config.xml")
+      feedConf <- tempfile(pattern = "feed-",  tmpdir(check = TRUE), fileext = "-config.xml")
 
       writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
                        confCsvMetaInit(),
-                       confColTxt,
-                       confCsvMetaClose(decSep = decData,
+                       confColumnAssignments,
+                       confCsvMetaClose(decSep = dataDecimalSeparator,
                                         skipRows = 0,
-                                        colSep = sepData),
+                                        colSep = dataSeparator),
                        confAddMetaInit(),
                        confSensorTxt,
                        confObsPropTxt,
@@ -478,7 +598,29 @@ observeEvent(input$storeDBData, {
       system(paste0("java -jar ", feederPath, " -m ", feedTmpConfigDirectory, " 0 ", feedNumberOfParallelImports))
     }
 
-    progress$close()
+    #
+    # INSERT DATA
+    #
+    # probe id, parameter id pp unit bg ng
+    # -- insert probe_parameter
+    # WITH query_pro AS (
+    #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
+    # ),
+    # query_para AS (
+    #   SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
+    # ),
+    # insert_unit AS (
+    #   INSERT INTO unit
+    #   (unitid, unit)
+    #   VALUES(nextval('unitid_seq'),
+    #          'pro_para_col003_var'
+    #   )
+    #   ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
+    #   RETURNING unitid as unit_id
+    # )
+    # INSERT INTO probe_parameter
+    # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
+
 
     ## add Stoffgruppe and link observablepropertyrelation
     # remove missing or "NA"
@@ -541,7 +683,7 @@ observeEvent(input$storeDBData, {
 
   showModal(modalDialog(
     title = "Vorgang abgeschlossen",
-    "Die Messdaten wurden erfolgreich in der Datenbank abgelegt.",
+    "Die Messdaten wurden erfolgreich in der Datenbank angelegt.",
     footer = modalButton("Ok")
   ))
 }, ignoreInit=TRUE)

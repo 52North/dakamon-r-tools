@@ -170,17 +170,18 @@ observeEvent(input$storeDBOrt, {
   if (length(misCols > 0)) {
     for (i in 1:length(misCols)) {# i <- 1
       colId <- sprintf("col%03d", i + length(regCols))
-      coltype = switch(class(Ort_data[,misCols[i]]),
+      coltype <- switch(class(Ort_data[,misCols[i]]),
                        integer = "numeric",
                        numeric = "numeric",
                        character = "character varying(255)")
-
+      colHeader <- Ort_header[misCols[i]]
       # TODO adopt to new FoI table
       dbSendQuery(db, paste0("ALTER TABLE ort_data ADD COLUMN ", colId, " ", coltype, ";"))
 
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
-                               VALUES ('", paste(colId, 'ort', Ort_header[misCols[i]], sep="', '"),"')"))
+                               VALUES ('", paste(colId, 'ort', colHeader, sep="', '"),"')"))
     }
+    ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   }
 
   # if there are already Orte in the DB that are again in the CSV

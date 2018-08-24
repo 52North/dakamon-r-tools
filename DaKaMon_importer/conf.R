@@ -26,13 +26,20 @@ SOSWebApp <- "http://localhost:8080/52n-sos-webapp/"
 # FIXME verbose <- local (below) vs. verbose <- TRUE !?
 verbose <- TRUE
 
+#
+# DETECTION LIMIT
+#
 BGencode <- 0
 BGchar <- "BG"
-BGlabel <- "Bestimmungsgrenze" # label in DB
-
+# label in DB
+BGlabel <- "Bestimmungsgrenze"
+#
+# LOWER DETECTION LIMIT
+#
 NGencode <- -1
 NGchar <- "NG"
-NGlabel <- "Nachweisgrenze" # label in DB
+# label in DB
+NGlabel <- "Nachweisgrenze"
 
 local <- interactive()
 SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
@@ -76,7 +83,7 @@ ifelse(local,
        adminConf <-   authenticate("dakamon-administrator", adminPwd))
 
 ## DB="GUI/CSV"
-
+# FIXME is the order of the header label fixed here, e.g. is in all data files the value column the third one following R's index policy?
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
@@ -99,7 +106,9 @@ reqColProbe <- list(id="ID",
                     eventTiemBegin="Ereignisbeginn",
                     eventTimeEnd="Ereignisende",
                     probeTechnic="Probenahmetechnik",
-                    probeType="Probenahmeart")
+                    probeType="Probenahmeart",
+                    labName="Labor",
+                    labId="Labor_Nr")
 
 reqColData <- list(probeId = "ProbenID",
                    obsProp = "Parameter",
