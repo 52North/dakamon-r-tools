@@ -190,45 +190,42 @@ observeEvent(input$storeDBParameter, {
   }
 
   for (param in 1:nrow(PAR_data)) {
+    dynamicDf <- NULL
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(paramDataCols)))
+    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+    for (col in 1:nrow(paramDataCols)) {
+      dynamicDfRow$columnid <- paramDataCols[col, "columnid"]
+      dynamicDfRow$dede <- paramDataCols[col, "dede"]
+      value = PAR_data[col, paramDataCols[col, "dede"]]
+      if (is.null(value) || is.na(value)) {
+        dynamicDfRow$value = "EMPTY"
+      } else {
+        if (class(value) == "character") {
+          value = paste0("'", value, "'")
+        }
+        dynamicDfRow$value = value
+      }
+      dynamicDf <- rbind(dynamicDf, dynamicDfRow)
+    }
     # if there are already PARe in the DB that are again in the CSV
-    if (nrow(checkDBPAR$PARInDB) > 0) {
+    if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
       ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
       # TODO switch to workflow with dynamic columns
       dbSendQuery(db, paste0("with update_param as (
         UPDATE observableproperty
         SET
-        name = name_var
-        WHERE identifier = var
-        RETURNING observablepropertyid
+        name = '", PAR_data[param,reqColPAR$name],
+        "' WHERE identifier = '", PAR_data[param,reqColPAR$id],
+        "' RETURNING observablepropertyid
       )
       UPDATE parameter_data
-      SET
-      param_col003 = param_col003_var,
-      param_col004 = param_col004_var,
-      param_col005 = param_col005_var,
-      param_col006 = param_col006_var,
-      param_col007 = param_col007_var
-      WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param)
-      RETURNING observablepropertyid;"))
+      SET ",
+      paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+      " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);"))
     } else {
       ## INSERT PAR and data via SQL ##
       dynamicColumns = paste0(paramDataCols[, 1], collapse = ", ")
-      dynamicValues = ""
-      for (col in paramDataCols[["dede"]]) {
-        value = PAR_data[param, col]
-        if (is.null(value) || is.na(value)) {
-          if (class(value) == "character") {
-            dynamicValues = paste(dynamicValues, "", sep = ", ")
-          } else {
-            dynamicValues = paste(dynamicValues, -1, sep = ", ")
-          }
-        } else {
-          if (class(value) == "character") {
-            value = paste0("'", value, "'")
-          }
-          dynamicValues = paste(dynamicValues, value, sep = ", ")
-        }
-      }
+      dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
       insertParams = paste0("(
         INSERT INTO observableproperty
         (observablepropertyid, identifier, name)
@@ -242,9 +239,9 @@ observeEvent(input$storeDBParameter, {
       )")
       insertParameterValues = paste0("INSERT INTO parameter_data
                       (observablepropertyid, ", dynamicColumns, ")
-                      SELECT  observablepropertyid",
+                      (SELECT observablepropertyid, ",
                       dynamicValues,
-                      "FROM insert_param")
+                      "FROM insert_param)")
       query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
       dbSendQuery(db, query)
     }
