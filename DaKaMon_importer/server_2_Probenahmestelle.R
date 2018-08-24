@@ -189,12 +189,12 @@ observeEvent(input$storeDBPNS, {
   # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
     dynamicDf <- NULL
-    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(pnsDataCols)))
-    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
     for (col in 1:nrow(pnsDataCols)) {
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(pnsDataCols)))
+      colnames(dynamicDfRow) <- c("columnid", "dede", "value")
       dynamicDfRow$columnid <- pnsDataCols[col, "columnid"]
       dynamicDfRow$dede <- pnsDataCols[col, "dede"]
-      value = PNS_data[col, pnsDataCols[col, "dede"]]
+      value = PNS_data[pns, pnsDataCols[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         #if (class(value) == "character") {
         #  dynamicDfRow$value =  "''"

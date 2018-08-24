@@ -190,9 +190,11 @@ observeEvent(input$storeDBOrt, {
     dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortDataCols)))
     colnames(dynamicDfRow) <- c("columnid", "dede", "value")
     for (col in 1:nrow(ortDataCols)) {
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortDataCols)))
+      colnames(dynamicDfRow) <- c("columnid", "dede", "value")
       dynamicDfRow$columnid <- ortDataCols[col, "columnid"]
       dynamicDfRow$dede <- ortDataCols[col, "dede"]
-      value = Ort_data[col, ortDataCols[col, "dede"]]
+      value = Ort_data[ort, ortDataCols[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         #if (class(value) == "character") {
         #  dynamicDfRow$value =  "''"
