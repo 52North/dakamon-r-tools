@@ -196,7 +196,7 @@ observeEvent(input$storeDBParameter, {
     for (col in 1:nrow(paramDataCols)) {
       dynamicDfRow$columnid <- paramDataCols[col, "columnid"]
       dynamicDfRow$dede <- paramDataCols[col, "dede"]
-      value = PAR_data[col, paramDataCols[col, "dede"]]
+      value = PAR_data[param, paramDataCols[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         dynamicDfRow$value = "EMPTY"
       } else {
@@ -211,7 +211,7 @@ observeEvent(input$storeDBParameter, {
     if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
       ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
       # TODO switch to workflow with dynamic columns
-      dbSendQuery(db, paste0("with update_param as (
+      query <- paste0("with update_param as (
         UPDATE observableproperty
         SET
         name = '", PAR_data[param,reqColPAR$name],
@@ -221,7 +221,8 @@ observeEvent(input$storeDBParameter, {
       UPDATE parameter_data
       SET ",
       paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-      " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);"))
+      " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);")
+      dbSendQuery(db, query)
     } else {
       ## INSERT PAR and data via SQL ##
       dynamicColumns = paste0(paramDataCols[, 1], collapse = ", ")
