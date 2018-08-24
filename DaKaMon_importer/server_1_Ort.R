@@ -182,6 +182,7 @@ observeEvent(input$storeDBOrt, {
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                VALUES ('", paste(colId, 'ort', colHeader, sep="', '"),"')"))
     }
+    ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   }
 
   # if there are already Orte in the DB that are again in the CSV
