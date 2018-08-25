@@ -390,6 +390,9 @@ observeEvent(input$storeDBData, {
       progress$close()
     }
 
+    progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
+    progress$set(message = "Lade Daten in DB.", value = 0)
+
     Messungen_data <- inCSVData$df
 
     confColumnAssignments <- NULL
@@ -403,11 +406,15 @@ observeEvent(input$storeDBData, {
       column[column == BGchar] <- BGencode
       Messungen_data[,valueIndex] <- column
     }
+    progress$inc(1)
+
     if (any(Messungen_data[,valueIndex] == NGchar, na.rm = TRUE)) {
       column <- Messungen_data[,valueIndex]
       column[column == NGchar] <- NGencode
       Messungen_data[,valueIndex] <- column
     }
+    progress$inc(1)
+
     #
     # FIXME convert "," decimal separator to system separator
     #
@@ -418,6 +425,7 @@ observeEvent(input$storeDBData, {
       }
       Messungen_data[,valueIndex] <- column
     }
+    progress$inc(1)
 
     #convert value column to numeric values
     Messungen_data[,valueIndex] <- as.numeric(Messungen_data[,valueIndex])
@@ -435,12 +443,24 @@ observeEvent(input$storeDBData, {
     probeIdIndex <- match(reqColData$probeId, reqColData)
     proben <- Messungen_data[,probeIdIndex]
     probenQuerySection <- paste0(proben, collapse = "','")
-    # FIXME col033 and col034 musst be replaced by reqColProbe$LabId & reqColProbe$LabName
-    sensors <- dbGetQuery(db, paste0("SELECT probe.identifier AS probeid, probe.pns_id, probe.col033 AS sensorId, probe.col034 AS sensorName
-                                    FROM probe
-                                    WHERE probe.identifier IN ('",
-                                    probenQuerySection,
-                                    "')"))
+    # FIXME col022, col023, col024, col033 and col034 musst be replaced by reqColProbe$LabId & reqColProbe$LabName
+    probenMetadataQuery <- paste0("SELECT
+                                      identifier AS probeid,
+                                      pns_id,
+                                      col033 AS sensorId,
+                                      col034 AS sensorName,
+                                      col022 AS resulTime,
+                                      col023 AS phenTimeStart,
+                                      col024 AS phenTimeEnd
+                                    FROM
+                                      probe
+                                    WHERE
+                                      identifier IN ('",
+                                      probenQuerySection,
+                                      "')")
+    probenMetadata <- dbGetQuery(db, probenMetadataQuery)
+    progress$inc(1)
+
     #
     # get observed property information
     # SELECT observableproperty.identifier, observableproperty.name
@@ -450,12 +470,19 @@ observeEvent(input$storeDBData, {
     parameterIndex <- match(reqColData$obsProp, reqColData)
     parameter <- Messungen_data[,parameterIndex]
     parameterQuerySection <- paste0(unique(parameter), collapse = "','")
-    observedpropertiesQuery <- paste0("SELECT observablepropertyid, observableproperty.identifier, observableproperty.name
-                                    FROM observableproperty
-                                    WHERE observableproperty.identifier IN ('",
-              parameterQuerySection,
-              "')")
+    observedpropertiesQuery <- paste0("SELECT
+                                      observablepropertyid,
+                                      identifier,
+                                      name
+                                    FROM
+                                      observableproperty
+                                    WHERE
+                                      identifier IN ('",
+                                      parameterQuerySection,
+                                      "')")
     observedproperties <- dbGetQuery(db, observedpropertiesQuery)
+    progress$inc(1)
+
     #
     # get PNS and Ort
     #
@@ -490,23 +517,25 @@ observeEvent(input$storeDBData, {
                          SELECT DISTINCT probe.pns_id
                          FROM probe
                          WHERE probe.identifier IN ('",
-                       probenQuerySection,
-                         "')
+                          probenQuerySection,
+                          "')
                        )
                        SELECT
-                       my_pns_id.pns_id,
-                       pns_data.col001 AS pns_lat,
-                       pns_data.col002 AS pns_lon,
-                       featureofinterest.identifier AS pns_identifier,
-                       featureofinterest.name AS pns_name
+                         my_pns_id.pns_id,
+                         pns_data.col001 AS pns_lat,
+                         pns_data.col002 AS pns_lon,
+                         featureofinterest.identifier AS pns_identifier,
+                         featureofinterest.name AS pns_name
                        FROM
-                       my_pns_id,
-                       pns_data,
-                       featureofinterest
+                         my_pns_id,
+                         pns_data,
+                         featureofinterest
                        WHERE
-                       my_pns_id.pns_id = pns_data.featureofinterestid AND
-                       my_pns_id.pns_id = featureofinterest.featureofinterestid")
+                         my_pns_id.pns_id = pns_data.featureofinterestid AND
+                         my_pns_id.pns_id = featureofinterest.featureofinterestid")
     features <- dbGetQuery(db, pnsQuery)
+    progress$inc(1)
+
     for (i in 1:nrow(Messungen_data)) {
       row <- Messungen_data[i,]
 
@@ -538,149 +567,50 @@ observeEvent(input$storeDBData, {
       # INSERT INTO probe_parameter
       # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
 
-
-      #
-      # CREATE FEEDER CONFIGURATIONS
-      #
-      # each row requires its own configuration
-      #
-      cat(confColumnAssignments)
-      confColumnAssignments <- paste(confColumnAssignments,
-                          confColumnAssignment(colId = i-2,
-                                               colRClass = class(columns),
-                                               FoITempRef = "thisFoI",
-                                               obsPropTempRef = paste0("obsProp",i),
-                                               uomTempRef = paste0("uom",i),
-                                               sensorTempRef = paste0("sensor",i),
-                                               BGlabel = BGlabel,
-                                               BGvalue = columns),
-                          sep="\n")
-
-      confObsPropTxt <- paste(confObsPropTxt,
-                              confObsPropDef(obsPropTempRef = paste0("obsProp",i),
-                                             obsPropURI = inCSVData$headAsChar[i], obsPropName = inCSVData$headAsChar[i]),
-                              sep="\n")
-
-      confUomTxt <-paste(confUomTxt,
-                         confUomDef(uomTempRef = paste0("uom",i),
-                                    uomName = inCSVData$UoMs[i],
-                                    uomURI = inCSVData$UoMs[i]),
-                         sep="\n")
-
-
+      progress$inc(1)
     }
 
-    progress <- Progress$new()
-    progress$set(message = "Lade Daten in DB.", value = 0)
+    feedTmpConfigDirectory <- tempdir(check = TRUE)
+    #
+    # Create the global configuraton file
+    #
+    #
+    #
+    feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
-    # loop over unique FoI
-    uFoIs <- unique(Messungen_data[,reqColData$id])
-    nUFoIs <- length(uFoIs)
+    writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
+                     confCsvMetaInit(),
+                     confColumnAssignments,
+                     confCsvMetaClose(decSep = dataDecimalSeparator,
+                                      skipRows = 0,
+                                      colSep = dataSeparator),
+                     confAddMetaInit(),
+                     confSensorTxt,
+                     confObsPropTxt,
+                     confFoITxt,
+                     confUomTxt,
+                     confAddMetaClose(),
+                     sep="\n"), feedConf)
+    progress$inc(1)
 
-    for (uFoI in uFoIs) {
-      progress$inc(1/nUFoIs)
+    #
+    # Create global CSV file
+    #
+    feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
 
-      confSensorTxt <- NULL
-      confFoITxt <- confFoIManualDef("thisFoI", uFoI, uFoI)
+    write.table(Messungen_data[Messungen_data[,reqColData$id] == uFoI,-1], feedCSV,
+                sep = dataSeparator, dec = dataDecimalSeparator,
+                row.names = FALSE, col.names=TRUE,
+                fileEncoding="UTF-8")
+    progress$inc(1)
 
-      for (i in 4:ncol(Messungen_data)) {
-        columns <- Messungen_data[,i]
-        confSensorTxt <- paste(confSensorTxt,
-                               confSensorManualDef(sensorTempRef = paste0("sensor",i),
-                                                   foiURI = uFoI, foiName = uFoI,
-                                                   obsPropURI = inCSVData$headAsChar[i], obsPropName = inCSVData$headAsChar[i]),
-                               sep="\n")
-      }
+    #
 
-      feedTmpConfigDirectory <- tempdir(check = TRUE)
+    system2("java", args = c("-jar", feederPath, "-m", feedTmpConfigDirectory, "0", feedNumberOfParallelImports))
+    progress$inc(1)
 
-      feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
-
-      write.table(Messungen_data[Messungen_data[,reqColData$id] == uFoI,-1], feedCSV,
-                  sep = dataSeparator, dec = dataDecimalSeparator,
-                  row.names = FALSE, col.names=TRUE,
-                  fileEncoding="UTF-8")
-
-      feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
-
-      writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
-                       confCsvMetaInit(),
-                       confColumnAssignments,
-                       confCsvMetaClose(decSep = dataDecimalSeparator,
-                                        skipRows = 0,
-                                        colSep = dataSeparator),
-                       confAddMetaInit(),
-                       confSensorTxt,
-                       confObsPropTxt,
-                       confFoITxt,
-                       confUomTxt,
-                       confAddMetaClose(),
-                       sep="\n"), feedConf)
-
-    }
-
-    if (length(uFOIs) > 0) {
-      system2("java", args = c("-jar", feederPath, "-m", feedTmpConfigDirectory, "0", feedNumberOfParallelImports))
-    }
-
-
-
-
-    ## add Stoffgruppe and link observablepropertyrelation
-    # remove missing or "NA"
-    inCSVData$stgr[inCSVData$stgr == "" | inCSVData$stgr == "NA"] <- "ohne"
-
-    progress <- Progress$new()
-    progress$set(message = "Registriere Elementgruppe in DB.", value = 0)
-
-    nColDf <- ncol(inCSVData$df)
-
-    # fill observablepropertyrelation table
-    for (colDf in 4:nColDf) { # colDf <- 4
-      progress$inc(1/(nColDf-3))
-
-      # find observablepropertyids
-      opIdPhen <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$headAsChar[colDf], "'"))
-      if (nrow(opIdPhen) == 0) {
-        message(paste0("Folgendes 'ObserveableProperty' fehlt in der DB: ",  inCSVData$headAsChar[colDf]))
-        next;
-      }
-      # check for opIdPhen being mentioned in relation
-      opIdsRel <- dbGetQuery(db, paste0("SELECT parentobservablepropertyid, childobservablepropertyid FROM observablepropertyrelation WHERE childobservablepropertyid = ", opIdPhen$observablepropertyid))
-
-      if (is.na(inCSVData$stgr[colDf])) {
-        if (input$dataOW & nrow(opIdsRel) == 1) {
-          dbSendQuery(db, paste0("DELETE FROM observablepropertyrelation WHERE childobservablepropertyid = '", opIdPhen$observablepropertyid,  "'"))
-        }
-        next;
-      }
-
-      opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
-
-      if (nrow(opIdsRel) == 0) {
-        if (nrow(opIdStgr) == 0) {
-          dbSendQuery(db, paste0("INSERT INTO observableproperty (observablepropertyid, identifier, name, description, disabled, hiddenchild)
-                              VALUES (nextval('observablepropertyid_seq'), '", inCSVData$stgr[colDf], "Stgr', '", inCSVData$stgr[colDf], "', 'Stoffgruppe', 'F', 'F');"))
-          opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
-        }
-        dbSendQuery(db, paste0("INSERT INTO observablepropertyrelation (parentobservablepropertyid, childobservablepropertyid) VALUES ('", opIdStgr$observablepropertyid, "', '", opIdPhen$observablepropertyid, "')"))
-      } else {
-        if (input$dataOW) {
-          if (nrow(opIdStgr) == 0) {
-            dbSendQuery(db, paste0("INSERT INTO observableproperty (observablepropertyid, identifier, name, description, disabled, hiddenchild)
-                              VALUES (nextval('observablepropertyid_seq'), '", inCSVData$stgr[colDf], "Stgr', '", inCSVData$stgr[colDf], "', 'Stoffgruppe', 'F', 'F');"))
-            opIdStgr <- dbGetQuery(db, paste0("SELECT observablepropertyid, name FROM observableproperty WHERE name = '", inCSVData$stgr[colDf], "'"))
-          }
-
-          if (opIdsRel$parentobservablepropertyid != opIdStgr$observablepropertyid)
-            dbSendQuery(db, paste0("UPDATE observablepropertyrelation SET parentobservablepropertyid = ", opIdStgr$observablepropertyid,
-                                   " WHERE parentobservablepropertyid = '", opIdsRel$parentobservablepropertyid,"' AND childobservablepropertyid = '", opIdPhen$observablepropertyid,"'"))
-        }
-      }
-    }
-
-    dbSendQuery(db, "UPDATE series SET published = 'T'")
     SOScacheUpdate(wait=1)
+    progress$inc(1)
 
     progress$close()
   }
