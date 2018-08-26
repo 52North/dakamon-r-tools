@@ -1,198 +1,211 @@
 ################################################################################
 ###########################   Upload der Messungen   ###########################
 ################################################################################
-
+dataSeparator <- colSep
+dataDecimalSeparator <- decSep
 ## tools
-confInit <- function(url=SOSWebApp, csvPath) {
-  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-         <SosImportConfiguration xsi:schemaLocation=\"https://raw.githubusercontent.com/52North/sos-importer/master/bindings/src/main/resources/import-configuration.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
-         <DataFile referenceIsARegularExpression=\"false\">
-         <LocalFile>
-         <Path>", csvPath, "</Path>
-         <Encoding>UTF-8</Encoding>
-         </LocalFile>
-         </DataFile>
-         <SosMetadata>
-         <URL>", url, "service</URL>
-         <Offering generate=\"true\"/>
-         <Version>2.0.0</Version>
-         <Binding>POX</Binding>
-         <Importer>org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter</Importer>
-         </SosMetadata>")
+sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
+  POST(url = paste0(SOSWebApp, "admin/cache/reload"),
+       config=conf, body="a")
+
+  # if (!is.null(gmlId)) {
+  #   reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"),
+  #                            body = SOSreqFoI(gmlId),
+  #                            content_type_xml(), accept_json())$content)
+  #
+  #   while (is.null(fromJSON(reqMsg)$exceptions)) { #} && length(fromJSON(reqMsg)$featureOfInterest) > 0) {
+  #     if (verbose)
+  #       message(reqMsg)
+  #
+  #     Sys.sleep(wait)
+  #     reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"),
+  #                              body = SOSreqFoI(gmlId), # foi_data[sfoi,]$ID
+  #                              content_type_xml(), accept_json())$content)
+  #   }
+  # } else {
+    Sys.sleep(wait)
+  # }
 }
 
-confCsvMetaInit <- function() {
-  paste0("<CsvMetadata>
-         <ColumnAssignments>
-         <Column>
-         <Number>0</Number>
-         <Type>OM_PARAMETER</Type>
-         <Metadata>
-         <Key>TYPE</Key>
-         <Value>TEXT</Value>
-         </Metadata>
-         <Metadata>
-         <Key>NAME</Key>
-         <Value>Proben-Nummer</Value>
-         </Metadata>
-         </Column>
-         <Column>
-         <Number>1</Number>
-         <Type>DATE_TIME</Type>
-         <Metadata>
-         <Key>PARSE_PATTERN</Key>
-         <Value>M/d/yyyy</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TYPE</Key>
-         <Value>COMBINATION</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TIME_ZONE</Key>
-         <Value>0</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TIME_HOUR</Key>
-         <Value>12</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TIME_MINUTE</Key>
-         <Value>0</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TIME_SECOND</Key>
-         <Value>0</Value>
-         </Metadata>
-         <Metadata>
-         <Key>GROUP</Key>
-         <Value>1</Value>
-         </Metadata>
-         </Column>")
-}
-
-confColumnAssignment <- function(colId=3, colRClass,
-                          FoITempRef, obsPropTempRef, sensorTempRef, uomTempRef,
-                          BGlabel=BGlabel,
-                          BGvalue=BGencode,
-                          NGlabel=NGlabel,
-                          NGvalue=NGencode) {
-  paste0("<Column>
-         <Number>", colId, "</Number>
-         <Type>MEASURED_VALUE</Type>
-         <Metadata>
-           <Key>TYPE</Key>
-           <Value>", switch(colRClass, numeric="NUMERIC", integer="NUMERIC", character="TEXT", factor="TEXT", message("unknown type in column definition")), "</Value>
-         </Metadata>
-         <RelatedFOI>
-            <IdRef>", FoITempRef, "</IdRef>
-         </RelatedFOI>
-         <RelatedObservedProperty>
-           <IdRef>", obsPropTempRef, "</IdRef>
-         </RelatedObservedProperty>
-         <RelatedSensor>
-           <IdRef>", sensorTempRef, "</IdRef>
-         </RelatedSensor>
-         <RelatedUnitOfMeasurement>
-           <IdRef>", uomTempRef, "</IdRef>
-         </RelatedUnitOfMeasurement>
-         <RelatedReferenceValue>
-           <Label>", BGlabel, "</Label>
-           <Value>", BGvalue, "</Value>
-         </RelatedReferenceValue>
-         </Column>")
-}
-
-confCsvMetaClose <- function(decSep, skipRows, comInd="#",
-                             colSep, txtInd="\"", header=FALSE,
-                             obsCol="org.n52.sos.importer.feeder.collector.DefaultCsvCollector") {
-  paste0("</ColumnAssignments>
-         <DecimalSeparator>", decSep, "</DecimalSeparator>
-         <FirstLineWithData>", skipRows, "</FirstLineWithData>
-         <Parameter>
-         <CommentIndicator>", comInd, "</CommentIndicator>
-         <ColumnSeparator>", colSep, "</ColumnSeparator>
-         <TextIndicator>", txtInd, "</TextIndicator>
-         </Parameter>
-         <ObservationCollector>", obsCol, "</ObservationCollector>
-         </CsvMetadata>")
-}
-
-confAddMetaInit <- function() {
-  paste0("<AdditionalMetadata>
-         <Metadata>
-         <Key>HUNK_SIZE</Key>
-         <Value>5</Value>
-         </Metadata>
-         <Metadata>
-         <Key>TIMEOUT_BUFFER</Key>
-         <Value>50000</Value>
-         </Metadata>")
-}
-
-confSensorManualDef <- function(sensorTempRef,
-                                foiURI, foiName,
-                                obsPropURI, obsPropName) {
-  paste0("<Sensor>
-    <ManualResource>
-      <ID>", sensorTempRef, "</ID>
-      <URI>", paste(foiURI, obsPropURI, sep="-"), "</URI>
-      <Name>", paste(obsPropName, foiName, sep=" at "), "</Name>
-    </ManualResource>
-  </Sensor>
-")
-}
-
-confSensorDef <- function(sensorTempRef, obsPropName) {
-  paste0("<Sensor>
-    <GeneratedResource>
-      <ID>", sensorTempRef, "</ID>
-      <Number>0</Number>
-      <URI useAsPrefix=\"true\">", obsPropName, "_</URI>
-      <ConcatString>_</ConcatString>
-    </GeneratedResource>
-  </Sensor>
-")
-}
-
-confObsPropDef <- function(obsPropTempRef, obsPropURI, obsPropName){
-  paste0("<ObservedProperty>
-    <ManualResource>
-      <ID>", obsPropTempRef, "</ID>
-      <URI>", obsPropURI, "</URI>
-      <Name>", obsPropName, "</Name>
-    </ManualResource>
-  </ObservedProperty>")
-}
-
-confFoIManualDef <- function(FoITempRef, FoIURI, FoIName){
-  paste0("<FeatureOfInterest>
-    <ManualResource>
-      <ID>", FoITempRef, "</ID>
-      <URI>", FoIURI, "</URI>
-      <Name>", FoIName, "</Name>
-    </ManualResource>
-  </FeatureOfInterest>")
-}
-
-confUomDef <- function(uomTempRef, uomName, uomURI) {
-  paste0("<UnitOfMeasurement>
-      <ManualResource>
-        <ID>", uomTempRef, "</ID>
-        <URI>", uomURI, "</URI>
-        <Name>", uomName, "</Name>
-      </ManualResource>
-    </UnitOfMeasurement>")
-}
-
-confAddMetaClose <- function() {
-  "</AdditionalMetadata>
-</SosImportConfiguration>"
+createFeederConfiguration <- function(csvPath,
+                                      url=SOSWebApp, timestampPattern = feederTimestampPattern,
+                                      timeZone = feederTimeZoneIdentifier, epsgCode = feederEpsgCode,
+                                      decimalSeparator = ".", columnSeparator = dataSeparator,
+                                      importerClass = feederImporterClass, hunkSize = feederHunkSize,
+                                      timeoutBuffer = feederTimeoutBuffer) {
+  paste0(
+  "<SosImportConfiguration xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
+    <DataFile referenceIsARegularExpression=\"false\">
+      <LocalFile>
+        <Path>", csvPath, "</Path>
+        <Encoding>UTF-8</Encoding>
+      </LocalFile>
+    </DataFile>
+    <SosMetadata>
+      <URL>", url, "service</URL>
+      <Offering generate=\"true\" />
+      <Version>2.0.0</Version>
+      <Binding>POX</Binding>
+      <Importer>", importerClass, "</Importer>
+    </SosMetadata>
+    <CsvMetadata>
+      <ColumnAssignments>
+        <Column>
+          <Number>0</Number>
+          <Type>OBSERVED_PROPERTY</Type>
+        </Column>
+        <Column>
+          <Number>1</Number>
+          <Type>MEASURED_VALUE</Type>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>NUMERIC</Value>
+          </Metadata>
+        </Column>
+        <Column>
+          <Number>2</Number>
+          <Type>UOM</Type>
+        </Column>
+        <Column>
+          <Number>3</Number>
+          <Type>SENSOR</Type>
+        </Column>
+        <Column>
+          <Number>4</Number>
+          <Type>DATE_TIME</Type>
+          <Metadata>
+            <Key>GROUP</Key>
+            <Value>1</Value>
+          </Metadata>
+          <Metadata>
+            <Key>PARSE_PATTERN</Key>
+            <Value>", timestampPattern, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>COMBINATION</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_ZONE_IDENTIFIER</Key>
+            <Value>", timeZone, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_TYPE</Key>
+            <Value>RESULT</Value>
+          </Metadata>
+        </Column>
+        <Column>
+          <Number>5</Number>
+          <Type>DATE_TIME</Type>
+          <Metadata>
+            <Key>GROUP</Key>
+            <Value>2</Value>
+          </Metadata>
+          <Metadata>
+            <Key>PARSE_PATTERN</Key>
+            <Value>", timestampPattern, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>COMBINATION</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_ZONE_IDENTIFIER</Key>
+            <Value>", timeZone, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_TYPE</Key>
+            <Value>OBSERVATION_START</Value>
+          </Metadata>
+        </Column>
+        <Column>
+          <Number>6</Number>
+          <Type>DATE_TIME</Type>
+          <Metadata>
+            <Key>GROUP</Key>
+            <Value>3</Value>
+          </Metadata>
+          <Metadata>
+            <Key>PARSE_PATTERN</Key>
+            <Value>", timestampPattern, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>COMBINATION</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_ZONE_IDENTIFIER</Key>
+            <Value>", timeZone, "</Value>
+          </Metadata>
+          <Metadata>
+            <Key>TIME_TYPE</Key>
+            <Value>OBSERVATION_END</Value>
+          </Metadata>
+        </Column>
+        <Column>
+          <Number>7</Number>
+          <Type>FOI</Type>
+        </Column>
+        <Column>
+          <Number>8</Number>
+          <Type>POSITION</Type>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>COMBINATION</Value>
+          </Metadata>
+          <Metadata>
+            <Key>PARSE_PATTERN</Key>
+            <Value>COORD_0</Value>
+          </Metadata>
+          <Metadata>
+            <Key>GROUP</Key>
+            <Value>A</Value>
+          </Metadata>
+          <Metadata>
+            <Key>POSITION_EPSG_CODE</Key>
+            <Value>", epsgCode, "</Value>
+          </Metadata>
+        </Column>
+        <Column>
+          <Number>9</Number>
+          <Type>POSITION</Type>
+          <Metadata>
+            <Key>TYPE</Key>
+            <Value>COMBINATION</Value>
+          </Metadata>
+          <Metadata>
+            <Key>PARSE_PATTERN</Key>
+            <Value>COORD_1</Value>
+          </Metadata>
+          <Metadata>
+            <Key>GROUP</Key>
+            <Value>A</Value>
+          </Metadata>
+        </Column>
+      </ColumnAssignments>
+      <DecimalSeparator>", decimalSeparator, "</DecimalSeparator>
+      <FirstLineWithData>1</FirstLineWithData>
+      <Parameter>
+        <CommentIndicator>#</CommentIndicator>
+        <ColumnSeparator>", columnSeparator, "</ColumnSeparator>
+        <TextIndicator>\"</TextIndicator>
+      </Parameter>
+      <ObservationCollector ignoreColumnCountMismatch=\"false\">org.n52.sos.importer.feeder.collector.DefaultCsvCollector</ObservationCollector>
+    </CsvMetadata>
+    <AdditionalMetadata>
+      <Metadata>
+        <Key>HUNK_SIZE</Key>
+        <Value>", hunkSize, "</Value>
+      </Metadata>
+      <Metadata>
+        <Key>TIMEOUT_BUFFER</Key>
+        <Value>", timeoutBuffer, "</Value>
+      </Metadata>
+    </AdditionalMetadata>
+  </SosImportConfiguration>")
 }
 
 ## /tools
-
-dataSeparator <- colSep
-dataDecimalSeparator <- decSep
 
 # reactive variables
 inCSVData <- reactiveValues()
@@ -390,14 +403,10 @@ observeEvent(input$storeDBData, {
       progress$close()
     }
 
-    progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
-    progress$set(message = "Lade Daten in DB.", value = 0)
-
     Messungen_data <- inCSVData$df
 
-    confColumnAssignments <- NULL
-    confObsPropTxt <- NULL
-    confUomTxt <- NULL
+    progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
+    progress$set(message = "Lade Daten in DB.", value = 0)
 
     valueIndex <- match(reqColData$value, reqColData)
     # convert value column BG, NG values in numbers and the whole column in numeric values
@@ -448,7 +457,6 @@ observeEvent(input$storeDBData, {
                                       identifier AS probeid,
                                       pns_id,
                                       col033 AS sensorId,
-                                      col034 AS sensorName,
                                       col022 AS resulTime,
                                       col023 AS phenTimeStart,
                                       col024 AS phenTimeEnd
@@ -536,12 +544,27 @@ observeEvent(input$storeDBData, {
     features <- dbGetQuery(db, pnsQuery)
     progress$inc(1)
 
+    feedTmpConfigDirectory <- tempdir(check = TRUE)
+    #
+    # Create global CSV file
+    #
+    feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
+    #
+    # Create the global configuraton file
+    #
+    feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
+
+    writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
+    progress$inc(1)
+
+    feedDataContent <- "Parameter;Wert;Einheit;sensor-id;resultTime;phenStart;phenEnd;foiIdentifier;lat;lon"
     for (i in 1:nrow(Messungen_data)) {
       row <- Messungen_data[i,]
 
       #
       # Fill probe_parameter table
-      #
+      # 1        2         3    4       5  6
+      # ProbenID;Parameter;Wert;Einheit;BG;NG
       # probe_id (in CSV, col#1), parameter_id, pp_unit (in CSV, col), bg, ng
       # TODO continue here
       #
@@ -567,49 +590,54 @@ observeEvent(input$storeDBData, {
       # INSERT INTO probe_parameter
       # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
 
+      query <- paste0("WITH query_probe_id AS (
+                    SELECT id as probe_id
+                    FROM probe
+                    WHERE identifier = '", row[1], "'
+                  ),
+                  query_parameter_id AS (
+                    SELECT observablepropertyid as para_id
+                    FROM observableproperty
+                    WHERE identifier = '", row[2], "'
+                  ),
+                  insert_unit AS (
+                    INSERT INTO unit (unitid, unit)
+                    VALUES(nextval('unitid_seq'),'", row[4], "')
+                    ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
+                    RETURNING unitid as unit_id
+                  )
+                  INSERT INTO probe_parameter
+                  SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, '", row[5], "', '", row[6], "'
+                  FROM query_probe_id, query_parameter_id, insert_unit")
+      dbExecute(db, query)
+      newDataRow <- paste(row[2], # Parameter
+                          row[3], # Wert
+                          row[4], # Einheit
+                          paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
+                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),4]), # resultTime
+                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),5]), # phenTimeStart
+                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),6]), # phenTimeEnd
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3], # Lon
+                          sep=";")
+      feedDataContent <- paste0(feedDataContent, "\n", newDataRow)
+
       progress$inc(1)
     }
 
-    feedTmpConfigDirectory <- tempdir(check = TRUE)
     #
-    # Create the global configuraton file
+    # write global csv file
     #
-    #
-    #
-    feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
-
-    writeLines(paste(confInit(SOSWebApp, csvPath = feedCSV),
-                     confCsvMetaInit(),
-                     confColumnAssignments,
-                     confCsvMetaClose(decSep = dataDecimalSeparator,
-                                      skipRows = 0,
-                                      colSep = dataSeparator),
-                     confAddMetaInit(),
-                     confSensorTxt,
-                     confObsPropTxt,
-                     confFoITxt,
-                     confUomTxt,
-                     confAddMetaClose(),
-                     sep="\n"), feedConf)
+    writeLines(feedDataContent, feedCSV)
     progress$inc(1)
 
-    #
-    # Create global CSV file
-    #
-    feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
-
-    write.table(Messungen_data[Messungen_data[,reqColData$id] == uFoI,-1], feedCSV,
-                sep = dataSeparator, dec = dataDecimalSeparator,
-                row.names = FALSE, col.names=TRUE,
-                fileEncoding="UTF-8")
+    system2("java",
+            args = c("-jar", feederPath, "-c", feedConf),
+            timeout = 300)
     progress$inc(1)
 
-    #
-
-    system2("java", args = c("-jar", feederPath, "-m", feedTmpConfigDirectory, "0", feedNumberOfParallelImports))
-    progress$inc(1)
-
-    SOScacheUpdate(wait=1)
+    sosCacheUpdate(wait=1)
     progress$inc(1)
 
     progress$close()

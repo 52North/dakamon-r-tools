@@ -6,3 +6,4 @@ TRUNCATE TABLE featurerelation CASCADE;
 TRUNCATE TABLE observableproperty CASCADE;
 TRUNCATE TABLE probe CASCADE;
 TRUNCATE TABLE probe_parameter CASCADE;
+TRUNCATE TABLE observation CASCADE;
