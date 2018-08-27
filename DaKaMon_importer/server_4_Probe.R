@@ -197,49 +197,36 @@ observeEvent(input$storeDBProbe, {
   }
 
   for (probe in 1:nrow(Probe_data)) { # probe <- 1
+    dynamicDf <- NULL
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(probeColumnMappings)))
+    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+    for (col in 1:nrow(probeColumnMappings)) {
+      dynamicDfRow$columnid <- probeColumnMappings[col, "columnid"]
+      dynamicDfRow$dede <- probeColumnMappings[col, "dede"]
+      value = Probe_data[probe, probeColumnMappings[col, "dede"]]
+      if (is.null(value) || is.na(value)) {
+        dynamicDfRow$value = "EMPTY"
+      } else {
+        if (class(value) == "character") {
+          value = paste0("'", value, "'")
+        }
+        dynamicDfRow$value = value
+      }
+      dynamicDf <- rbind(dynamicDf, dynamicDfRow)
+    }
     # if there are already Probee in the DB that are again in the CSV
     if (nrow(checkDBProbe$ProbeInDB) > 0) {
       ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
       # TODO implement workflow with dynamic columns
-      dbSendQuery(db, paste0("UPDATE probe
-      	SET
-      		probe_col003 = probe_col003_var,
-      		probe_col004 = probe_col004_var,
-      		probe_col005 = probe_col005_var,
-      		probe_col006 = probe_col006_var,
-      		probe_col007 = probe_col007_var,
-      		probe_col008 = probe_col008_var,
-      		probe_col009 = probe_col009_var,
-      		probe_col010 = probe_col010_var,
-      		probe_col011 = probe_col011_var,
-      		probe_col012 = probe_col012_var,
-      		probe_col013 = probe_col013_var,
-      		probe_col014 = probe_col014_var,
-      		probe_col015 = probe_col015_var
-      RETURNING id;	"))
+      query <- paste0("UPDATE probe
+    	        SET ",
+              paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+              ";")
+      dbSendQuery(db, query)
     } else {
       ## INSERT Probe via SQL ##
       dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
-      dynamicValues = ""
-      for (col in probeColumnMappings[["dede"]]) {
-        value = Probe_data[probe, col]
-        if (is.null(value) || is.na(value)) {
-          if (class(value) == "character") {
-            dynamicValues = paste(dynamicValues, "", sep = ", ")
-          } else {
-            dynamicValues = paste(dynamicValues, -1, sep = ", ")
-          }
-        } else {
-          if (class(value) == "character") {
-            if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
-              value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
-            } else {
-              value = paste0("'", value, "'")
-            }
-          }
-          dynamicValues = paste(dynamicValues, value, sep = ", ")
-        }
-      }
+      dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
       get_pns_id = paste0("WITH query_pns AS (
                           SELECT featureofinterestid AS pns_id
                           FROM featureofinterest
@@ -251,7 +238,7 @@ observeEvent(input$storeDBProbe, {
         (id, identifier, pns_id, ", dynamicColumns, ")
         VALUES (nextval('probeid_seq'), '",
                      Probe_data[probe, reqColProbe$id],
-                     "', (SELECT pns_id FROM query_pns)",
+                     "', (SELECT pns_id FROM query_pns), ",
                      dynamicValues,
                      ");")
       dbSendQuery(db, query)
