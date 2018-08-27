@@ -88,8 +88,22 @@ observeEvent(input$checkDBPNS, {
     checkDBPNS$txt <- NULL
   }
 
-  # TODO: check whether referenced super FoIs exist; if not -> error state: no upload
+  # check whether referenced super FoIs exist; if not -> error state: no upload
+  OrtInDB <- dbGetQuery(db, paste0("SELECT identifier FROM featureofinterest WHERE identifier IN ('",
+                                   paste(inCSVPNS$df[,reqColPNS$geo], collapse="', '"),"')"))
 
+  if (nrow(OrtInDB) == 0) {
+    checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                            paste0(inCSVPNS$df[,reqColPNS$geo], collapse="</li><li>"))
+  } else {
+    misingOrte <- which(sapply(inCSVPNS$df[,reqColPNS$geo], # TODO drop ID, parent identifier
+                            function(x) is.na(match(x, OrtInDB$identifier))))
+    if (length(misingOrte > 0)) {
+      checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                              paste0(inCSVPNS$df[,reqColPNS$geo][misingOrte], collapse="</li><li>"))  
+    }
+  }
+  
   checkDBPNS$PNSInDB <- PNSInDB
 
   checkDBPNS$checked <- TRUE
