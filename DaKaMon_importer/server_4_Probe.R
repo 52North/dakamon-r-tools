@@ -215,7 +215,7 @@ observeEvent(input$storeDBProbe, {
       dynamicDf <- rbind(dynamicDf, dynamicDfRow)
     }
     # if there are already Probee in the DB that are again in the CSV
-    if (nrow(checkDBProbe$ProbeInDB) > 0) {
+    if (Probe_data[probe,"ID"] %in% checkDBProbe$ProbeInDB$identifier) {
       ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
       # TODO implement workflow with dynamic columns
       query <- paste0("UPDATE probe
