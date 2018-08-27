@@ -46,6 +46,7 @@ observeEvent(input$csvFileOrt, {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
 
   valiOrt$txt <- txt
+  
   valiOrt$validated <- TRUE
 })
 
@@ -69,7 +70,7 @@ output$OrtValidationOut <- renderUI({
 # find existing Orte
 
 observeEvent(input$checkDBOrt, {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
+  db <- connectToDB()
   on.exit(dbDisconnect(db), add=T)
 
   progress <- shiny::Progress$new()
