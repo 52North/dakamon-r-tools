@@ -168,7 +168,7 @@ observeEvent(input$storeDBParameter, {
 
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('param', 'global')"))[,1]
-  paramDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
+  paramColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
   misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
 
@@ -191,12 +191,12 @@ observeEvent(input$storeDBParameter, {
 
   for (param in 1:nrow(PAR_data)) {
     dynamicDf <- NULL
-    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(paramDataCols)))
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(paramColumnMappings)))
     colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-    for (col in 1:nrow(paramDataCols)) {
-      dynamicDfRow$columnid <- paramDataCols[col, "columnid"]
-      dynamicDfRow$dede <- paramDataCols[col, "dede"]
-      value = PAR_data[param, paramDataCols[col, "dede"]]
+    for (col in 1:nrow(paramColumnMappings)) {
+      dynamicDfRow$columnid <- paramColumnMappings[col, "columnid"]
+      dynamicDfRow$dede <- paramColumnMappings[col, "dede"]
+      value = PAR_data[param, paramColumnMappings[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         dynamicDfRow$value = "EMPTY"
       } else {
@@ -225,7 +225,7 @@ observeEvent(input$storeDBParameter, {
       dbSendQuery(db, query)
     } else {
       ## INSERT PAR and data via SQL ##
-      dynamicColumns = paste0(paramDataCols[, 1], collapse = ", ")
+      dynamicColumns = paste0(paramColumnMappings[, 1], collapse = ", ")
       dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
       insertParams = paste0("(
         INSERT INTO observableproperty

@@ -165,7 +165,7 @@ observeEvent(input$storeDBPNS, {
 
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pns', 'global')"))[,1]
-  pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
+  pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
                           function(x) is.na(match(x, regCols))))
 
@@ -183,18 +183,18 @@ observeEvent(input$storeDBPNS, {
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                VALUES ('", paste(colId, 'pns', PNS_header[misCols[i]], sep="', '"),"')"))
     }
-    pnsDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
+    pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pns')"))
   }
 
   # if there are already PNSn in the DB that are again in the CSV
   for (pns in 1:nrow(PNS_data)) {
     dynamicDf <- NULL
-    for (col in 1:nrow(pnsDataCols)) {
-      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(pnsDataCols)))
+    for (col in 1:nrow(pnsColumnMappings)) {
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(pnsColumnMappings)))
       colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-      dynamicDfRow$columnid <- pnsDataCols[col, "columnid"]
-      dynamicDfRow$dede <- pnsDataCols[col, "dede"]
-      value = PNS_data[pns, pnsDataCols[col, "dede"]]
+      dynamicDfRow$columnid <- pnsColumnMappings[col, "columnid"]
+      dynamicDfRow$dede <- pnsColumnMappings[col, "dede"]
+      value = PNS_data[pns, pnsColumnMappings[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         #if (class(value) == "character") {
         #  dynamicDfRow$value =  "''"
@@ -238,7 +238,7 @@ observeEvent(input$storeDBPNS, {
       dbSendQuery(db, query)
     } else { # -> INSERT
       ## INSERT FoI and data via SQL, mind the parental FoI ##
-      dynamicColumns = paste0(pnsDataCols[, 1], collapse = ", ")
+      dynamicColumns = paste0(pnsColumnMappings[, 1], collapse = ", ")
       dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
       query = paste0("WITH
                     insert_pns AS (

@@ -163,7 +163,7 @@ observeEvent(input$storeDBOrt, {
 
   ## add missing columns
   regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
-  ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
+  ortColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   misCols <- which(sapply(Ort_header, # TODO drop ID and Name
                           function(x) is.na(match(x, regCols))))
 
@@ -181,20 +181,20 @@ observeEvent(input$storeDBOrt, {
       dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                VALUES ('", paste(colId, 'ort', colHeader, sep="', '"),"')"))
     }
-    ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
+    ortColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
   }
 
   # if there are already Orte in the DB that are again in the CSV
   for (ort in 1:nrow(Ort_data)) {
     dynamicDf <- NULL
-    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortDataCols)))
+    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortColumnMappings)))
     colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-    for (col in 1:nrow(ortDataCols)) {
-      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortDataCols)))
+    for (col in 1:nrow(ortColumnMappings)) {
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortColumnMappings)))
       colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-      dynamicDfRow$columnid <- ortDataCols[col, "columnid"]
-      dynamicDfRow$dede <- ortDataCols[col, "dede"]
-      value = Ort_data[ort, ortDataCols[col, "dede"]]
+      dynamicDfRow$columnid <- ortColumnMappings[col, "columnid"]
+      dynamicDfRow$dede <- ortColumnMappings[col, "dede"]
+      value = Ort_data[ort, ortColumnMappings[col, "dede"]]
       if (is.null(value) || is.na(value)) {
         #if (class(value) == "character") {
         #  dynamicDfRow$value =  "''"
