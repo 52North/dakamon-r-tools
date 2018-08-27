@@ -608,7 +608,14 @@ observeEvent(input$storeDBData, {
                   )
                   INSERT INTO probe_parameter
                   SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, '", row[5], "', '", row[6], "'
-                  FROM query_probe_id, query_parameter_id, insert_unit")
+                  FROM query_probe_id, query_parameter_id, insert_unit
+                  ON CONFLICT ON CONSTRAINT probe_parameter_pkey
+                      DO UPDATE SET 
+                          pp_unit = (SELECT unit_id FROM insert_unit),
+                          bg = ", row[5],
+                          ", ng = ", row[6],
+                      " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
+                      AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
       dbExecute(db, query)
       newDataRow <- paste(row[2], # Parameter
                           row[3], # Wert
