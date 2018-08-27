@@ -20,10 +20,9 @@ probenPNS <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifi
                     LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid"))
 dbDisconnect(db)
 
-
 output$probenPNSInput <- renderUI(selectInput("probenPNS", "Probenahmestelle:", 
-                                              probenPNS$identifier, multiple = TRUE, 
-                                              selected = probenPNS$identifier[1]))
+                                              probenPNS$name, multiple = TRUE, 
+                                              selected = probenPNS$name[1]))
 
 
 # Alle Proben/Global Spaltennamen
@@ -45,11 +44,16 @@ allProben <- reactive({
                    " FROM probe pro 
                    LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id") # FIXME: in meiner tAbelle taucht nur col047 für pns_id auf ..?
     
-    if (!is.null(input$probenPNS))
-      query <- paste0(query, " WHERE pns.identifier IN (", paste0("'", input$probenPNS, "'" ,collapse=", ") ,")")
-    
+    if (!is.null(input$probenPNS)) {
+      slectedPNS <- input$probenPNS
+      if (Sys.info()["sysname"] == "Windows") {
+        slectedPNS <- stri_enc_tonative(input$probenPNS)
+      }
+      query <- paste0(query, " WHERE pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
+    }
+
     allPro <- dbGetQuery(db, query)
-    
+ 
     dbDisconnect(db)
     
     if (nrow(allPro) > 0)

@@ -5,6 +5,7 @@ library(shinyjs)
 library(httr)
 library(rjson)
 library(RPostgreSQL)
+library(stringi)
 
 source("conf.R", local = TRUE, encoding = "UTF-8")$value
 

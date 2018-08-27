@@ -25,12 +25,17 @@ if (nrow(ort) > 0) {
     ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
     ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
     ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
-    ortData <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
-                                     " FROM featureofinterest foi
+    thematik <- input$ews
+    if (Sys.info()["sysname"] == "Windows") {
+      thematik <- stri_enc_tonative(input$ews)
+    }
+    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+                    " FROM featureofinterest foi
                                      RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                      WHERE foi.featureofinterestid IN (", 
-                                     paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.", colThematik, " IN (", paste0("'", input$ews, "'" ,collapse=", ") ,")"))
+                    paste0(ort$featureofinterestid, collapse=", "), ")
+                                     AND od.", colThematik, " IN (", paste0("'", thematik, "'" ,collapse=", ") ,")")
+    ortData <- dbGetQuery(db, query)
     
     
     if (nrow(ortData) > 0)
