@@ -197,7 +197,7 @@ observeEvent(input$storeDBParameter, {
         dynamicDfRow$columnid <- paramColumnMappings[col, "columnid"]
         dynamicDfRow$dede <- paramColumnMappings[col, "dede"]
         value = PAR_data[param, paramColumnMappings[col, "dede"]]
-        if (is.null(value) || is.na(value)) {
+        if (is.null(value) || is.na(value) || value == '') {
           dynamicDfRow$value = "EMPTY"
         } else {
           if (class(value) == "character") {

@@ -203,7 +203,7 @@ observeEvent(input$storeDBProbe, {
         dynamicDfRow$columnid <- probeColumnMappings[col, "columnid"]
         dynamicDfRow$dede <- probeColumnMappings[col, "dede"]
         value = Probe_data[probe, probeColumnMappings[col, "dede"]]
-        if (is.null(value) || is.na(value)) {
+        if (is.null(value) || is.na(value) || value == '') {
           dynamicDfRow$value = "EMPTY"
         } else {
           if (class(value) == "character") {
@@ -220,7 +220,9 @@ observeEvent(input$storeDBProbe, {
         query <- paste0("UPDATE probe
       	        SET ",
                 paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-                ";")
+                " WHERE identifier = '",
+                Probe_data[probe,"ID"],
+                "';")
         dbSendQuery(db, query)
       } else {
         ## INSERT Probe via SQL ##

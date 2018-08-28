@@ -208,12 +208,7 @@ observeEvent(input$storeDBPNS, {
         dynamicDfRow$columnid <- pnsColumnMappings[col, "columnid"]
         dynamicDfRow$dede <- pnsColumnMappings[col, "dede"]
         value = PNS_data[pns, pnsColumnMappings[col, "dede"]]
-        if (is.null(value) || is.na(value)) {
-          #if (class(value) == "character") {
-          #  dynamicDfRow$value =  "''"
-          #} else {
-          #  dynamicDfRow$value = -1
-          #}
+        if (is.null(value) || is.na(value) || value == '') {
           dynamicDfRow$value = "EMPTY"
         } else {
           if (class(value) == "character") {
