@@ -193,6 +193,15 @@ connectToDB <- function() {
   db
 }
 
+modalErrorHandler <- function(e) {
+  print(e)
+  showModalMessage("Fehler", e["message"])
+}
+
+showModalMessage <- function(title="Title", message="Some Message") {
+  showModal(modalDialog(title = title, message, footer = modalButton("Ok")))
+}
+
 shinyApp(ui, server, onStart = function() {
   cat("Starting Application ...")
   # Ensure the DB pool closes all connections

@@ -96,7 +96,7 @@ observeEvent(input$checkDBParameter, {
     }
   
     checkDBPAR$checked <- TRUE
-  }, finally = poolReturn(db))
+  }, error = modalErrorHandler(e), finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -248,10 +248,7 @@ observeEvent(input$storeDBParameter, {
       }
     }
   
-    showModal(modalDialog(
-      title = "Vorgang abgeschlossen",
-      paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt."),
-      footer = modalButton("Ok")
-    ))
-  }, finally = poolReturn(db))
+    message = paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt.")
+    showModalMessage("Vorgang abgeschlossen", message)
+  }, error = modalErrorHandler(e), finally = poolReturn(db))
 })
