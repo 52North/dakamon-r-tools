@@ -76,7 +76,7 @@ feederPath <- ifelse(local, "~/Code/git/sos-importer/feeder/target/52n-sos-impor
 #
 feedNumberOfParallelImports <- 1
 #
-# WGS84 2D Lat Lon wiht Â°
+# WGS84 2D Lat Lon wiht °
 feederEpsgCode <- "4326"
 # sync with dbTimestampPattern and timestampRegExPattern
 # R reverses the order of the date information and adds seconds (if absent: ":00")

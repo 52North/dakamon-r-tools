@@ -6,6 +6,13 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 
+if (!"pool" %in% (rownames(installed.packages()))) {
+  # get pool from GitHub, since it's not yet on CRAN
+  devtools::install_github("rstudio/pool")
+}
+
+library(pool)
+
 # guess an encoding
 library(readr)
 
@@ -162,18 +169,36 @@ server <- function(input, output) {
   
   source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
   
-  # Lit
+  # Literatur
   # Datei upload
 }
 
-connectToDB <- function(callback = NULL) {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
-  
-  if (Sys.info()["sysname"] == "Windows")
+pool <- dbPool(
+  drv = RPostgreSQL::PostgreSQL(),
+  dbname = dbName,
+  host = dbHost,
+  user = dbUser,
+  password = dbPassword,
+  port = dbPort,
+  minSize = 3,
+  maxSize = 10,
+  idleTimeout = 30000 # 30sec
+)
+
+connectToDB <- function() {
+  db <- poolCheckout(pool)
+  if (Sys.info()["sysname"] == "Windows") {
     dbSendQuery(db, "set client_encoding='windows-1252'")
-  
+  }
   db
 }
 
+shinyApp(ui, server, onStart = function() {
+  cat("Starting Application ...")
+  # Ensure the DB pool closes all connections
+  onStop(function() {
+    cat("Closing DB connection pool")
+    poolClose(pool)
+  })
+})
 
-shinyApp(ui, server)

@@ -73,29 +73,30 @@ output$PARValidationOut <- renderUI({
 
 observeEvent(input$checkDBParameter, {
   db <- connectToDB()
-  on.exit(dbDisconnect(db), add=T)
-
-  progress <- shiny::Progress$new()
-  on.exit(progress$close(), add = T)
-
-  progress$set(message = "Prüfe bereits registrierte Parameter.", value = 0)
-
-  # get all PARs from the DB that have any of the identifiers in the CSV
-  if (length(inCSVPAR$df) > 0) {
-    PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
-                                   paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
-
-    if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
-      checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
-                              paste0(PARInDB$identifier, collapse="</li><li>"))
-    } else {
-      checkDBPAR$txt <- NULL
-  }
-
-    checkDBPAR$PARInDB <- PARInDB
-  }
-
-  checkDBPAR$checked <- TRUE
+  tryCatch({
+  
+    progress <- shiny::Progress$new()
+    on.exit(progress$close(), add = T)
+  
+    progress$set(message = "Prüfe bereits registrierte Parameter.", value = 0)
+  
+    # get all PARs from the DB that have any of the identifiers in the CSV
+    if (length(inCSVPAR$df) > 0) {
+      PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
+                                     paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
+  
+      if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
+        checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
+                                paste0(PARInDB$identifier, collapse="</li><li>"))
+      } else {
+        checkDBPAR$txt <- NULL
+    }
+  
+      checkDBPAR$PARInDB <- PARInDB
+    }
+  
+    checkDBPAR$checked <- TRUE
+  }, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -149,108 +150,108 @@ output$tablePAR <- renderDataTable({
 
 observeEvent(input$storeDBParameter, {
   db <- connectToDB()
-  on.exit(dbDisconnect(db), add=T)
-
-  PAR_data <- inCSVPAR$df
-  PAR_header <- inCSVPAR$headAsChar
-
-  PAR_empty_cols <- apply(PAR_data, 2, function(x) all(is.na(x)))
-
-  PAR_header <- PAR_header[!PAR_empty_cols]
-  PAR_data <- PAR_data[,!PAR_empty_cols]
-
-  nRowDf <- nrow(PAR_data)
-
-  progress <- shiny::Progress$new()
-  on.exit(progress$close(), add=T)
-
-  progress$set(message = "Füge Parameter in DB ein.", value = 0)
-
-  ## add missing columns
-  regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('param', 'global')"))[,1]
-  paramColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
-  misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
-                          function(x) is.na(match(x, regCols))))
-
-  if (length(misCols > 0)) {
-    # TODO adjust to new column_metadata workflow
-    for (i in 1:length(misCols)) {# i <- 1
-      colId <- paste0(sprintf("col%03d", i + length(regCols)))
-      coltype = switch(class(PAR_data[,misCols[i]]),
-                       integer = "numeric",
-                       numeric = "numeric",
-                       character = "character varying(255)")
-
-      # TODO adopt to new FoI table
-      dbSendQuery(db, paste0("ALTER TABLE parameter_data ADD COLUMN ", colId, " ", coltype, ";"))
-
-      dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
-                               VALUES ('", paste(colId, 'param', PAR_header[misCols[i]], sep="', '"),"')"))
-    }
-  }
-
-  for (param in 1:nrow(PAR_data)) {
-    dynamicDf <- NULL
-    dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(paramColumnMappings)))
-    colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-    for (col in 1:nrow(paramColumnMappings)) {
-      dynamicDfRow$columnid <- paramColumnMappings[col, "columnid"]
-      dynamicDfRow$dede <- paramColumnMappings[col, "dede"]
-      value = PAR_data[param, paramColumnMappings[col, "dede"]]
-      if (is.null(value) || is.na(value)) {
-        dynamicDfRow$value = "EMPTY"
-      } else {
-        if (class(value) == "character") {
-          value = paste0("'", value, "'")
-        }
-        dynamicDfRow$value = value
+  tryCatch({
+    PAR_data <- inCSVPAR$df
+    PAR_header <- inCSVPAR$headAsChar
+  
+    PAR_empty_cols <- apply(PAR_data, 2, function(x) all(is.na(x)))
+  
+    PAR_header <- PAR_header[!PAR_empty_cols]
+    PAR_data <- PAR_data[,!PAR_empty_cols]
+  
+    nRowDf <- nrow(PAR_data)
+  
+    progress <- shiny::Progress$new()
+    on.exit(progress$close(), add=T)
+  
+    progress$set(message = "Füge Parameter in DB ein.", value = 0)
+  
+    ## add missing columns
+    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('param', 'global')"))[,1]
+    paramColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('param')"))
+    misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
+                            function(x) is.na(match(x, regCols))))
+  
+    if (length(misCols > 0)) {
+      # TODO adjust to new column_metadata workflow
+      for (i in 1:length(misCols)) {# i <- 1
+        colId <- paste0(sprintf("col%03d", i + length(regCols)))
+        coltype = switch(class(PAR_data[,misCols[i]]),
+                         integer = "numeric",
+                         numeric = "numeric",
+                         character = "character varying(255)")
+  
+        # TODO adopt to new FoI table
+        dbSendQuery(db, paste0("ALTER TABLE parameter_data ADD COLUMN ", colId, " ", coltype, ";"))
+  
+        dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                                 VALUES ('", paste(colId, 'param', PAR_header[misCols[i]], sep="', '"),"')"))
       }
-      dynamicDf <- rbind(dynamicDf, dynamicDfRow)
     }
-    # if there are already PARe in the DB that are again in the CSV
-    if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
-      ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
-      # TODO switch to workflow with dynamic columns
-      query <- paste0("with update_param as (
-        UPDATE observableproperty
-        SET
-        name = '", PAR_data[param,reqColPAR$name],
-        "' WHERE identifier = '", PAR_data[param,reqColPAR$id],
-        "' RETURNING observablepropertyid
-      )
-      UPDATE parameter_data
-      SET ",
-      paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-      " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);")
-      dbSendQuery(db, query)
-    } else {
-      ## INSERT PAR and data via SQL ##
-      dynamicColumns = paste0(paramColumnMappings[, 1], collapse = ", ")
-      dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
-      insertParams = paste0("(
-        INSERT INTO observableproperty
-        (observablepropertyid, identifier, name)
-        VALUES
-        (nextval('observablepropertyid_seq'), '",
-            PAR_data[param, reqColPAR$id],
-            "', '",
-            PAR_data[param, reqColPAR$name],
-            "')
-        RETURNING observablepropertyid
-      )")
-      insertParameterValues = paste0("INSERT INTO parameter_data
-                      (observablepropertyid, ", dynamicColumns, ")
-                      (SELECT observablepropertyid, ",
-                      dynamicValues,
-                      "FROM insert_param)")
-      query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
-      dbSendQuery(db, query)
+  
+    for (param in 1:nrow(PAR_data)) {
+      dynamicDf <- NULL
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(paramColumnMappings)))
+      colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+      for (col in 1:nrow(paramColumnMappings)) {
+        dynamicDfRow$columnid <- paramColumnMappings[col, "columnid"]
+        dynamicDfRow$dede <- paramColumnMappings[col, "dede"]
+        value = PAR_data[param, paramColumnMappings[col, "dede"]]
+        if (is.null(value) || is.na(value)) {
+          dynamicDfRow$value = "EMPTY"
+        } else {
+          if (class(value) == "character") {
+            value = paste0("'", value, "'")
+          }
+          dynamicDfRow$value = value
+        }
+        dynamicDf <- rbind(dynamicDf, dynamicDfRow)
+      }
+      # if there are already PARe in the DB that are again in the CSV
+      if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
+        ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
+        # TODO switch to workflow with dynamic columns
+        query <- paste0("with update_param as (
+          UPDATE observableproperty
+          SET
+          name = '", PAR_data[param,reqColPAR$name],
+          "' WHERE identifier = '", PAR_data[param,reqColPAR$id],
+          "' RETURNING observablepropertyid
+        )
+        UPDATE parameter_data
+        SET ",
+        paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+        " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);")
+        dbSendQuery(db, query)
+      } else {
+        ## INSERT PAR and data via SQL ##
+        dynamicColumns = paste0(paramColumnMappings[, 1], collapse = ", ")
+        dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
+        insertParams = paste0("(
+          INSERT INTO observableproperty
+          (observablepropertyid, identifier, name)
+          VALUES
+          (nextval('observablepropertyid_seq'), '",
+              PAR_data[param, reqColPAR$id],
+              "', '",
+              PAR_data[param, reqColPAR$name],
+              "')
+          RETURNING observablepropertyid
+        )")
+        insertParameterValues = paste0("INSERT INTO parameter_data
+                        (observablepropertyid, ", dynamicColumns, ")
+                        (SELECT observablepropertyid, ",
+                        dynamicValues,
+                        "FROM insert_param)")
+        query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
+        dbSendQuery(db, query)
+      }
     }
-  }
-
-  showModal(modalDialog(
-    title = "Vorgang abgeschlossen",
-    paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt."),
-    footer = modalButton("Ok")
-  ))
+  
+    showModal(modalDialog(
+      title = "Vorgang abgeschlossen",
+      paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt."),
+      footer = modalButton("Ok")
+    ))
+  }, finally = poolReturn(db))
 })

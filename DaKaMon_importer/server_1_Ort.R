@@ -71,26 +71,26 @@ output$OrtValidationOut <- renderUI({
 
 observeEvent(input$checkDBOrt, {
   db <- connectToDB()
-  on.exit(dbDisconnect(db), add=T)
-
-  progress <- shiny::Progress$new()
-  on.exit(progress$close(), add = T)
-
-  progress$set(message = "Prüfe bereits registrierte Orte.", value = 0)
-
-  # get all Orte from the DB that have any of the identifiers in the CSV
-  OrtInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('",
-                                   paste(inCSVOrt$df[,reqColOrt$id], collapse="', '"),"')"))
-  if (nrow(OrtInDB) > 0) {
-    checkDBOrt$txt <- paste("Folgende Orte sind bereits in der DB: <ul><li>",
-                            paste0(OrtInDB$identifier, collapse="</li><li>"))
-  } else {
-    checkDBOrt$txt <- NULL
-  }
-
-  checkDBOrt$OrtInDB <- OrtInDB
-
-  checkDBOrt$checked <- TRUE
+  tryCatch({
+    progress <- shiny::Progress$new()
+    on.exit(progress$close(), add = T)
+    
+    progress$set(message = "Prüfe bereits registrierte Orte.", value = 0)
+    
+    # get all Orte from the DB that have any of the identifiers in the CSV
+    OrtInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('",
+                                     paste(inCSVOrt$df[,reqColOrt$id], collapse="', '"),"')"))
+    if (nrow(OrtInDB) > 0) {
+      checkDBOrt$txt <- paste("Folgende Orte sind bereits in der DB: <ul><li>",
+                              paste0(OrtInDB$identifier, collapse="</li><li>"))
+    } else {
+      checkDBOrt$txt <- NULL
+    }
+    
+    checkDBOrt$OrtInDB <- OrtInDB
+    
+    checkDBOrt$checked <- TRUE
+  }, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -145,12 +145,58 @@ output$tableOrt <- renderDataTable({
 
 observeEvent(input$storeDBOrt, {
   db <- connectToDB()
-  on.exit(dbDisconnect(db), add=T)
+  tryCatch({
 
-  Ort_data <- inCSVOrt$df
-  Ort_header <- inCSVOrt$headAsChar
-
-  Ort_empty_cols <- apply(Ort_data, 2, function(x) all(is.na(x)))
+    Ort_data <- inCSVOrt$df
+    Ort_header <- inCSVOrt$headAsChar
+    
+    Ort_empty_cols <- apply(Ort_data, 2, function(x) all(is.na(x)))
+    
+    Ort_header <- Ort_header[!Ort_empty_cols]
+    Ort_data <- Ort_data[,!Ort_empty_cols]
+    
+    nRowDf <- nrow(Ort_data)
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close(), add=T)
+    
+    progress$set(message = "Füge Orte in DB ein.", value = 0)
+    
+    ## add missign columns
+    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
+    ortDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('ort')"))
+    misCols <- which(sapply(Ort_header, # TODO drop ID and Name
+                            function(x) is.na(match(x, regCols))))
+    
+    if (length(misCols > 0)) {
+      for (i in 1:length(misCols)) {# i <- 1
+        colId <- sprintf("col%03d", i + length(regCols))
+        coltype = switch(class(Ort_data[,misCols[i]]),
+                         integer = "numeric",
+                         numeric = "numeric",
+                         character = "character varying(255)")
+        
+        #dbWithTransaction(db, {
+          colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0 
+                                                    FROM column_metadata 
+                                                    WHERE columnid='", colId, "'
+                                                    AND prefixid='ort' ;"))
+          if (!colMetadataExists) {
+            dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
+                                    VALUES ('", paste(colId, 'ort', Ort_header[misCols[i]], sep="', '"),"');"))
+          }
+          
+          colExists = dbGetQuery(db, paste0("SELECT count(column_name) > 0
+                                             FROM information_schema.columns 
+                                             WHERE table_name='ort_data' 
+                                             AND column_name='", colId, "';"))
+          if (!colExists) {
+            dbSendQuery(db, paste0("ALTER TABLE ort_data ADD COLUMN ", colId, " ", coltype, ";"))
+          }
+        #})
+        
+      }
+    }
 
   Ort_header <- Ort_header[!Ort_empty_cols]
   Ort_data <- Ort_data[,!Ort_empty_cols]
@@ -256,4 +302,5 @@ observeEvent(input$storeDBOrt, {
     paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt."),
     footer = modalButton("Ok")
   ))
+  }, finally = poolReturn(db))
 })
