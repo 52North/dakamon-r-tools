@@ -238,12 +238,12 @@ observeEvent(input$storeDBParameter, {
               "')
           RETURNING observablepropertyid
         )")
-        insertParameterValues = paste0("INSERT INTO parameter_data
-                        (observablepropertyid, ", dynamicColumns, ")
-                        (SELECT observablepropertyid, ",
+        insertParameterValues = paste("INSERT INTO parameter_data
+                        (observablepropertyid,", dynamicColumns, ")
+                        (SELECT observablepropertyid,",
                         dynamicValues,
                         "FROM insert_param)")
-        query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
+        query = paste("WITH insert_param AS", insertParams, insertParameterValues, ";")
         dbSendQuery(db, query)
       }
     }

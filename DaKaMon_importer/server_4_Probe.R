@@ -232,12 +232,10 @@ observeEvent(input$storeDBProbe, {
                             WHERE identifier = '",
                             Probe_data[probe, reqColProbe$geoSub],
                             "')")
-        query = paste0(get_pns_id,
-                       " INSERT INTO probe
-          (id, identifier, pns_id, ", dynamicColumns, ")
-          VALUES (nextval('probeid_seq'), '",
-                       Probe_data[probe, reqColProbe$id],
-                       "', (SELECT pns_id FROM query_pns), ",
+        query = paste(get_pns_id,
+                      "INSERT INTO probe
+                       (id, identifier, pns_id,", dynamicColumns, ")
+                       VALUES (nextval('probeid_seq'),'", "', (SELECT pns_id FROM query_pns),",
                        dynamicValues,
                        ");")
         dbSendQuery(db, query)
