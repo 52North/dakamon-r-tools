@@ -591,6 +591,7 @@ observeEvent(input$storeDBData, {
         # INSERT INTO probe_parameter
         # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
   
+        # FIXME: unit, bg and ng are optional!!!
         query <- paste0("WITH query_probe_id AS (
                       SELECT id as probe_id
                       FROM probe

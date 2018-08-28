@@ -242,7 +242,7 @@ observeEvent(input$storeDBParameter, {
                         (observablepropertyid, ", dynamicColumns, ")
                         (SELECT observablepropertyid, ",
                         dynamicValues,
-                        "FROM insert_param)")
+                        " FROM insert_param)")
         query = paste0("WITH insert_param AS ", insertParams, " ", insertParameterValues, ";")
         dbSendQuery(db, query)
       }
