@@ -106,7 +106,7 @@ observeEvent(input$checkDBPNS, {
     checkDBPNS$PNSInDB <- PNSInDB
   
     checkDBPNS$checked <- TRUE
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -286,5 +286,5 @@ observeEvent(input$storeDBPNS, {
   
     message = paste0(nrow(PNS_data), " Probenahmestellen wurden erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })

@@ -103,7 +103,7 @@ observeEvent(input$checkDBProbe, {
                                   paste0(inCSVProbe$df[misPNSIDs, reqColProbe$geoSub], collapse="</li><li>"))
     }
     checkDBProbe$checked <- TRUE
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -246,5 +246,5 @@ observeEvent(input$storeDBProbe, {
   
     message = paste0(nrow(Probe_data), " Proben wurden erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })

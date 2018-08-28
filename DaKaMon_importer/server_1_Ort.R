@@ -90,7 +90,7 @@ observeEvent(input$checkDBOrt, {
     checkDBOrt$OrtInDB <- OrtInDB
     
     checkDBOrt$checked <- TRUE
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -298,5 +298,5 @@ observeEvent(input$storeDBOrt, {
   
     message = paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })

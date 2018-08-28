@@ -305,7 +305,7 @@ observeEvent(input$checkDBData, {
     # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
   
     CheckDBData$checked <- TRUE
-  }, error = modalErrorHandler(e), finally = poolReturn(db))
+  }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
 
@@ -649,7 +649,7 @@ observeEvent(input$storeDBData, {
       progress$inc(1)
   
       progress$close()
-    }, error = modalErrorHandler(e), finally = poolReturn(db))
+    }, error = modalErrorHandler, finally = poolReturn(db))
   }
 
   message = "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
