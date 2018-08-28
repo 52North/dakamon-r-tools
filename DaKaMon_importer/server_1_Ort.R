@@ -265,7 +265,7 @@ observeEvent(input$storeDBOrt, {
       }
     
       message = paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt.")
-      showModalMessage("Vorgang abgeschlossen", message)
+      showModalMessage(title="Vorgang abgeschlossen", message)
     })
   }, error = modalErrorHandler, finally = poolReturn(db))
 })

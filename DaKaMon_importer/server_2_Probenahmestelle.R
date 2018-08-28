@@ -284,7 +284,8 @@ observeEvent(input$storeDBPNS, {
       }
     }
   
-    message = paste0(nrow(PNS_data), " Probenahmestellen wurden erfolgreich in der Datenbank angelegt.")
-    showModalMessage("Vorgang abgeschlossen", message)
+    
+      message = paste0(nrow(PNS_data), " Probenahmestellen wurden erfolgreich in der Datenbank angelegt.")
+      showModalMessage(title="Vorgang abgeschlossen", message)
   }, error = modalErrorHandler, finally = poolReturn(db))
 })

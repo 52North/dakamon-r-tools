@@ -248,7 +248,8 @@ observeEvent(input$storeDBParameter, {
       }
     }
   
-    message = paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt.")
-    showModalMessage("Vorgang abgeschlossen", message)
+    
+      message = paste0(nrow(PAR_data), " Parameter wurden erfolgreich in der Datenbank angelegt.")
+      showModalMessage(title="Vorgang abgeschlossen", message)
   }, error = modalErrorHandler, finally = poolReturn(db))
 })

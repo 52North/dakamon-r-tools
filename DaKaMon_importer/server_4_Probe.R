@@ -242,7 +242,8 @@ observeEvent(input$storeDBProbe, {
       }
     }
   
-    message = paste0(nrow(Probe_data), " Proben wurden erfolgreich in der Datenbank angelegt.")
-    showModalMessage("Vorgang abgeschlossen", message)
+    
+      message = paste0(nrow(Probe_data), " Proben wurden erfolgreich in der Datenbank angelegt.")
+      showModalMessage(title="Vorgang abgeschlossen", message)
   }, error = modalErrorHandler, finally = poolReturn(db))
 })

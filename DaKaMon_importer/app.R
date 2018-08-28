@@ -194,12 +194,14 @@ connectToDB <- function() {
 }
 
 modalErrorHandler <- function(e) {
-  print(e)
-  showModalMessage("Fehler", e["message"])
+  if (!is.null(e)) {
+    print(e)
+  }
+  showModalMessage(title="Fehler", e["message"])
 }
 
-showModalMessage <- function(title="Title", message="Some Message") {
-  showModal(modalDialog(title = title, message, footer = modalButton("Ok")))
+showModalMessage <- function(..., title="Title") {
+  showModal(modalDialog(..., title = title, footer = modalButton("Ok")))
 }
 
 shinyApp(ui, server, onStart = function() {
