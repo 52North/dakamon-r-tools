@@ -5,3 +5,5 @@ Blei;Blei;Schwermetalle;Pb;3;nein;6
 Cadmium;Cadmium;Schwermetalle;Cd;4;nein;1
 Nickel;Nickel;Schwermetalle;Ni;5;nein;3
 Quecksilber;Quecksilber;Schwermetalle;Hg;6;nein;4
+AngEW;Angeschlossene EW;Stammdaten;AngEW;;;
+GK;Größenklasse;Stammdaten;GK;;;

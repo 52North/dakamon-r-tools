@@ -425,7 +425,7 @@ observeEvent(input$storeDBData, {
           Messungen_data[,valueIndex] <- column
         }
         progress$inc(1)
-    
+
         #
         # FIXME convert "," decimal separator to system separator
         #

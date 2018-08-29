@@ -211,7 +211,7 @@ observeEvent(input$storeDBPNS, {
             dynamicDfRow$columnid <- pnsColumnMappings[col, "columnid"]
             dynamicDfRow$dede <- pnsColumnMappings[col, "dede"]
             value = PNS_data[pns, pnsColumnMappings[col, "dede"]]
-            if (is.null(value) || is.na(value)) {
+            if (is.null(value) || is.na(value) || value == '') {
               dynamicDfRow$value = "EMPTY"
             } else {
               if (class(value) == "character") {
@@ -237,8 +237,8 @@ observeEvent(input$storeDBPNS, {
           # TODO switch to workflow with dynamic columns
           query <- paste0("with update_pns as (
           UPDATE featureofinterest
-          	SET
-          		 name = '", PNS_data[pns,reqColPNS$name],
+            SET
+               name = '", PNS_data[pns,reqColPNS$name],
                "', geom = ST_GeomFromText('POINT (",
                          PNS_data[pns,reqColPNS$lat],
                          " ",
@@ -261,7 +261,7 @@ observeEvent(input$storeDBPNS, {
           updatedId <- dbGetQuery(db, query)
           ## if pns - foi relation does not exist, insert relation ##
           query <- paste("INSERT INTO featurerelation
-          	(SELECT featureofinterestid, ", updatedId$pns_id," FROM featureofinterest 
+            (SELECT featureofinterestid, ", updatedId$pns_id," FROM featureofinterest 
                         WHERE identifier = '", PNS_data[pns,reqColPNS$geo],"');")
           dbSendQuery(db, query)
         } else { # -> INSERT

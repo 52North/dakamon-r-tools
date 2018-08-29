@@ -211,7 +211,7 @@ observeEvent(input$storeDBOrt, {
           dynamicDfRow$columnid <- ortColumnMappings[col, "columnid"]
           dynamicDfRow$dede <- ortColumnMappings[col, "dede"]
           value = Ort_data[ort, ortColumnMappings[col, "dede"]]
-          if (is.null(value) || is.na(value)) {
+          if (is.null(value) || is.na(value) || value == '') {
             dynamicDfRow$value = "EMPTY"
           } else {
             if (class(value) == "character") {
