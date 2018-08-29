@@ -13,7 +13,7 @@ sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE)
 createFeederConfiguration <- function(csvPath,
                                       url=SOSWebApp, timestampPattern = feederTimestampPattern,
                                       timeZone = feederTimeZoneIdentifier, epsgCode = feederEpsgCode,
-                                      decimalSeparator = ".", columnSeparator = dataSeparator,
+                                      decimalSeparator = decSep, columnSeparator = colSep,
                                       importerClass = feederImporterClass, hunkSize = feederHunkSize,
                                       timeoutBuffer = feederTimeoutBuffer) {
   paste0(
@@ -537,11 +537,16 @@ observeEvent(input$storeDBData, {
         #
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
-        writeLines(createFeederConfiguration(csvPath = feedCSV, decimalSeparator = decSep, columnSeparator = colSep), feedConf)
+        writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
-
-        feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
+        
+        feedDataContent <- data.frame()
         for (i in 1:nrow(Messungen_data)) {
+          
+          columns <- c("Parameter", "Wert", "Einheit", "sensorId", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon")
+          newDataRow <- data.frame(matrix(NA, nrow = 1, ncol=10))
+          colnames(newDataRow) <- columns
+          
           row <- Messungen_data[i,]
 
           #
@@ -601,27 +606,40 @@ observeEvent(input$storeDBData, {
                     SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ",
                           ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
                           ", ",
-                          ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
+                          ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
                           " FROM query_probe_id, query_parameter_id, insert_unit
                     ON CONFLICT ON CONSTRAINT probe_parameter_pkey
                         DO UPDATE SET
                             pp_unit = (SELECT unit_id FROM insert_unit),
                               bg = ", ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
-                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
+                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
+          
           dbExecute(db, query)
-          newDataRow <- c(row[2], # Parameter
-                              row[3], # Wert
-                              row[4], # Einheit
-                              paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),4], # resultTime
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),5], # phenTimeStart
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),6], # phenTimeEnd
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3] # Lon
-                              )
+          
+          newDataRow$Parameter     = row[,2] 
+          newDataRow$Wert          = row[,3]
+          newDataRow$Einheit       = row[,4]
+          newDataRow$sensorId     = paste0(probenMetadata[is.element(probenMetadata$probeid, row[,1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2])
+          newDataRow$resultTime    = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),4])
+          newDataRow$phenStart     = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),5])
+          newDataRow$phenEnd       = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),6])
+          newDataRow$foiIdentifier = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4]
+          newDataRow$lat           = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[,1]),2]),2]
+          newDataRow$lat           = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[,1]),2]),3]
+                          
+          # newDataRow <- c(row[1,2], # Parameter
+          #                 row[1,3], # Wert
+          #                 row[1,4], # Einheit
+          #                 paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
+          #                 gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1,1]),4]), # resultTime
+          #                 gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1,1]),5]), # phenTimeStart
+          #                 gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1,1]),6]), # phenTimeEnd
+          #                 features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
+          #                 features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
+          #                 features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
+          # )
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
           progress$inc(1)
@@ -632,7 +650,8 @@ observeEvent(input$storeDBData, {
         #
         # write global csv file
         #
-        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
+        print(paste("writing import data to: ", feedCSV))
+        write.table(feedDataContent, file=feedCSV, row.names=FALSE,sep=colSep, dec=decSep, fileEncoding="UTF-8")
         #writeLines(iconv(feedDataContent, from=localEncoding, to="UTF-8"), feedCSV)
         progress$inc(1)
 

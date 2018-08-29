@@ -222,13 +222,12 @@ observeEvent(input$storeDBProbe, {
         }
 
         # if there are already Probee in the DB that are again in the CSV
-        if (Probe_data[probe,"ID"] %in% checkDBProbe$ProbeInDB$identifier) {
-          ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
-          # TODO implement workflow with dynamic columns
+        if (Probe_data[probe, reqColProbe$id] %in% checkDBProbe$ProbeInDB$identifier) {
+          ## UPDATE Probe via SQL ##
           query <- paste0("UPDATE probe
         	        SET ",
                   paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-                  " WHERE identifier = '", Probe_data[probe,"ID"], "';")
+                  " WHERE identifier = '", Probe_data[probe, reqColProbe$id], "';")
           dbSendQuery(db, query)
         } else {
           ## INSERT Probe via SQL ##
