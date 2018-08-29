@@ -13,27 +13,27 @@ decReferenz <- decSep
 observeEvent(input$csvFileReferenz, {
   valiReferenz$validated <- FALSE
   checkDBReferenz$checked <- FALSE
-  
+
   # check whether an encoding has been set; fallback: guess the eoncoding using readr
   if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFileReferenz$datapath)
     csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
   }
-  
+
   inCSVReferenz$csvEncode <- csvEncode
-  
+
   inCSVReferenz$df <- read.csv(input$csvFileReferenz$datapath,
                           header = TRUE,
                           sep = sepReferenz, dec = decReferenz,
                           stringsAsFactors = FALSE,
                           fileEncoding = inCSVReferenz$csvEncode)
-  
+
   inCSVReferenz$headAsChar <- colnames(inCSVReferenz$df)
-  
+
   ## validation of Referenz csv-file
   # look for required column names
   # check whether columns have unique names
-  
+
   txt <- NULL
   if (!(reqColReferenz$id %in% inCSVReferenz$headAsChar) || length(unique(inCSVReferenz$df[,reqColReferenz$id])) != length(inCSVReferenz$df[,reqColReferenz$id]))
     txt <- paste0(txt, "<li>Jeder Referenz benötigt eine persistente und eindeutige ID in der Spalte '", reqColReferenz$id, "'.</li>")
@@ -41,12 +41,12 @@ observeEvent(input$csvFileReferenz, {
     if (!(reqColName %in% inCSVReferenz$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
-  
+
   if(length(unique(inCSVReferenz$headAsChar)) != length(inCSVReferenz$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
-  
+
   valiReferenz$txt <- txt
-  
+
   valiReferenz$validated <- TRUE
 })
 
@@ -74,9 +74,9 @@ observeEvent(input$checkDBReferenz, {
   tryCatch({
     progress <- shiny::Progress$new()
     on.exit(progress$close(), add = T)
-    
+
     progress$set(message = "Prüfe bereits registrierte Referenzen.", value = 0)
-    
+
     # get all Referenze from the DB that have any of the identifiers in the CSV
     ReferenzInDB <- dbGetQuery(db, paste0("SELECT id, pub_id FROM publikation WHERE identifier IN ('",
                                      paste(inCSVReferenz$df[,reqColReferenz$id], collapse="', '"),"')"))
@@ -86,9 +86,9 @@ observeEvent(input$checkDBReferenz, {
     } else {
       checkDBReferenz$txt <- NULL
     }
-    
+
     checkDBReferenz$ReferenzInDB <- ReferenzInDB
-    
+
     checkDBReferenz$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -113,21 +113,21 @@ output$ReferenzDBConsistencyOut <- renderUI({
 output$tableReferenz <- renderDataTable({
   if (!is.null(inCSVReferenz$df)) {
     showTab <- inCSVReferenz$df
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showHead <- paste0(showHead, "</span>")
-    
+
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sReferenz=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-    
+
     # if DB consistency has been checked, apply colors
     if (checkDBReferenz$checked) {
       rowColors <- rep("white", nrow(showTab))
-      
+
       if (nrow(checkDBReferenz$ReferenzInDB) > 0) {
         rowColors[showTab$ID %in% checkDBReferenz$ReferenzInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
@@ -145,28 +145,28 @@ output$tableReferenz <- renderDataTable({
 observeEvent(input$storeDBReferenz, {
   db <- connectToDB()
   tryCatch({
-    
+
     Referenz_data <- inCSVReferenz$df
     Referenz_header <- inCSVReferenz$headAsChar
-    
+
     Referenz_empty_cols <- apply(Referenz_data, 2, function(x) all(is.na(x)))
-    
+
     Referenz_header <- Referenz_header[!Referenz_empty_cols]
     Referenz_data <- Referenz_data[,!Referenz_empty_cols]
-    
+
     nRowDf <- nrow(Referenz_data)
-    
+
     progress <- shiny::Progress$new()
     on.exit(progress$close(), add=T)
-    
+
     progress$set(message = "Füge Referenzen in DB ein.", value = 0)
-    
+
     ## add missign columns
     regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pub', 'global')"))[,1]
     ReferenzDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pub')"))
     misCols <- which(sapply(Referenz_header, # TODO drop ID and Name
                             function(x) is.na(match(x, regCols))))
-    
+
     if (length(misCols > 0)) {
       for (i in 1:length(misCols)) {# i <- 1
         colId <- sprintf("col%03d", i + length(regCols))
@@ -174,29 +174,29 @@ observeEvent(input$storeDBReferenz, {
                          integer = "numeric",
                          numeric = "numeric",
                          character = "character varying(255)")
-        
+
         #dbWithTransaction(db, {
-        colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0 
-                                                  FROM column_metadata 
+        colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0
+                                                  FROM column_metadata
                                                   WHERE columnid='", colId, "'
                                                   AND prefixid='pub' ;"))
         if (!colMetadataExists) {
           dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                  VALUES ('", paste(colId, 'pub', Referenz_header[misCols[i]], sep="', '"),"');"))
         }
-        
+
         colExists = dbGetQuery(db, paste0("SELECT count(column_name) > 0
-                                          FROM information_schema.columns 
-                                          WHERE table_name='Referenz_data' 
+                                          FROM information_schema.columns
+                                          WHERE table_name='Referenz_data'
                                           AND column_name='", colId, "';"))
         if (!colExists) {
           dbSendQuery(db, paste0("ALTER TABLE publikation ADD COLUMN ", colId, " ", coltype, ";"))
         }
         #})
-        
+
         }
     }
-    
+
     # if there are already Referenze in the DB that are again in the CSV
     for (ref in 1:nrow(Referenz_data)) {
       dynamicDf <- NULL
@@ -223,13 +223,13 @@ observeEvent(input$storeDBReferenz, {
         # returns the id (pkid) of the updated feature ##
         updateFeature = paste0("with update_Referenz as (
           UPDATE featureofinterest SET
-          name = ", paste0("'", Referenz_data[ref, reqColReferenz$name], "'"), ", 
-          geom = ", paste0("ST_GeomFromText('POINT (", Referenz_data[ref, reqColReferenz$lat], 
+          name = ", paste0("'", Referenz_data[ref, reqColReferenz$name], "'"), ",
+          geom = ", paste0("ST_GeomFromText('POINT (", Referenz_data[ref, reqColReferenz$lat],
                            " ", Referenz_data[ref, reqColReferenz$lon], ")', 4326) "),
                            " WHERE identifier = ", paste0("'", Referenz_data[ref, reqColReferenz$id], "'"),
                            " RETURNING featureofinterestid
           )
-          UPDATE Referenz_data SET ", 
+          UPDATE Referenz_data SET ",
                            paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
                            " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_Referenz);"
         )
@@ -238,15 +238,15 @@ observeEvent(input$storeDBReferenz, {
         ## INSERT FoI and data via SQL ##
         dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
         dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
-        
+
         insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
                      VALUES (nextval('featureofinterestid_seq'), 1",
-                              paste0("'", Referenz_data[Referenz, reqColReferenz$id], "'"), 
-                              paste0("'", Referenz_data[Referenz, reqColReferenz$name], "'"), 
+                              paste0("'", Referenz_data[Referenz, reqColReferenz$id], "'"),
+                              paste0("'", Referenz_data[Referenz, reqColReferenz$name], "'"),
                               paste0("ST_GeomFromText('POINT (", Referenz_data[Referenz, reqColReferenz$lat], " ",
                                      Referenz_data[Referenz, reqColReferenz$lon], ")', 4326)) "),
                               sep = ", ")
-        
+
         insertReferenz = paste0("INSERT INTO Referenz_data (featureofinterestid, rndid, ",
                            dynamicColumns, ")
                   SELECT Referenz_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
@@ -256,7 +256,7 @@ observeEvent(input$storeDBReferenz, {
         dbSendQuery(db, query)
       }
     }
-    
+
     message = paste0(nrow(Referenz_data) , " Referenze wurden erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
     }, error = modalErrorHandler, finally = poolReturn(db))

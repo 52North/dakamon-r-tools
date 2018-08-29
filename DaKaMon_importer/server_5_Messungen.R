@@ -7,24 +7,7 @@ dataDecimalSeparator <- decSep
 sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
   POST(url = paste0(SOSWebApp, "admin/cache/reload"),
        config=conf, body="a")
-
-  # if (!is.null(gmlId)) {
-  #   reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"),
-  #                            body = SOSreqFoI(gmlId),
-  #                            content_type_xml(), accept_json())$content)
-  #
-  #   while (is.null(fromJSON(reqMsg)$exceptions)) { #} && length(fromJSON(reqMsg)$featureOfInterest) > 0) {
-  #     if (verbose)
-  #       message(reqMsg)
-  #
-  #     Sys.sleep(wait)
-  #     reqMsg <- rawToChar(POST(paste0(SOSWebApp, "service"),
-  #                              body = SOSreqFoI(gmlId), # foi_data[sfoi,]$ID
-  #                              content_type_xml(), accept_json())$content)
-  #   }
-  # } else {
-    Sys.sleep(wait)
-  # }
+  Sys.sleep(wait)
 }
 
 createFeederConfiguration <- function(csvPath,
@@ -284,7 +267,7 @@ observeEvent(input$checkDBData, {
     # check whether the ProbeIDs exist
     # check whether the Parameter exist
     # check whether the combination of ProbeId and Parameter already corresponds to some time series data
-  
+
     # TODO implement messungen check database
     # dbSendQuery(db, paste0("WITH query_pro AS (
     #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
@@ -303,7 +286,7 @@ observeEvent(input$checkDBData, {
     # )
     # INSERT INTO probe_parameter
     # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
-  
+
     CheckDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -391,11 +374,11 @@ observeEvent(input$storeDBData, {
 
         # FIXME where is the value inCSVData$obsIdsInDB set?
         if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
-    
+
           # delete observations already in the DB
           progress <- Progress$new()
           progress$set(message = "Bereite DB vor.", value = 0)
-    
+
           for (id in inCSVData$obsIdsInDB) {
             progress$inc(1/length(inCSVData$obsIdsInDB))
             POST(paste0(SOSWebApp, "service"),
@@ -404,12 +387,12 @@ observeEvent(input$storeDBData, {
           }
           progress$close()
         }
-    
+
         Messungen_data <- inCSVData$df
-    
+
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
-    
+
         valueIndex <- match(reqColData$value, reqColData)
         # convert value column BG, NG values in numbers and the whole column in numeric values
         if (any(Messungen_data[,valueIndex] == BGchar, na.rm = TRUE)) {
@@ -418,7 +401,7 @@ observeEvent(input$storeDBData, {
           Messungen_data[,valueIndex] <- column
         }
         progress$inc(1)
-    
+
         if (any(Messungen_data[,valueIndex] == NGchar, na.rm = TRUE)) {
           column <- Messungen_data[,valueIndex]
           column[column == NGchar] <- NGencode
@@ -437,10 +420,10 @@ observeEvent(input$storeDBData, {
           Messungen_data[,valueIndex] <- column
         }
         progress$inc(1)
-    
+
         #convert value column to numeric values
         Messungen_data[,valueIndex] <- as.numeric(Messungen_data[,valueIndex])
-    
+
         # notes
         # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
         # - obsProp: parameter (observableProperty.identifier)
@@ -455,21 +438,21 @@ observeEvent(input$storeDBData, {
         proben <- Messungen_data[,probeIdIndex]
         probenQuerySection <- paste0(proben, collapse = "','")
         probenMetadataQuery <- paste0("SELECT
-                                          identifier AS probeid,
-                                          pns_id,
-                                          lab_id AS sensorId,
-                                          resulttime AS resulTime,
-                                          phenomenontimestart AS phenTimeStart,
-                                          phenomenontimeend AS phenTimeEnd
-                                        FROM
-                                          probe
-                                        WHERE
-                                          identifier IN ('",
-                                          probenQuerySection,
-                                          "')")
+                                        identifier AS probeid,
+                                        pns_id,
+                                        lab_id AS sensorId,
+                                        to_char(resulttime::date, '",  dbTimestampPattern, "') AS resulTime,
+                                        to_char(phenomenontimestart::date, '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(phenomenontimeend::date, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                      FROM
+                                        probe
+                                      WHERE
+                                        identifier IN ('",
+                                      probenQuerySection,
+                                      "')")
         probenMetadata <- dbGetQuery(db, probenMetadataQuery)
         progress$inc(1)
-    
+
         #
         # get observed property information
         # SELECT observableproperty.identifier, observableproperty.name
@@ -480,18 +463,18 @@ observeEvent(input$storeDBData, {
         parameter <- Messungen_data[,parameterIndex]
         parameterQuerySection <- paste0(unique(parameter), collapse = "','")
         observedpropertiesQuery <- paste0("SELECT
-                                          observablepropertyid,
-                                          identifier,
-                                          name
-                                        FROM
-                                          observableproperty
-                                        WHERE
-                                          identifier IN ('",
+                                        observablepropertyid,
+                                        identifier,
+                                        name
+                                      FROM
+                                        observableproperty
+                                      WHERE
+                                        identifier IN ('",
                                           parameterQuerySection,
                                           "')")
         observedproperties <- dbGetQuery(db, observedpropertiesQuery)
         progress$inc(1)
-    
+
         #
         # get PNS and Ort
         #
@@ -521,29 +504,29 @@ observeEvent(input$storeDBData, {
         #   my_pns_id.pns_id ASC
         #
         pnsQuery <- paste0("WITH
-                           my_pns_id AS (
-                             SELECT DISTINCT probe.pns_id
-                             FROM probe
-                             WHERE probe.identifier IN ('",
-                              probenQuerySection,
-                              "')
-                           )
-                           SELECT
-                             my_pns_id.pns_id,
-                             pns_data.lat AS pns_lat,
-                             pns_data.lon AS pns_lon,
-                             featureofinterest.identifier AS pns_identifier,
-                             featureofinterest.name AS pns_name
-                           FROM
-                             my_pns_id,
-                             pns_data,
-                             featureofinterest
-                           WHERE
-                             my_pns_id.pns_id = pns_data.featureofinterestid AND
-                             my_pns_id.pns_id = featureofinterest.featureofinterestid")
+                         my_pns_id AS (
+                           SELECT DISTINCT probe.pns_id
+                           FROM probe
+                           WHERE probe.identifier IN ('",
+                            probenQuerySection,
+                            "')
+                         )
+                         SELECT
+                           my_pns_id.pns_id,
+                           pns_data.lat AS pns_lat,
+                           pns_data.lon AS pns_lon,
+                           featureofinterest.identifier AS pns_identifier,
+                           featureofinterest.name AS pns_name
+                         FROM
+                           my_pns_id,
+                           pns_data,
+                           featureofinterest
+                         WHERE
+                           my_pns_id.pns_id = pns_data.featureofinterestid AND
+                           my_pns_id.pns_id = featureofinterest.featureofinterestid")
         features <- dbGetQuery(db, pnsQuery)
         progress$inc(1)
-    
+
         feedTmpConfigDirectory <- tempdir(check = TRUE)
         #
         # Create global CSV file
@@ -553,16 +536,14 @@ observeEvent(input$storeDBData, {
         # Create the global configuraton file
         #
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
-    
+
         writeLines(createFeederConfiguration(csvPath = feedCSV, decimalSeparator = decSep, columnSeparator = colSep), feedConf)
         progress$inc(1)
-    
-        #rbind(matrix(NA, nrow=4, ncol=3), c("foo", "bar", "baz"))
-        #feedDataContent <- "Parameter;Wert;Einheit;sensor-id;resultTime;phenStart;phenEnd;foiIdentifier;lat;lon"              
+
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
         for (i in 1:nrow(Messungen_data)) {
           row <- Messungen_data[i,]
-    
+
           #
           # Fill probe_parameter table
           # 1        2         3    4       5  6
@@ -591,70 +572,70 @@ observeEvent(input$storeDBData, {
           # )
           # INSERT INTO probe_parameter
           # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
-    
+
+          # FIXME: unit, bg and ng are optional!!!
           insertUnitQuery <- if (is.null(row[4]) || is.na(row[4]) || row[4] == '') {
-                                "insert_unit AS (
-                                    SELECT NULL::bigint as unit_id
-                                )"
-                              } else {
-                                paste0("insert_unit AS (
-                                          INSERT INTO unit (unitid, unit)
-                                          VALUES(nextval('unitid_seq'),'", row[4], "')
-                                          ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
-                                          RETURNING unitid as unit_id
-                                       )")
-                              }
-          
-          
+            "insert_unit AS (
+                                 SELECT NULL::bigint as unit_id
+                               )"
+          } else {
+            paste0("insert_unit AS (
+                                            INSERT INTO unit (unitid, unit)
+                                            VALUES(nextval('unitid_seq'),'", row[4], "')
+                                            ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
+                                            RETURNING unitid as unit_id
+                                          )")
+          }
+
           query <- paste0("WITH query_probe_id AS (
-                        SELECT id as probe_id
-                        FROM probe
-                        WHERE identifier = '", row[1], "'
-                      ),
-                      query_parameter_id AS (
-                        SELECT observablepropertyid as para_id
-                        FROM observableproperty
+                      SELECT id as probe_id
+                      FROM probe
+                      WHERE identifier = '", row[1], "'
+                    ),
+                    query_parameter_id AS (
+                      SELECT observablepropertyid as para_id
+                      FROM observableproperty
                         WHERE identifier = '", row[2], "' ),",
-                        insertUnitQuery,
-                        " INSERT INTO probe_parameter
-                        SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ", 
+                          insertUnitQuery,
+                          " INSERT INTO probe_parameter
+                    SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ",
                           ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
-                          ", ", 
+                          ", ",
                           ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
                           " FROM query_probe_id, query_parameter_id, insert_unit
-                      ON CONFLICT ON CONSTRAINT probe_parameter_pkey
-                          DO UPDATE SET 
-                              pp_unit = (SELECT unit_id FROM insert_unit),
+                    ON CONFLICT ON CONSTRAINT probe_parameter_pkey
+                        DO UPDATE SET
+                            pp_unit = (SELECT unit_id FROM insert_unit),
                               bg = ", ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
                               ", ng = ", ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
-                          AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
+                        AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           dbExecute(db, query)
-          newDataRow <- cbind(row[2], # Parameter
+          newDataRow <- c(row[2], # Parameter
                               row[3], # Wert
                               row[4], # Einheit
                               paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
-                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),4]), # resultTime
-                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),5]), # phenTimeStart
-                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),6]), # phenTimeEnd
+                              probenMetadata[is.element(probenMetadata$probeid, row[1]),4], # resultTime
+                              probenMetadata[is.element(probenMetadata$probeid, row[1]),5], # phenTimeStart
+                              probenMetadata[is.element(probenMetadata$probeid, row[1]),6], # phenTimeEnd
                               features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
                               features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
-          )
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3] # Lon
+                              )
           feedDataContent <- rbind(feedDataContent, newDataRow)
-          
+
           progress$inc(1)
         }
         sosCacheUpdate(wait=1)
         progress$inc(1)
-    
+
         #
         # write global csv file
         #
-        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8")
+        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
         #writeLines(iconv(feedDataContent, from=localEncoding, to="UTF-8"), feedCSV)
         progress$inc(1)
-    
+
         if (!file.exists(feederPath)) {
           print(paste("Feeder path does not exist:", feederPath))
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
@@ -668,17 +649,17 @@ observeEvent(input$storeDBData, {
                               timeout = 300)
             print("Done!")
             progress$inc(1)
-            
+
             if (length(grep("Exception", result, value = TRUE)) > 0) {
               print("Errors occured during import! Consult importer logs.")
               content <- div(style='overflow-y: scroll; max-height: 200px', paste0(result, collapse = "\n"))
               showModalMessage(title="Fehler", content)
             } else {
-              content = "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
+              content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
               showModalMessage(title="Vorgang abgeschlossen", content)
             }
             progress$close()
-            
+
           }, error = modalErrorHandler, warning = modalErrorHandler)
         }
       })

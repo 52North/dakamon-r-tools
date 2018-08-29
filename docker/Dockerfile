@@ -1,7 +1,7 @@
 #
 #  build via
 #
-#    docker build -f docker/Dockerfile -t shiny-server:dakamon-YYYY-MM .
+#    docker build -f docker/Dockerfile -t shiny-server:dakamon-$(date +%Y-%m) --no-cache .
 #
 #  from repository root
 FROM rocker/shiny:latest
@@ -39,7 +39,7 @@ RUN chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
 RUN apt-get update &&\
     apt-get install --assume-yes --no-install-recommends libssl-dev libpq-dev
 
-RUN R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr', 'RPostgreSQL', 'readr'), repos='https://cran.rstudio.com/')"
+RUN R -e "install.packages(c('DT', 'shinyjs', 'httr', 'rjson', 'dplyr', 'RPostgreSQL', 'readr', 'devtools'), repos='https://cran.rstudio.com/')"
 
 ADD DaKaMon_importer/*.* /srv/shiny-server/DaKaMon_importer/
 

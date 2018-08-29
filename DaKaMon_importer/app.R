@@ -158,19 +158,19 @@ ui <- navbarPage("Datenimport",
 
 
 server <- function(input, output) {
-  
+
   source("server_1_Ort.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_2_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_3_Parameter.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_4_Probe.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_2_1_Referenz.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_2_2_Literatur.R", local = TRUE, encoding = "UTF-8")$value
   
   # Literatur

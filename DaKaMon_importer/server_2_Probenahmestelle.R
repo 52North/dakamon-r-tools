@@ -74,9 +74,9 @@ observeEvent(input$checkDBPNS, {
   tryCatch({
     progress <- shiny::Progress$new()
     on.exit(progress$close(), add = T)
-  
+
     progress$set(message = "Prüfe bereits registrierte PNSe.", value = 0)
-  
+
     # get all PNSe from the DB that have any of the identifiers in the CSV
     PNSInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('",
                                      paste(inCSVPNS$df[,reqColPNS$id], collapse="', '"),"')"))
@@ -86,11 +86,11 @@ observeEvent(input$checkDBPNS, {
     } else {
       checkDBPNS$txt <- NULL
     }
-  
+
     # check whether referenced super FoIs exist; if not -> error state: no upload
     OrtInDB <- dbGetQuery(db, paste0("SELECT identifier FROM featureofinterest WHERE identifier IN ('",
                                      paste(inCSVPNS$df[,reqColPNS$geo], collapse="', '"),"')"))
-  
+
     if (nrow(OrtInDB) == 0) {
       checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVPNS$df[,reqColPNS$geo], collapse="</li><li>"))
@@ -99,12 +99,12 @@ observeEvent(input$checkDBPNS, {
                               function(x) is.na(match(x, OrtInDB$identifier))))
       if (length(misingOrte > 0)) {
         checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
-                                paste0(inCSVPNS$df[,reqColPNS$geo][misingOrte], collapse="</li><li>"))  
+                                paste0(inCSVPNS$df[,reqColPNS$geo][misingOrte], collapse="</li><li>"))
       }
     }
-    
+
     checkDBPNS$PNSInDB <- PNSInDB
-  
+
     checkDBPNS$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -164,26 +164,26 @@ observeEvent(input$storeDBPNS, {
     dbWithTransaction(db, {
       PNS_data <- inCSVPNS$df
       PNS_header <- inCSVPNS$headAsChar
-    
+
       PNS_empty_cols <- apply(PNS_data, 2, function(x) all(is.na(x)))
-    
+
       PNS_header <- PNS_header[!PNS_empty_cols]
       PNS_data <- PNS_data[,!PNS_empty_cols]
-    
+
       nRowDf <- nrow(PNS_data)
-    
+
       progress <- shiny::Progress$new()
       on.exit(progress$close(), add=T)
-    
+
       progress$set(message = "Füge Probenahmestellen in DB ein.", value = 0)
-    
+
       ## add missing columns
       regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pns', 'global')"))[,1]
       pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                   WHERE prefixid IN ('pns') AND columnid LIKE 'col%'"))
       misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
                               function(x) is.na(match(x, regCols))))
-    
+
       if (length(misCols > 0)) {
         for (i in 1:length(misCols)) {# i <- 1
           colId <- paste0(sprintf("col%03d", i + length(regCols)))
@@ -191,17 +191,17 @@ observeEvent(input$storeDBPNS, {
                            integer = "numeric",
                            numeric = "numeric",
                            character = "character varying(255)")
-    
+
           # TODO adopt to new FoI table
           dbSendQuery(db, paste0("ALTER TABLE pns_data ADD COLUMN ", colId, " ", coltype, ";"))
-    
+
           dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                    VALUES ('", paste(colId, 'pns', PNS_header[misCols[i]], sep="', '"),"')"))
         }
-        pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
+        pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                     WHERE prefixid IN ('pns') AND columnid LIKE 'col%'"))
       }
-    
+
       for (pns in 1:nrow(PNS_data)) {
         dynamicDf <- NULL
         if (length(pnsColumnMappings) > 0) {
@@ -222,8 +222,8 @@ observeEvent(input$storeDBPNS, {
             dynamicDf <- rbind(dynamicDf, dynamicDfRow)
           }
         }
-        
-        
+
+
         if (length(pnsColumnMappings) > 0) {
           dynamicColumns <- paste0(pnsColumnMappings[, 1], collapse = ", ")
           dynamicValues <- paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse=", ")
@@ -231,7 +231,7 @@ observeEvent(input$storeDBPNS, {
           dynamicColumns <- NULL
           dynamicValues <- NULL
         }
-          
+
         # if there are already PNSn in the DB that are again in the CSV
         if (PNS_data[pns,"ID"] %in% checkDBPNS$PNSInDB$identifier) { # -> UPDATE
           # TODO switch to workflow with dynamic columns
@@ -251,17 +251,17 @@ observeEvent(input$storeDBPNS, {
           	SET ",
               "lat = ", PNS_data[pns,reqColPNS$lat], ", ",
               "lon = ", PNS_data[pns,reqColPNS$lon], ifelse(is.null(dynamicValues), "", {
-              paste0(paste0(dynamicDf[["columnid"]], " = ", 
-                            gsub("EMPTY", "NULL", dynamicDf[["value"]])), 
+              paste0(paste0(dynamicDf[["columnid"]], " = ",
+                            gsub("EMPTY", "NULL", dynamicDf[["value"]])),
                      collapse = ", ")
               }),
           " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_pns)
           RETURNING featureofinterestid as pns_id;")
-          
+
           updatedId <- dbGetQuery(db, query)
           ## if pns - foi relation does not exist, insert relation ##
           query <- paste("INSERT INTO featurerelation
-            (SELECT featureofinterestid, ", updatedId$pns_id," FROM featureofinterest 
+            (SELECT featureofinterestid, ", updatedId$pns_id," FROM featureofinterest
                         WHERE identifier = '", PNS_data[pns,reqColPNS$geo],"');")
           dbSendQuery(db, query)
         } else { # -> INSERT
@@ -289,7 +289,7 @@ observeEvent(input$storeDBPNS, {
                          FROM insert_pns, query_ort
                          RETURNING childfeatureid
                         )
-                        INSERT INTO pns_data (featureofinterestid, rndid, lat, lon", dynamicColumns, ") ",
+                        INSERT INTO pns_data (featureofinterestid, rndid, lat, lon", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ") ",
                         paste("SELECT pns_id, pseudo_encrypt(nextval('rndIdSeq')::int), ",
                                PNS_data[pns,reqColPNS$lat], ",",
                                PNS_data[pns,reqColPNS$lon], ifelse(is.null(dynamicValues), "", ","),
@@ -298,7 +298,7 @@ observeEvent(input$storeDBPNS, {
           dbSendQuery(db, query)
         }
       }
-    
+
       message = paste0(nrow(PNS_data), " Probenahmestellen wurden erfolgreich in der Datenbank angelegt.")
       showModalMessage(title="Vorgang abgeschlossen", message)
     })
