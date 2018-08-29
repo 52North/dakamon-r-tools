@@ -278,7 +278,7 @@ observeEvent(input$storeDBOrt, {
               "RETURNING featureofinterestid as ort_id)",
               "INSERT INTO ort_data
               (featureofinterestid, rndid", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")
-              SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int),", 
+              SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int)", 
               ifelse(is.null(dynamicColumns), "", ","), dynamicValues, 
               " FROM insert_ort")
           

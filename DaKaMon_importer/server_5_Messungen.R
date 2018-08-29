@@ -592,6 +592,20 @@ observeEvent(input$storeDBData, {
           # INSERT INTO probe_parameter
           # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
     
+          insertUnitQuery <- if (is.null(row[4]) || is.na(row[4]) || row[4] == '') {
+                                "insert_unit AS (
+                                    SELECT NULL::bigint as unit_id
+                                )"
+                              } else {
+                                paste0("insert_unit AS (
+                                          INSERT INTO unit (unitid, unit)
+                                          VALUES(nextval('unitid_seq'),'", row[4], "')
+                                          ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
+                                          RETURNING unitid as unit_id
+                                       )")
+                              }
+          
+          
           query <- paste0("WITH query_probe_id AS (
                         SELECT id as probe_id
                         FROM probe
@@ -600,35 +614,32 @@ observeEvent(input$storeDBData, {
                       query_parameter_id AS (
                         SELECT observablepropertyid as para_id
                         FROM observableproperty
-                        WHERE identifier = '", row[2], "'
-                      ),
-                      insert_unit AS (
-                        INSERT INTO unit (unitid, unit)
-                        VALUES(nextval('unitid_seq'),'", row[4], "')
-                        ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
-                        RETURNING unitid as unit_id
-                      )
-                      INSERT INTO probe_parameter
-                      SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, '", row[5], "', '", row[6], "'
-                      FROM query_probe_id, query_parameter_id, insert_unit
+                        WHERE identifier = '", row[2], "' ),",
+                        insertUnitQuery,
+                        " INSERT INTO probe_parameter
+                        SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ", 
+                          ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
+                          ", ", 
+                          ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
+                          " FROM query_probe_id, query_parameter_id, insert_unit
                       ON CONFLICT ON CONSTRAINT probe_parameter_pkey
                           DO UPDATE SET 
                               pp_unit = (SELECT unit_id FROM insert_unit),
-                              bg = ", row[5],
-                              ", ng = ", row[6],
+                              bg = ", ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
+                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                           AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           dbExecute(db, query)
-          newDataRow <- c(row[2], # Parameter
-                          row[3], # Wert
-                          row[4], # Einheit
-                          paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
-                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),4]), # resultTime
-                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),5]), # phenTimeStart
-                          gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),6]), # phenTimeEnd
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
+          newDataRow <- cbind(row[2], # Parameter
+                              row[3], # Wert
+                              row[4], # Einheit
+                              paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
+                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),4]), # resultTime
+                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),5]), # phenTimeStart
+                              gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[1]),6]), # phenTimeEnd
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
           )
           feedDataContent <- rbind(feedDataContent, newDataRow)
           

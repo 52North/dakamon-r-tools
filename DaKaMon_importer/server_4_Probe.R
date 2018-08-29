@@ -220,6 +220,7 @@ observeEvent(input$storeDBProbe, {
           }
           dynamicDf <- rbind(dynamicDf, dynamicDfRow)
         }
+        
         # if there are already Probee in the DB that are again in the CSV
         if (Probe_data[probe,"ID"] %in% checkDBProbe$ProbeInDB$identifier) {
           ## UPDATE Probe via SQL, returns the id (pkid) of the updated probe ##
@@ -231,8 +232,14 @@ observeEvent(input$storeDBProbe, {
           dbSendQuery(db, query)
         } else {
           ## INSERT Probe via SQL ##
-          dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
-          dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
+          if (length(probeColumnMappings) > 0) {
+            dynamicColumns = paste0(probeColumnMappings[, 1], collapse = ", ")
+            dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
+          } else {
+            dynamicColumns <- NULL
+            dynamicValues <- NULL
+          }
+          
           get_pns_id = paste0("WITH query_pns AS (
                               SELECT featureofinterestid AS pns_id
                               FROM featureofinterest
@@ -242,14 +249,15 @@ observeEvent(input$storeDBProbe, {
           query = paste(get_pns_id,
                         "INSERT INTO probe
                          (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id,", dynamicColumns, ")",
-                         paste("VALUES (nextval('probeid_seq'),", 
+                         paste("VALUES (nextval('probeid_seq')", 
                            paste0("'", Probe_data[probe, reqColProbe$id], "'"),
                            paste0("to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
                            paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
                            paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"), 
                            sep=", "
                         ),
-                        ", (SELECT pns_id FROM query_pns),",
+                        ", (SELECT pns_id FROM query_pns)",
+                        ifelse(is.null(dynamicValues), "", ","),
                         dynamicValues,
                         ");")
           dbSendQuery(db, query)
