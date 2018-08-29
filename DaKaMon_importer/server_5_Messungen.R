@@ -592,6 +592,19 @@ observeEvent(input$storeDBData, {
         # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
   
         # FIXME: unit, bg and ng are optional!!!
+        insertUnitQuery <- if (is.null(row[4]) || is.na(row[4]) || row[4] == '') {
+                              "insert_unit AS (
+                                 SELECT NULL::bigint as unit_id
+                               )"
+                            } else {
+                              paste0("insert_unit AS (
+                                            INSERT INTO unit (unitid, unit)
+                                            VALUES(nextval('unitid_seq'),'", row[4], "')
+                                            ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
+                                            RETURNING unitid as unit_id
+                                          )")
+                            }
+        
         query <- paste0("WITH query_probe_id AS (
                       SELECT id as probe_id
                       FROM probe
@@ -601,21 +614,37 @@ observeEvent(input$storeDBData, {
                       SELECT observablepropertyid as para_id
                       FROM observableproperty
                       WHERE identifier = '", row[2], "'
-                    ),
-                    insert_unit AS (
-                      INSERT INTO unit (unitid, unit)
-                      VALUES(nextval('unitid_seq'),'", row[4], "')
-                      ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
-                      RETURNING unitid as unit_id
-                    )
-                    INSERT INTO probe_parameter
-                    SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, '", row[5], "', '", row[6], "'
-                    FROM query_probe_id, query_parameter_id, insert_unit
+                    ),",
+                    insertUnitQuery,
+                    " INSERT INTO probe_parameter
+                    SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ", 
+                        if (is.null(row[5]) || is.na(row[5]) || row[5] == '') {
+                          "NULL"
+                        } else {
+                          row[5]
+                        },
+                        ", ", 
+                        if (is.null(row[6]) || is.na(row[]) || row[6] == '') {
+                          "NULL"
+                        } else {
+                          row[6]
+                        },
+                    " FROM query_probe_id, query_parameter_id, insert_unit
                     ON CONFLICT ON CONSTRAINT probe_parameter_pkey
                         DO UPDATE SET 
                             pp_unit = (SELECT unit_id FROM insert_unit),
-                            bg = ", row[5],
-                            ", ng = ", row[6],
+                            bg = ", 
+                            if (is.null(row[5]) || is.na(row[5]) || row[5] == '') {
+                                "NULL"
+                              } else {
+                                row[5]
+                            },
+                            ", ng = ",
+                            if (is.null(row[6]) || is.na(row[]) || row[6] == '') {
+                              "NULL"
+                            } else {
+                              row[6]
+                            },
                         " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
         dbExecute(db, query)
