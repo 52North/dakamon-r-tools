@@ -13,7 +13,7 @@ sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE)
 createFeederConfiguration <- function(csvPath,
                                       url=SOSWebApp, timestampPattern = feederTimestampPattern,
                                       timeZone = feederTimeZoneIdentifier, epsgCode = feederEpsgCode,
-                                      decimalSeparator = ".", columnSeparator = dataSeparator,
+                                      decimalSeparator = decSep, columnSeparator = colSep,
                                       importerClass = feederImporterClass, hunkSize = feederHunkSize,
                                       timeoutBuffer = feederTimeoutBuffer) {
   paste0(
@@ -537,7 +537,7 @@ observeEvent(input$storeDBData, {
         #
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
-        writeLines(createFeederConfiguration(csvPath = feedCSV, decimalSeparator = decSep, columnSeparator = colSep), feedConf)
+        writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
 
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
@@ -601,13 +601,13 @@ observeEvent(input$storeDBData, {
                     SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ",
                           ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
                           ", ",
-                          ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
+                          ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
                           " FROM query_probe_id, query_parameter_id, insert_unit
                     ON CONFLICT ON CONSTRAINT probe_parameter_pkey
                         DO UPDATE SET
                             pp_unit = (SELECT unit_id FROM insert_unit),
                               bg = ", ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
-                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[]) || row[6] == '', "NULL", row[6]),
+                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           dbExecute(db, query)
@@ -620,7 +620,7 @@ observeEvent(input$storeDBData, {
                               probenMetadata[is.element(probenMetadata$probeid, row[1]),6], # phenTimeEnd
                               features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
                               features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3] # Lon
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
                               )
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
@@ -632,8 +632,8 @@ observeEvent(input$storeDBData, {
         #
         # write global csv file
         #
+        print(paste("writing import data to: ", feedCSV))
         write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
-        #writeLines(iconv(feedDataContent, from=localEncoding, to="UTF-8"), feedCSV)
         progress$inc(1)
 
         if (!file.exists(feederPath)) {
