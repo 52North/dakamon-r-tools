@@ -632,7 +632,7 @@ observeEvent(input$storeDBData, {
         #
         # write global csv file
         #
-        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8")
+        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
         #writeLines(iconv(feedDataContent, from=localEncoding, to="UTF-8"), feedCSV)
         progress$inc(1)
 
