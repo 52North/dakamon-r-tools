@@ -77,5 +77,5 @@ reqColData <- list(probeId = "ProbenID",
                    bg = "BG",
                    ng = "NG") 
 
-
+reqColReferenz<- list(id = "ID") 
 

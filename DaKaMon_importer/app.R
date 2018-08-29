@@ -169,6 +169,10 @@ server <- function(input, output) {
   
   source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
   
+  source("server_2_1_Referenz.R", local = TRUE, encoding = "UTF-8")$value
+  
+  source("server_2_2_Literatur.R", local = TRUE, encoding = "UTF-8")$value
+  
   # Literatur
   # Datei upload
 }
