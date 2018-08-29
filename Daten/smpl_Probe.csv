@@ -16,10 +16,10 @@ PRO-022;KAM_BW_EPP_Zulauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;5;5
 PRO-023;KAM_BW_EPP_Ablauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;24;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
 PRO-024;KAM_BW_EPP_PS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
 PRO-025;KAM_BW_EPP_USS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
-STA-2016-EPP;KAM_BW_EPP_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-EPP-2016
-STA-2016-BHK;KAM_NW_BHK_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BHK-2016
-STA-2016-BOB;KAM_BY_BOB_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BOB-2016
-STA-2016-BON;KAM_BW_BON_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BON-2016
-STA-2016-BRE;KAM_SL_BRE_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BRE-2016
-STA-2016-HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-HBR-2016
-KOM-2016-HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Kommunaleskataster;Stammdaten;;;Kommune;Kom-HBR-2016
+STA-2016-KAM_BW_EPP;KAM_BW_EPP_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-EPP-2016
+STA-2016-KAM_NW_BHK;KAM_NW_BHK_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BHK-2016
+STA-2016-KAM_NW_BOB;KAM_BY_BOB_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BOB-2016
+STA-2016-KAM_BW_BON;KAM_BW_BON_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BON-2016
+STA-2016-KAM_SL_BRE;KAM_SL_BRE_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BRE-2016
+STA-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-HBR-2016
+KOM-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Kommunaleskataster;Stammdaten;;;Kommune;Kom-HBR-2016
