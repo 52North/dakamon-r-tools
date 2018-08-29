@@ -621,13 +621,13 @@ observeEvent(input$storeDBData, {
           newDataRow$Parameter     = row[,2] 
           newDataRow$Wert          = row[,3]
           newDataRow$Einheit       = row[,4]
-          newDataRow$sensorId     = paste0(probenMetadata[is.element(probenMetadata$probeid, row[,1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2])
+          newDataRow$sensorId      = paste0(probenMetadata[is.element(probenMetadata$probeid, row[,1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2])
           newDataRow$resultTime    = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),4])
           newDataRow$phenStart     = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),5])
           newDataRow$phenEnd       = gsub(" CEST", "", probenMetadata[is.element(probenMetadata$probeid, row[,1]),6])
           newDataRow$foiIdentifier = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4]
           newDataRow$lat           = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[,1]),2]),2]
-          newDataRow$lat           = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[,1]),2]),3]
+          newDataRow$lon           = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[,1]),2]),3]
                           
           # newDataRow <- c(row[1,2], # Parameter
           #                 row[1,3], # Wert
@@ -652,7 +652,6 @@ observeEvent(input$storeDBData, {
         #
         print(paste("writing import data to: ", feedCSV))
         write.table(feedDataContent, file=feedCSV, row.names=FALSE,sep=colSep, dec=decSep, fileEncoding="UTF-8")
-        #writeLines(iconv(feedDataContent, from=localEncoding, to="UTF-8"), feedCSV)
         progress$inc(1)
 
         if (!file.exists(feederPath)) {
