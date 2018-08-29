@@ -78,7 +78,7 @@ observeEvent(input$checkDBReferenz, {
     progress$set(message = "Prüfe bereits registrierte Referenzen.", value = 0)
     
     # get all Referenze from the DB that have any of the identifiers in the CSV
-    ReferenzInDB <- dbGetQuery(db, paste0("SELECT id, pub_id FROM publikation WHERE identifier IN ('",
+    ReferenzInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM referenz WHERE identifier IN ('",
                                      paste(inCSVReferenz$df[,reqColReferenz$id], collapse="', '"),"')"))
     if (nrow(ReferenzInDB) > 0) {
       checkDBReferenz$txt <- paste("Folgende Referenzen sind bereits in der DB: <ul><li>",
@@ -162,8 +162,9 @@ observeEvent(input$storeDBReferenz, {
     progress$set(message = "Füge Referenzen in DB ein.", value = 0)
     
     ## add missign columns
-    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pub', 'global')"))[,1]
-    ReferenzDataCols <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata WHERE prefixid IN ('pub')"))
+    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ref', 'global')"))[,1]
+    referenzColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
+                                                  WHERE prefixid IN ('ref') AND columnid LIKE 'col%'"))
     misCols <- which(sapply(Referenz_header, # TODO drop ID and Name
                             function(x) is.na(match(x, regCols))))
     
@@ -174,40 +175,40 @@ observeEvent(input$storeDBReferenz, {
                          integer = "numeric",
                          numeric = "numeric",
                          character = "character varying(255)")
-        
-        #dbWithTransaction(db, {
+
         colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0 
                                                   FROM column_metadata 
                                                   WHERE columnid='", colId, "'
-                                                  AND prefixid='pub' ;"))
+                                                  AND prefixid='ref' ;"))
         if (!colMetadataExists) {
           dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
-                                 VALUES ('", paste(colId, 'pub', Referenz_header[misCols[i]], sep="', '"),"');"))
+                                 VALUES ('", paste(colId, 'ref', Referenz_header[misCols[i]], sep="', '"),"');"))
         }
         
         colExists = dbGetQuery(db, paste0("SELECT count(column_name) > 0
                                           FROM information_schema.columns 
-                                          WHERE table_name='Referenz_data' 
+                                          WHERE table_name='referenz' 
                                           AND column_name='", colId, "';"))
         if (!colExists) {
-          dbSendQuery(db, paste0("ALTER TABLE publikation ADD COLUMN ", colId, " ", coltype, ";"))
+          dbSendQuery(db, paste0("ALTER TABLE referenz ADD COLUMN ", colId, " ", coltype, ";"))
         }
-        #})
         
-        }
+      }
+      referenzColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
+                                                  WHERE prefixid IN ('ref') AND columnid LIKE 'col%'"))
     }
     
     # if there are already Referenze in the DB that are again in the CSV
     for (ref in 1:nrow(Referenz_data)) {
       dynamicDf <- NULL
-      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ReferenzColumnMappings)))
+      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(referenzColumnMappings)))
       colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-      for (col in 1:nrow(ReferenzColumnMappings)) {
-        dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ReferenzColumnMappings)))
+      for (col in 1:nrow(referenzColumnMappings)) {
+        dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(referenzColumnMappings)))
         colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-        dynamicDfRow$columnid <- ReferenzColumnMappings[col, "columnid"]
-        dynamicDfRow$dede <- ReferenzColumnMappings[col, "dede"]
-        value = Referenz_data[Referenz, ReferenzColumnMappings[col, "dede"]]
+        dynamicDfRow$columnid <- referenzColumnMappings[col, "columnid"]
+        dynamicDfRow$dede <- referenzColumnMappings[col, "dede"]
+        value = Referenz_data[ref, referenzColumnMappings[col, "dede"]]
         if (is.null(value) || is.na(value) || value == '') {
           dynamicDfRow$value = "EMPTY"
         } else {
@@ -219,45 +220,25 @@ observeEvent(input$storeDBReferenz, {
         dynamicDf <- rbind(dynamicDf, dynamicDfRow)
       }
       if (Referenz_data[ref,"ID"] %in% checkDBReferenz$ReferenzInDB$identifier) {
-        # TODO switch to workflow with dynamic columns UPDATE FoI and data via SQL,
-        # returns the id (pkid) of the updated feature ##
-        updateFeature = paste0("with update_Referenz as (
-          UPDATE featureofinterest SET
-          name = ", paste0("'", Referenz_data[ref, reqColReferenz$name], "'"), ", 
-          geom = ", paste0("ST_GeomFromText('POINT (", Referenz_data[ref, reqColReferenz$lat], 
-                           " ", Referenz_data[ref, reqColReferenz$lon], ")', 4326) "),
-                           " WHERE identifier = ", paste0("'", Referenz_data[ref, reqColReferenz$id], "'"),
-                           " RETURNING featureofinterestid
-          )
-          UPDATE Referenz_data SET ", 
+        ## UPDATE referenz and data via SQL ##
+        update = paste0("UPDATE referenz SET ", 
                            paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-                           " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_Referenz);"
-        )
-        dbSendQuery(db, updateFeature)
+                           " WHERE identifier = '", Referenz_data[ref, reqColReferenz$id], "';")
+        dbSendQuery(db, update)
       } else {
-        ## INSERT FoI and data via SQL ##
+        ## INSERT referenz and data via SQL ##
         dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
         dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
         
-        insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
-                     VALUES (nextval('featureofinterestid_seq'), 1",
-                              paste0("'", Referenz_data[Referenz, reqColReferenz$id], "'"), 
-                              paste0("'", Referenz_data[Referenz, reqColReferenz$name], "'"), 
-                              paste0("ST_GeomFromText('POINT (", Referenz_data[Referenz, reqColReferenz$lat], " ",
-                                     Referenz_data[Referenz, reqColReferenz$lon], ")', 4326)) "),
-                              sep = ", ")
-        
-        insertReferenz = paste0("INSERT INTO Referenz_data (featureofinterestid, rndid, ",
-                           dynamicColumns, ")
-                  SELECT Referenz_id, pseudo_encrypt(nextval('rndIdSeq')::int),",
-                           dynamicValues, " FROM insert_Referenz")
-        query = paste("WITH insert_Referenz as (", insertFeature, " RETURNING featureofinterestid as Referenz_id)",
-                      insertReferenz, ";")
-        dbSendQuery(db, query)
+        insert = paste0("INSERT INTO referenz (id, identifier, ", dynamicColumns, ")
+                        SELECT nextval('referenzid_seq')::int, '", 
+                           Referenz_data[ref, reqColReferenz$id], "', ",
+                           dynamicValues, ";")
+        dbSendQuery(db, insert)
       }
     }
     
-    message = paste0(nrow(Referenz_data) , " Referenze wurden erfolgreich in der Datenbank angelegt.")
+    message = paste0(nrow(Referenz_data) , " Referenzen wurden erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
     }, error = modalErrorHandler, finally = poolReturn(db))
 })
