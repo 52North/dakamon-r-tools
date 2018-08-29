@@ -5,7 +5,7 @@ db <- connectToDB()
 
 col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
 res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
-                             WHERE ", col, " IS NOT NULL"))
+                             WHERE ", col, " IS NOT NULL ORDER BY name"))
 dbDisconnect(db)
 
 

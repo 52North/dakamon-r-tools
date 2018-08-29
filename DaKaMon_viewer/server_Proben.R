@@ -13,11 +13,12 @@ pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE
 pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
 
 # Query alle PNS TODO: Namen genügen
-probenPNS <- dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", paste0(pnsColColumns, collapse=", "),
-                                   " FROM featureofinterest foi
+probenPNS <- dbGetQuery(db, paste0("SELECT DISTINCT foi.name
+                                    FROM featureofinterest foi
                     RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                     RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
-                    LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid"))
+                    LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
+                    ORDER BY name"))
 dbDisconnect(db)
 
 output$probenPNSInput <- renderUI(selectInput("probenPNS", "Probenahmestelle:", 
