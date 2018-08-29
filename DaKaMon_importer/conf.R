@@ -10,6 +10,7 @@ colSep <- ";"
 decSep <- ","
 # encoding
 csvEncode <- "UTF-8"
+localEncoding <- strsplit(Sys.getlocale("LC_COLLATE"), ".", fixed=TRUE)[[1]][2]
 
 
 #
@@ -70,17 +71,17 @@ verbose <- local
 #
 # FEEDER
 #
-feederPath <- ifelse(local, "~/Code/git/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
+feederPath <- ifelse(local, "ADJUST_ME/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
 #
 # specifiies the number of parallel performed imports during measurement upload
 #
 feedNumberOfParallelImports <- 1
 #
-# WGS84 2D Lat Lon wiht °
+# WGS84 2D Lat Lon with degree unit
 feederEpsgCode <- "4326"
 # sync with dbTimestampPattern and timestampRegExPattern
 # R reverses the order of the date information and adds seconds (if absent: ":00")
-feederTimestampPattern <- "yyyy-MM-dd HH:mm:ss"
+feederTimestampPattern <- "dd-MM-yyyy HH:mm"
 feederTimeZoneIdentifier <- "Europe/Berlin"
 #
 feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleObservationImporter"

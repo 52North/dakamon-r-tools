@@ -158,16 +158,20 @@ ui <- navbarPage("Datenimport",
 
 
 server <- function(input, output) {
-  
+
   source("server_1_Ort.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_2_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_3_Parameter.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_4_Probe.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
+
+  source("server_2_1_Referenz.R", local = TRUE, encoding = "UTF-8")$value
+
+  source("server_2_2_Literatur.R", local = TRUE, encoding = "UTF-8")$value
   
   # Literatur
   # Datei upload
@@ -194,12 +198,14 @@ connectToDB <- function() {
 }
 
 modalErrorHandler <- function(e) {
-  print(e)
-  showModalMessage("Fehler", e["message"])
+  if (!is.null(e)) {
+    print(e)
+  }
+  showModalMessage(title="Fehler", e["message"])
 }
 
-showModalMessage <- function(title="Title", message="Some Message") {
-  showModal(modalDialog(title = title, message, footer = modalButton("Ok")))
+showModalMessage <- function(..., title="Title") {
+  showModal(modalDialog(..., title = title, footer = modalButton("Ok")))
 }
 
 shinyApp(ui, server, onStart = function() {
