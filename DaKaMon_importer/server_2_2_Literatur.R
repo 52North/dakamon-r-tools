@@ -36,12 +36,12 @@ observeEvent(input$csvFileLiteratur, {
   # check whether columns have unique names
   
   txt <- NULL
-  if (!(reqColLiteratur$id %in% inCSVLiteratur$headAsChar) || length(unique(inCSVLiteratur$df[,reqColLiteratur$id])) != length(inCSVLiteratur$df[,reqColLiteratur$id]))
-    txt <- paste0(txt, "<li>Jeder Literatur benötigt eine persistente und eindeutige ID in der Spalte '", reqColLiteratur$id, "'.</li>")
-  for (reqColName in reqColLiteratur[-1]) {
-    if (!(reqColName %in% inCSVLiteratur$headAsChar))
-      txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
-  }
+  # if (!(reqColLiteratur$id %in% inCSVLiteratur$headAsChar) || length(unique(inCSVLiteratur$df[,reqColLiteratur$id])) != length(inCSVLiteratur$df[,reqColLiteratur$id]))
+  #   txt <- paste0(txt, "<li>Jeder Literatur benötigt eine persistente und eindeutige ID in der Spalte '", reqColLiteratur$id, "'.</li>")
+  # for (reqColName in reqColLiteratur[-1]) {
+  #   if (!(reqColName %in% inCSVLiteratur$headAsChar))
+  #     txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
+  # }
   
   if(length(unique(inCSVLiteratur$headAsChar)) != length(inCSVLiteratur$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
@@ -78,14 +78,95 @@ observeEvent(input$checkDBLiteratur, {
     
     progress$set(message = "Prüfe bereits registrierte Literaturn.", value = 0)
     
+    checkDBLiteratur$txt <- NULL
+    
     # get all Literatur from the DB that have any of the identifiers in the CSV
-    LiteraturInDB <- dbGetQuery(db, paste0("SELECT id, identifier FROM literatur WHERE identifier IN ('",
-                                          paste(inCSVLiteratur$df[,reqColLiteratur$id], collapse="', '"),"')"))
+    LiteraturInDB <- dbGetQuery(db, paste0("SELECT DISTINCT lit.thematik, pns.identifier as pns, op.identifier as parameter, lit.untersuchungsbeginn, lit.untersuchungsende
+                                      from literatur lit
+                                           LEFT OUTER JOIN observableproperty op ON (lit.param_id = op.observablepropertyid)
+                                           LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = lit.pns_id) WHERE ",
+                                      "lit.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
+                                      AND pns.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')
+                                      AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')
+                                      AND lit.untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),") 
+                                      AND lit.untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),")"))
     if (nrow(LiteraturInDB) > 0) {
-      checkDBLiteratur$txt <- paste("Folgende Literaturn sind bereits in der DB: <ul><li>",
+      checkDBLiteratur$txt <- paste("Folgende Literatur sind bereits in der DB: <ul><li>",
                                    paste0(LiteraturInDB$identifier, collapse="</li><li>"))
+    }
+    
+    # check whether referenced Referenz exist; if not -> error state: no upload
+    RefInDB <- dbGetQuery(db, paste0("SELECT identifier FROM referenz WHERE identifier IN ('",
+                                     paste(inCSVLiteratur$df[,reqColLiteratur$refId], collapse="', '"),"')"))
+    
+    if (nrow(RefInDB) == 0) {
+      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Referenzen sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                              paste0(inCSVLiteratur$df[,reqColLiteratur$refId], collapse="</li><li>")))
     } else {
-      checkDBLiteratur$txt <- NULL
+      misingReferenz <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$refId], # TODO drop ID, parent identifier
+                                 function(x) is.na(match(x, RefInDB$identifier))))
+      if (length(misingReferenz > 0)) {
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Referenzen sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                paste0(inCSVLiteratur$df[,reqColLiteratur$refId][misingReferenz], collapse="</li><li>")))
+      }
+    }
+    
+    # check whether referenced Parameter exist; if not -> error state: no upload
+    ParamInDB <- dbGetQuery(db, paste0("SELECT identifier FROM observableproperty WHERE identifier IN ('",
+                                     paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')"))
+    
+    if (nrow(ParamInDB) == 0) {
+      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                              paste0(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="</li><li>")))
+    } else {
+      misingParam <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$paramId], # TODO drop ID, parent identifier
+                                 function(x) is.na(match(x, ParamInDB$identifier))))
+      if (length(misingParam > 0)) {
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende PArameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                paste0(inCSVLiteratur$df[,reqColLiteratur$paramId][misingParam], collapse="</li><li>")))
+      }
+    }
+    
+    # check whether referenced PNS exist; if not -> error state: no upload
+    PnsInDB <- dbGetQuery(db, paste0("SELECT identifier FROM featureofinterest WHERE identifier IN ('",
+                                     paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')"))
+    
+    if (nrow(PnsInDB) == 0) {
+      checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                              paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="</li><li>")))
+    } else {
+      misingPns <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId], # TODO drop ID, parent identifier
+                                 function(x) is.na(match(x, PnsInDB$identifier))))
+      if (length(misingPns > 0)) {
+        checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId][misingPns], collapse="</li><li>")))
+      }
+    }
+    
+    # check whether referenced combination of Thematik, PNS and Parameter exist; if not -> error state: no upload
+    CombinationInDB <- dbGetQuery(db, paste0("SELECT DISTINCT od.thematik, pns.identifier as pnsid, op.identifier as paramid
+                                      FROM probe_parameter pp
+                                      LEFT OUTER JOIN probe pro ON (pro.id = pp.probe_id)
+                                      LEFT OUTER JOIN observableproperty op ON (pp.parameter_id = op.observablepropertyid)
+                                      LEFT OUTER JOIN pns_data pd ON (pro.pns_id = pd.featureofinterestid)
+                                      LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = pd.featureofinterestid)
+                                      LEFT OUTER JOIN featurerelation fr ON (fr.childfeatureid = pd.featureofinterestid)
+                                      LEFT OUTER JOIN featureofinterest parent ON (parent.featureofinterestid = fr.parentfeatureid)
+                                      LEFT OUTER JOIN ort_data od ON (parent.featureofinterestid = od.featureofinterestid) WHERE ",
+                                      "od.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
+                                      AND pns.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')
+                                      AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')"))
+    
+    if (nrow(CombinationInDB) == 0) {
+      checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                                          paste0(inCSVLiteratur$df[,reqColLiteratur$thematik], ", ", inCSVLiteratur$df[,reqColLiteratur$pnsId], ", ", inCSVLiteratur$df[,reqColLiteratur$paramid], collapse="</li><li>")))
+    } else {
+      misingCombination <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId],
+                                function(x) is.na(match(x, CombinationInDB$identifier))))
+      if (length(misingCombination > 0)) {
+        checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                                            paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId][misingCombination], collapse="</li><li>")))
+      }
     }
     
     checkDBLiteratur$LiteraturInDB <- LiteraturInDB
