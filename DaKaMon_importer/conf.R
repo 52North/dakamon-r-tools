@@ -101,7 +101,8 @@ ifelse(local,
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
-                  lon="lon")
+                  lon="lon",
+                  thematik="Thematik")
 
 reqColPNS <- list(id="ID",
                   name="Name",

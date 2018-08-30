@@ -7,13 +7,12 @@ ortData <- NULL
 db <- connectToDB()
 
 # load all Entwässerungssysteme from DB
-colThematik <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'ort' AND dede = 'Thematik' limit 1")
-ews <- dbGetQuery(db, paste0("SELECT DISTINCT ", colThematik, " FROM ort_data"))
-output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,colThematik[1,1]]))
+ews <- dbGetQuery(db, paste0("SELECT DISTINCT thematik FROM ort_data"))
+output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
 
 # load all super FoI from DB
 ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier 
-FROM featureofinterest AS foi
+                  FROM featureofinterest AS foi
                   RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                   RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
                   RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
@@ -31,12 +30,12 @@ if (nrow(ort) > 0) {
     if (Sys.info()["sysname"] == "Windows") {
       thematik <- stri_enc_tonative(input$ews)
     }
-    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
                     " FROM featureofinterest foi
                                      RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                      WHERE foi.featureofinterestid IN (", 
                     paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.", colThematik, " IN (", paste0("'", thematik, "'" ,collapse=", ") ,")")
+                                     AND od.thematik IN (", paste0("'", thematik, "'" ,collapse=", ") ,")")
     ortData <- dbGetQuery(db, query)
     
     
@@ -116,10 +115,13 @@ if(!is.null(ortData)) {
     pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
     pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
     
-    pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    pnsColColumns <- NULL
+    if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
+        pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    }
     
-    pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", 
-                                 paste0(pnsColColumns, collapse=", "),
+    pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id", 
+                                 paste0(pnsColColumns),
                                  " FROM featureofinterest foi
                                RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
