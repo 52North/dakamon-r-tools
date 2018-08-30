@@ -118,29 +118,29 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Referenz anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         fileInput("csvFileRef", "CSV-Datei mit Referenzen", 
+                                         fileInput("csvFileReferenz", "CSV-Datei mit Referenzen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owRef", "Alle Daten überschreiben?", FALSE), 
-                                         uiOutput("RefValidationOut"),
-                                         uiOutput("RefDBConsistencyOut"),
+                                         checkboxInput("owReferenz", "Alle Daten überschreiben?", FALSE), 
+                                         uiOutput("ReferenzValidationOut"),
+                                         uiOutput("ReferenzDBConsistencyOut"),
                                          width = 2),
-                                       mainPanel(dataTableOutput('tableRef'))
+                                       mainPanel(dataTableOutput('tableReferenz'))
                                      )),
                             
                             tabPanel("Literaturdaten hochladen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         fileInput("csvFileLit", "CSV-Datei mit Literaturwerten", 
+                                         fileInput("csvFileLiteratur", "CSV-Datei mit Literaturwerten", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
-                                         uiOutput("LitValidationOut"),
-                                         uiOutput("LitDBConsistencyOut"),
+                                         checkboxInput("owLiteratur", "Alle Daten überschreiben?", FALSE), 
+                                         uiOutput("LiteraturValidationOut"),
+                                         uiOutput("LiteraturDBConsistencyOut"),
                                          width = 2),
-                                       mainPanel(dataTableOutput('tableLit'))
+                                       mainPanel(dataTableOutput('tableLiteratur'))
                                      ))),
                  
                  ## Dateien
