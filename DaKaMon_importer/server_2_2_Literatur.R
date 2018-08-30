@@ -81,18 +81,25 @@ observeEvent(input$checkDBLiteratur, {
     checkDBLiteratur$txt <- NULL
     
     # get all Literatur from the DB that have any of the identifiers in the CSV
-    LiteraturInDB <- dbGetQuery(db, paste0("SELECT DISTINCT lit.thematik, pns.identifier as pns, op.identifier as parameter, lit.untersuchungsbeginn, lit.untersuchungsende
+    LiteraturInDB <- dbGetQuery(db, paste0("SELECT DISTINCT ref.identifier as ref, lit.thematik, pns.identifier as pns, op.identifier as parameter, lit.untersuchungsbeginn, lit.untersuchungsende
                                       from literatur lit
                                            LEFT OUTER JOIN observableproperty op ON (lit.param_id = op.observablepropertyid)
-                                           LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = lit.pns_id) WHERE ",
-                                      "lit.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
+                                           LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = lit.pns_id) 
+                                           LEFT OUTER JOIN referenz ref ON (ref.id = lit.referenz_id) WHERE 
+                                      ref.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$refId], collapse="', '"),"')
+                                      AND lit.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
                                       AND pns.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')
                                       AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')
                                       AND lit.untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),") 
                                       AND lit.untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),")"))
     if (nrow(LiteraturInDB) > 0) {
-      checkDBLiteratur$txt <- paste("Folgende Literatur sind bereits in der DB: <ul><li>",
-                                   paste0(LiteraturInDB$identifier, collapse="</li><li>"))
+      checkDBLiteratur$txt <- paste("Folgende Literatur ist bereits in der DB: <ul><li>",
+                                   paste0(paste(LiteraturInDB$ref, 
+                                                 LiteraturInDB$thematik, 
+                                                 LiteraturInDB$pns,
+                                                 LiteraturInDB$parameter,
+                                                 LiteraturInDB$untersuchungsbeginn,
+                                                 LiteraturInDB$untersuchungsende, sep = ", "), collapse="</li><li>"))
     }
     
     # check whether referenced Referenz exist; if not -> error state: no upload
@@ -122,7 +129,7 @@ observeEvent(input$checkDBLiteratur, {
       misingParam <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$paramId], # TODO drop ID, parent identifier
                                  function(x) is.na(match(x, ParamInDB$identifier))))
       if (length(misingParam > 0)) {
-        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende PArameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                                 paste0(inCSVLiteratur$df[,reqColLiteratur$paramId][misingParam], collapse="</li><li>")))
       }
     }
@@ -211,9 +218,14 @@ output$tableLiteratur <- renderDataTable({
       rowColors <- rep("white", nrow(showTab))
       
       if (nrow(checkDBLiteratur$LiteraturInDB) > 0) {
-        rowColors[showTab$ID %in% checkDBLiteratur$LiteraturInDB$identifier] <- "red"
-        showDT <- formatStyle(showDT, "ID", target="row",
-                              backgroundColor = styleEqual(showTab$ID, rowColors))
+        rowColors[showTab$Referenz_ID %in% checkDBLiteratur$LiteraturInDB$ref] <- "red"
+                  # && showTab$Thematik %in% checkDBLiteratur$LiteraturInDB$thematik
+                  # && showTab$Parameter %in% checkDBLiteratur$LiteraturInDB$parameter
+                  # && showTab$PNS_ID %in% checkDBLiteratur$LiteraturInDB$pns
+                  # && showTab$Untersuchungsbeginn %in% checkDBLiteratur$LiteraturInDB$untersuchungsbeginn
+                  # && showTab$Untersuchungsende %in% checkDBLiteratur$LiteraturInDB$untersuchungsende
+        showDT <- formatStyle(showDT, "Referenz_ID", target="row",
+                              backgroundColor = styleEqual(showTab$Referenz_ID, rowColors))
       }
     }
     showDT
@@ -244,9 +256,9 @@ observeEvent(input$storeDBLiteratur, {
     progress$set(message = "Füge Literaturn in DB ein.", value = 0)
     
     ## add missign columns
-    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE plitixid IN ('lit', 'global')"))[,1]
-    literaturColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, plitixid, dede FROM column_metadata 
-                                                    WHERE plitixid IN ('lit') AND columnid LIKE 'col%'"))
+    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('lit', 'global')"))[,1]
+    literaturColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
+                                                    WHERE prefixid IN ('lit') AND columnid LIKE 'col%'"))
     misCols <- which(sapply(Literatur_header, # TODO drop ID and Name
                             function(x) is.na(match(x, regCols))))
     
@@ -261,9 +273,9 @@ observeEvent(input$storeDBLiteratur, {
         colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0 
                                                   FROM column_metadata 
                                                   WHERE columnid='", colId, "'
-                                                  AND plitixid='lit' ;"))
+                                                  AND prefixid='lit' ;"))
         if (!colMetadataExists) {
-          dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, plitixid, dede)
+          dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                  VALUES ('", paste(colId, 'lit', Literatur_header[misCols[i]], sep="', '"),"');"))
         }
         
@@ -276,8 +288,8 @@ observeEvent(input$storeDBLiteratur, {
         }
         
         }
-      literaturColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, plitixid, dede FROM column_metadata 
-                                                  WHERE plitixid IN ('lit') AND columnid LIKE 'col%'"))
+      literaturColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
+                                                  WHERE prefixid IN ('lit') AND columnid LIKE 'col%'"))
   }
     
     # if there are already Literatur in the DB that are again in the CSV
@@ -301,21 +313,47 @@ observeEvent(input$storeDBLiteratur, {
         }
         dynamicDf <- rbind(dynamicDf, dynamicDfRow)
       }
-      if (Literatur_data[lit,"ID"] %in% checkDBLiteratur$LiteraturInDB$identifier) {
+      if (Literatur_data[lit,reqColLiteratur$refId] %in% checkDBLiteratur$LiteraturInDB$referenz_id
+          && Literatur_data[lit,reqColLiteratur$thematik] %in% checkDBLiteratur$LiteraturInDB$thematik
+          && Literatur_data[lit,reqColLiteratur$paramId] %in% checkDBLiteratur$LiteraturInDB$parameter
+          && Literatur_data[lit,reqColLiteratur$pnsId] %in% checkDBLiteratur$LiteraturInDB$pns
+          && Literatur_data[lit,reqColLiteratur$uBegin] %in% checkDBLiteratur$LiteraturInDB$untersuchungsbeginn
+          && Literatur_data[lit,reqColLiteratur$uEnde] %in% checkDBLiteratur$LiteraturInDB$untersuchungsende) {
         ## UPDATE literatur and data via SQL ##
-        update = paste0("UPDATE literatur SET ", 
+        update = paste0("WITH ref as (
+                          SELECT id FROM referenz WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$refId] ,"')),
+                        param as (
+                        SELECT observablepropertyid  AS id  FROM observableproperty WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$paramId] ,"')),
+                        pns as (
+                        SELECT featureofinterestid as id FROM featureofinterest WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$pnsId] ,"'))
+                        UPDATE literatur SET ", 
                         paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-                        " WHERE identifier = '", Literatur_data[lit, reqColLiteratur$id], "';")
+                        " WHERE ref.id = ", Literatur_data[lit, reqColLiteratur$refId], "
+                        AND thematik = '", Literatur_data[lit, reqColLiteratur$thematik], "'
+                        AND param.id = ", Literatur_data[lit, reqColLiteratur$paramId], "
+                        AND pns.id = ", Literatur_data[lit, reqColLiteratur$pnsId]," 
+                        AND untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),") 
+                        AND untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
+                        ";")
         dbSendQuery(db, update)
       } else {
         ## INSERT literatur and data via SQL ##
         dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
         dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
-        
-        insert = paste0("INSERT INTO literatur (id, identifier, ", dynamicColumns, ")
-                        SELECT nextval('literaturid_seq')::int, '", 
-                        Literatur_data[lit, reqColLiteratur$id], "', ",
-                        dynamicValues, ";")
+
+        insert = paste0("WITH ref as (
+                          SELECT id FROM referenz WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$refId] ,"')),
+                          param as (
+                            SELECT observablepropertyid  AS id  FROM observableproperty WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$paramId] ,"')),
+                          pns as (
+                            SELECT featureofinterestid as id FROM featureofinterest WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$pnsId] ,"'))
+                        INSERT INTO literatur (id, referenz_id, thematik, param_id, pns_id, untersuchungsbeginn, untersuchungsende, ", dynamicColumns, ")
+                          SELECT nextval('literaturid_seq')::int, ref.id, '",
+                          Literatur_data[lit, reqColLiteratur$thematik], "', param.id, pns.id, "
+                          , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
+                          ", " , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC', "),
+                          dynamicValues, "
+                          FROM ref, param, pns;")
         dbSendQuery(db, insert)
       }
     }
