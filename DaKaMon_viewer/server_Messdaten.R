@@ -26,16 +26,16 @@ if (nrow(ort) > 0) {
     ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
     ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
     ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
-    thematik <- input$ews
+    selectedThematik <- input$ews
     if (Sys.info()["sysname"] == "Windows") {
-      thematik <- stri_enc_tonative(input$ews)
+      selectedThematik <- stri_enc_tonative(input$ews)
     }
     query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
                     " FROM featureofinterest foi
                                      RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                      WHERE foi.featureofinterestid IN (", 
                     paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.thematik IN (", paste0("'", thematik, "'" ,collapse=", ") ,")")
+                                     AND od.thematik IN (", paste0("'", selectedThematik, "'" ,collapse=", ") ,")")
     ortData <- dbGetQuery(db, query)
     
     
@@ -222,7 +222,7 @@ obsProp <- reactive({
   if (is.null(input$selElemGroup))
     return(NULL)
   db <- connectToDB()
-  col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+  colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
   op <- NULL
   for (i in 1:length(sPNS())) { # i <- 1
     query <- paste0("SELECT DISTINCT op.observablepropertyid, op.identifier, op.name, foi.identifier AS foiid,
@@ -234,7 +234,7 @@ obsProp <- reactive({
                       LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
                       LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
                       RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", col, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
+                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
     cat(query)
     op <- rbind(op, dbGetQuery(db, query))
   }
@@ -255,7 +255,7 @@ data <- reactive({
     
     columnCount <- (length(input$selObsPhen) * 5) + 4
     
-    stgrCol <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+    colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
     for (foi in pnsData()[sPNS(), "ID"]) {
      
@@ -277,7 +277,7 @@ data <- reactive({
       
       
       query <- paste0("SELECT DISTINCT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime,
-                                       u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", stgrCol, " AS stgrname 
+                                       u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", colStoffgruppe, " AS stgrname 
                   FROM observation o
                       LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
                       LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
