@@ -243,7 +243,7 @@ obsProp <- reactive({
   op
 })
 
-output$obsPhen <- renderUI(selectInput("selObsPhen", "Phänomenauswahl:", 
+output$obsPhen <- renderUI(selectInput("selObsPhen", "Parameterauswahl:", 
                                        obsProp()$name, multiple = TRUE, 
                                        selected = obsProp()$name[1]))
 
