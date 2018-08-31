@@ -134,10 +134,10 @@ reqColData <- list(probeId = "ProbenID",
 
 reqColReferenz<- list(id = "ID") 
 
-reqColLiteratur<- list(refId= "ReferenzID",
+reqColLiteratur<- list(refId= "Referenz_ID",
                       thematik = "Thematik",
                       paramId = "Parameter",
-                      pnsId = "PNSID",
+                      pnsId = "PNS_ID",
                       uBegin = "Untersuchungsbeginn",
                       uEnde = "Untersuchungsende") 
 
