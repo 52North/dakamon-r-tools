@@ -101,7 +101,8 @@ ifelse(local,
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
-                  lon="lon")
+                  lon="lon",
+                  thematik="Thematik")
 
 reqColPNS <- list(id="ID",
                   name="Name",
@@ -133,9 +134,9 @@ reqColData <- list(probeId = "ProbenID",
 
 reqColReferenz<- list(id = "ID") 
 
-reqColLiteratur<- list(refId= "ReferenzID",
+reqColLiteratur<- list(refId= "Referenz_ID",
                        thematik = "Thematik",
                        paramId = "Parameter",
-                       pnsId = "PNSID",
+                       pnsId = "PNS_ID",
                        uBegin = "Untersuchungsbeginn",
                        uEnde = "Untersuchungsende") 

@@ -441,9 +441,9 @@ observeEvent(input$storeDBData, {
                                         identifier AS probeid,
                                         pns_id,
                                         lab_id AS sensorId,
-                                        to_char(resulttime::date, '",  dbTimestampPattern, "') AS resulTime,
-                                        to_char(phenomenontimestart::date, '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(phenomenontimeend::date, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                        to_char(resulttime::timestamp, '",  dbTimestampPattern, "') AS resulTime,
+                                        to_char(phenomenontimestart::timestamp, '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(phenomenontimeend::timestamp, '",  dbTimestampPattern, "') AS phenTimeEnd
                                       FROM
                                         probe
                                       WHERE
@@ -626,7 +626,7 @@ observeEvent(input$storeDBData, {
 
           progress$inc(1)
         }
-        sosCacheUpdate(wait=1)
+        
         progress$inc(1)
 
         #
@@ -639,16 +639,21 @@ observeEvent(input$storeDBData, {
         if (!file.exists(feederPath)) {
           print(paste("Feeder path does not exist:", feederPath))
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
-          progress$close()
         } else {
           tryCatch({
             print("Start feeding data values ...")
-            result <- system2("java",
-                              stdout=TRUE,
-                              args = c("-jar", feederPath, "-c", feedConf),
-                              timeout = 300)
+            # result <- system2("java", stdout=TRUE, args = c("-jar", feederPath, "-c", feedConf))
+            result <- ""
+            system2("java", args = c("-jar", feederPath, "-c", feedConf), wait=FALSE)
+            
             print("Done!")
             progress$inc(1)
+            
+            
+            ## TODO Logs des Feeders in eine Datei speichern (via system2 testen)
+            ## TODO Meldung anpassen, dass nun die Daten (asynchron) importiert werden
+            ##      mit Hinweis auf Downloadlink
+            ## TODO Die Log Datei zum Download anbieten
 
             if (length(grep("Exception", result, value = TRUE)) > 0) {
               print("Errors occured during import! Consult importer logs.")
@@ -658,9 +663,7 @@ observeEvent(input$storeDBData, {
               content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
               showModalMessage(title="Vorgang abgeschlossen", content)
             }
-            progress$close()
-
-          }, error = modalErrorHandler, warning = modalErrorHandler)
+          }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close)
         }
       })
     }, error = modalErrorHandler, finally = poolReturn(db))

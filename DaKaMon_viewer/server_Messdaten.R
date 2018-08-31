@@ -7,13 +7,12 @@ ortData <- NULL
 db <- connectToDB()
 
 # load all Entwässerungssysteme from DB
-colThematik <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'ort' AND dede = 'Thematik' limit 1")
-ews <- dbGetQuery(db, paste0("SELECT DISTINCT ", colThematik, " FROM ort_data"))
-output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,colThematik[1,1]]))
+ews <- dbGetQuery(db, paste0("SELECT DISTINCT thematik FROM ort_data"))
+output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
 
 # load all super FoI from DB
 ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier 
-FROM featureofinterest AS foi
+                  FROM featureofinterest AS foi
                   RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                   RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
                   RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
@@ -27,16 +26,16 @@ if (nrow(ort) > 0) {
     ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
     ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
     ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
-    thematik <- input$ews
+    selectedThematik <- input$ews
     if (Sys.info()["sysname"] == "Windows") {
-      thematik <- stri_enc_tonative(input$ews)
+      selectedThematik <- stri_enc_tonative(input$ews)
     }
-    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
                     " FROM featureofinterest foi
                                      RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                      WHERE foi.featureofinterestid IN (", 
                     paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.", colThematik, " IN (", paste0("'", thematik, "'" ,collapse=", ") ,")")
+                                     AND od.thematik IN (", paste0("'", selectedThematik, "'" ,collapse=", ") ,")")
     ortData <- dbGetQuery(db, query)
     
     
@@ -116,10 +115,13 @@ if(!is.null(ortData)) {
     pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
     pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
     
-    pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    pnsColColumns <- NULL
+    if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
+        pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+    }
     
-    pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", 
-                                 paste0(pnsColColumns, collapse=", "),
+    pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id", 
+                                 paste0(pnsColColumns),
                                  " FROM featureofinterest foi
                                RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
@@ -220,7 +222,7 @@ obsProp <- reactive({
   if (is.null(input$selElemGroup))
     return(NULL)
   db <- connectToDB()
-  col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+  colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
   op <- NULL
   for (i in 1:length(sPNS())) { # i <- 1
     query <- paste0("SELECT DISTINCT op.observablepropertyid, op.identifier, op.name, foi.identifier AS foiid,
@@ -232,7 +234,7 @@ obsProp <- reactive({
                       LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
                       LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
                       RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", col, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
+                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
     cat(query)
     op <- rbind(op, dbGetQuery(db, query))
   }
@@ -241,7 +243,7 @@ obsProp <- reactive({
   op
 })
 
-output$obsPhen <- renderUI(selectInput("selObsPhen", "Phänomenauswahl:", 
+output$obsPhen <- renderUI(selectInput("selObsPhen", "Parameterauswahl:", 
                                        obsProp()$name, multiple = TRUE, 
                                        selected = obsProp()$name[1]))
 
@@ -251,9 +253,20 @@ data <- reactive({
     
     resDf <- NULL
     
-    columnCount <- (length(input$selObsPhen) * 5) + 4
+    phenValueCount <- 3
+    postfix <- c("Wert", "Einheit", "Stoffgruppe")
+    if (input$showBG) {
+      postfix <- append(postfix, "BG")
+      phenValueCount <-  phenValueCount + 1
+    }
+    if (input$showNG) {
+      postfix <- append(postfix, "NG")
+      phenValueCount <-  phenValueCount + 1
+    }
     
-    stgrCol <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+    columnCount <- (length(input$selObsPhen) * phenValueCount) + 4
+    
+    colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
     for (foi in pnsData()[sPNS(), "ID"]) {
      
@@ -270,12 +283,12 @@ data <- reactive({
       obsPropSel <- obsProp()$name %in% input$selObsPhen
       
       uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
-      postfix <- c("Wert", "Einheit", "BG", "NG", "Stoffgruppe")
+      
       as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))) 
       
       
       query <- paste0("SELECT DISTINCT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime,
-                                       u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", stgrCol, " AS stgrname 
+                                       u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", colStoffgruppe, " AS stgrname 
                   FROM observation o
                       LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
                       LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
@@ -327,9 +340,13 @@ data <- reactive({
                 resDfRow[valueRow] <- res[obs, "value"]
               }
               resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
-              resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
-              resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
               resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
+              if (input$showBG) {
+                resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
+              }
+              if (input$showNG) {
+                resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+              }
             }
           }
           

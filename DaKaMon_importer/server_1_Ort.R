@@ -267,7 +267,7 @@ observeEvent(input$storeDBOrt, {
           #   insertOrt, ";")
 
 
-          query <- paste("WITH insert_ort as(
+          query <- paste0("WITH insert_ort as(
               INSERT INTO featureofinterest
               (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
               VALUES (nextval('featureofinterestid_seq'), 1", ", ",
@@ -277,8 +277,9 @@ observeEvent(input$storeDBOrt, {
                   Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
               "RETURNING featureofinterestid as ort_id)",
               "INSERT INTO ort_data
-              (featureofinterestid, rndid, lat, lon", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")
-              SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int), ", Ort_data[ort, reqColOrt$lat],", ",Ort_data[ort, reqColOrt$lon],
+              (featureofinterestid, rndid, lat, lon, thematik", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")
+              SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int), ", Ort_data[ort, reqColOrt$lat],", ", 
+              Ort_data[ort, reqColOrt$lon], ", '", Ort_data[ort, reqColOrt$thematik], "'",
               ifelse(is.null(dynamicColumns), "", ","), dynamicValues,
               " FROM insert_ort")
 

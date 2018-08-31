@@ -1,3 +1,3 @@
-ReferenzID;Thematik;Parameter;PNSID;Untersuchungsbeginn;Untersuchungsende;bla;blabla
+Referenz_ID;Thematik;Parameter;PNS_ID;Untersuchungsbeginn;Untersuchungsende;bla;blabla
 ben2018a;Kläranlage;Blei;KAM_BW_EPP_Ablauf;15-01-2018 12:00;17-01-2018 12:00;bla ben;blabla ben
-eike2018a;Kläranlage;Ammoniak;KAM_BW_EPP_Ablauf;15-01-2018 12:00;17-01-2018 12:00;bla eike;blabla eike
+eike2018a;Kläranlage;Ammonium;KAM_BW_EPP_Ablauf;15-01-2018 12:00;17-01-2018 12:00;bla eike;blabla eike

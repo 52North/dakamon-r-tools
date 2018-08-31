@@ -211,7 +211,7 @@ observeEvent(input$storeDBProbe, {
           } else {
             if (class(value) == "character") {
               if (length(grep(timestampRegExPattern, value, value = TRUE)) > 0) {
-                value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'")
+                value = paste0("to_timestamp('", value, "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'")
               } else {
                 value = paste0("'", value, "'")
               }
@@ -250,9 +250,9 @@ observeEvent(input$storeDBProbe, {
                          (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id, lab, lab_id", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")",
                          paste("VALUES (nextval('probeid_seq')",
                            paste0("'", Probe_data[probe, reqColProbe$id], "'"),
-                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
-                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
-                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),
                            "(SELECT pns_id FROM query_pns)",
                            paste0("'", Probe_data[probe, reqColProbe$labName], "'"),
                            paste0("'", Probe_data[probe, reqColProbe$labId], "'"),
