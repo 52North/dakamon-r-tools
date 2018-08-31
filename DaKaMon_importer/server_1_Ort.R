@@ -267,7 +267,7 @@ observeEvent(input$storeDBOrt, {
           #   insertOrt, ";")
 
 
-          query <- paste("WITH insert_ort as(
+          query <- paste0("WITH insert_ort as(
               INSERT INTO featureofinterest
               (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
               VALUES (nextval('featureofinterestid_seq'), 1", ", ",
