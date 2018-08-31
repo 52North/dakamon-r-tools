@@ -81,7 +81,9 @@ observeEvent(input$checkDBLiteratur, {
     checkDBLiteratur$txt <- NULL
     
     # get all Literatur from the DB that have any of the identifiers in the CSV
-    LiteraturInDB <- dbGetQuery(db, paste0("SELECT DISTINCT ref.identifier as ref, lit.thematik, pns.identifier as pns, op.identifier as parameter, lit.untersuchungsbeginn, lit.untersuchungsende
+    LiteraturInDB <- dbGetQuery(db, paste0("SELECT DISTINCT ref.identifier as ref, lit.thematik, pns.identifier as pns, op.identifier as parameter, 
+                                      to_char(lit.untersuchungsbeginn::timestamp, '",  dbTimestampPattern, "') AS untersuchungsbeginn, 
+                                      to_char(lit.untersuchungsende::timestamp, '",  dbTimestampPattern, "') AS untersuchungsende 
                                       from literatur lit
                                            LEFT OUTER JOIN observableproperty op ON (lit.param_id = op.observablepropertyid)
                                            LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = lit.pns_id) 
@@ -90,8 +92,8 @@ observeEvent(input$checkDBLiteratur, {
                                       AND lit.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
                                       AND pns.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')
                                       AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')
-                                      AND lit.untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),") 
-                                      AND lit.untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),")"))
+                                      AND lit.untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),") 
+                                      AND lit.untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),")"))
     if (nrow(LiteraturInDB) > 0) {
       checkDBLiteratur$txt <- paste("Folgende Literatur ist bereits in der DB: <ul><li>",
                                    paste0(paste(LiteraturInDB$ref, 
@@ -139,19 +141,19 @@ observeEvent(input$checkDBLiteratur, {
                                      paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')"))
     
     if (nrow(PnsInDB) == 0) {
-      checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="</li><li>")))
     } else {
       misingPns <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId], # TODO drop ID, parent identifier
                                  function(x) is.na(match(x, PnsInDB$identifier))))
       if (length(misingPns > 0)) {
-        checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                                 paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId][misingPns], collapse="</li><li>")))
       }
     }
     
     # check whether referenced combination of Thematik, PNS and Parameter exist; if not -> error state: no upload
-    CombinationInDB <- dbGetQuery(db, paste0("SELECT DISTINCT od.thematik, pns.identifier as pnsid, op.identifier as paramid
+    CombinationInDB <- dbGetQuery(db, paste0("SELECT DISTINCT od.thematik, pns.identifier as pnsId, op.identifier as paramId
                                       FROM probe_parameter pp
                                       LEFT OUTER JOIN probe pro ON (pro.id = pp.probe_id)
                                       LEFT OUTER JOIN observableproperty op ON (pp.parameter_id = op.observablepropertyid)
@@ -165,13 +167,26 @@ observeEvent(input$checkDBLiteratur, {
                                       AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')"))
     
     if (nrow(CombinationInDB) == 0) {
-      checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
-                                                          paste0(inCSVLiteratur$df[,reqColLiteratur$thematik], ", ", inCSVLiteratur$df[,reqColLiteratur$pnsId], ", ", inCSVLiteratur$df[,reqColLiteratur$paramid], collapse="</li><li>")))
+      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+                                                          paste0(inCSVLiteratur$df[,reqColLiteratur$thematik], ", ", inCSVLiteratur$df[,reqColLiteratur$pnsId], ", ", inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="</li><li>")))
     } else {
-      misingCombination <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId],
-                                function(x) is.na(match(x, CombinationInDB$identifier))))
+      misingCombination <- NULL
+      for (combiCSV in 1:nrow(inCSVLiteratur$df[,c(reqColLiteratur$thematik, reqColLiteratur$pnsId, reqColLiteratur$paramId)])) {
+        missing <- TRUE
+        for (combiDB in 1:nrow(CombinationInDB)) {
+          if (inCSVLiteratur$df[combiCSV, reqColLiteratur$pnsId] == CombinationInDB[combiDB, "pnsid"]
+              && inCSVLiteratur$df[combiCSV, reqColLiteratur$thematik] == CombinationInDB[combiDB, "thematik"]
+              && inCSVLiteratur$df[combiCSV, reqColLiteratur$paramId] == CombinationInDB[combiDB, "paramid"]) {
+              missing <- FALSE
+          }
+        }
+        if (missing == TRUE) {
+          misingCombination <- rbind(misingCombination, inCSVLiteratur$df[combiCSV])
+        }
+      }
+      
       if (length(misingCombination > 0)) {
-        checkDBPNS$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                                                             paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId][misingCombination], collapse="</li><li>")))
       }
     }
@@ -313,34 +328,40 @@ observeEvent(input$storeDBLiteratur, {
         }
         dynamicDf <- rbind(dynamicDf, dynamicDfRow)
       }
-      if (Literatur_data[lit,reqColLiteratur$refId] %in% checkDBLiteratur$LiteraturInDB$referenz_id
-          && Literatur_data[lit,reqColLiteratur$thematik] %in% checkDBLiteratur$LiteraturInDB$thematik
-          && Literatur_data[lit,reqColLiteratur$paramId] %in% checkDBLiteratur$LiteraturInDB$parameter
-          && Literatur_data[lit,reqColLiteratur$pnsId] %in% checkDBLiteratur$LiteraturInDB$pns
-          && Literatur_data[lit,reqColLiteratur$uBegin] %in% checkDBLiteratur$LiteraturInDB$untersuchungsbeginn
-          && Literatur_data[lit,reqColLiteratur$uEnde] %in% checkDBLiteratur$LiteraturInDB$untersuchungsende) {
-        ## UPDATE literatur and data via SQL ##
-        update = paste0("WITH ref as (
-                          SELECT id FROM referenz WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$refId] ,"')),
-                        param as (
-                        SELECT observablepropertyid  AS id  FROM observableproperty WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$paramId] ,"')),
-                        pns as (
-                        SELECT featureofinterestid as id FROM featureofinterest WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$pnsId] ,"'))
-                        UPDATE literatur SET ", 
-                        paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
-                        " WHERE ref.id = ", Literatur_data[lit, reqColLiteratur$refId], "
-                        AND thematik = '", Literatur_data[lit, reqColLiteratur$thematik], "'
-                        AND param.id = ", Literatur_data[lit, reqColLiteratur$paramId], "
-                        AND pns.id = ", Literatur_data[lit, reqColLiteratur$pnsId]," 
-                        AND untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),") 
-                        AND untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
-                        ";")
-        dbSendQuery(db, update)
+      litExists <- FALSE
+      for (litEx in 1:nrow(checkDBLiteratur$LiteraturInDB)) {
+        if (Literatur_data[lit,reqColLiteratur$refId] %in% checkDBLiteratur$LiteraturInDB[litEx, "ref"]
+            && Literatur_data[lit,reqColLiteratur$thematik] %in% checkDBLiteratur$LiteraturInDB[litEx, "thematik"]
+            && Literatur_data[lit,reqColLiteratur$paramId] %in% checkDBLiteratur$LiteraturInDB[litEx, "parameter"]
+            && Literatur_data[lit,reqColLiteratur$pnsId] %in% checkDBLiteratur$LiteraturInDB[litEx, "pns"]
+            && Literatur_data[lit,reqColLiteratur$uBegin] %in% checkDBLiteratur$LiteraturInDB[litEx, "untersuchungsbeginn"]
+            && Literatur_data[lit,reqColLiteratur$uEnde] %in% checkDBLiteratur$LiteraturInDB[litEx, "untersuchungsende"]) {
+            litExists <- TRUE
+        }
+     }
+     if (litExists) {
+       ## UPDATE literatur and data via SQL ##
+       update = paste0("WITH ref as (
+                       SELECT id FROM referenz WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$refId] ,"')),
+                       param as (
+                       SELECT observablepropertyid  AS id  FROM observableproperty WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$paramId] ,"')),
+                       pns as (
+                       SELECT featureofinterestid as id FROM featureofinterest WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$pnsId] ,"'))
+                       UPDATE literatur SET ", 
+                       paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
+                       " WHERE referenz_id = (SELECT id FROM ref)
+                       AND thematik = '", Literatur_data[lit, reqColLiteratur$thematik], "'
+                       AND param_id = (SELECT id FROM param) 
+                       AND pns_id = (SELECT id FROM pns) 
+                       AND untersuchungsbeginn IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),") 
+                       AND untersuchungsende IN (", paste0("to_timestamp('", inCSVLiteratur$df[,reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "')"),
+                       ";")
+       dbSendQuery(db, update)
       } else {
         ## INSERT literatur and data via SQL ##
         dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
         dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
-
+        
         insert = paste0("WITH ref as (
                           SELECT id FROM referenz WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$refId] ,"')),
                           param as (
@@ -349,10 +370,10 @@ observeEvent(input$storeDBLiteratur, {
                             SELECT featureofinterestid as id FROM featureofinterest WHERE identifier IN ('", Literatur_data[lit, reqColLiteratur$pnsId] ,"'))
                         INSERT INTO literatur (id, referenz_id, thematik, param_id, pns_id, untersuchungsbeginn, untersuchungsende, ", dynamicColumns, ")
                           SELECT nextval('literaturid_seq')::int, ref.id, '",
-                          Literatur_data[lit, reqColLiteratur$thematik], "', param.id, pns.id, "
-                          , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC'"),
-                          ", " , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone 'UTC', "),
-                          dynamicValues, "
+                        Literatur_data[lit, reqColLiteratur$thematik], "', param.id, pns.id, "
+                        , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uBegin], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "'"),
+                        ", " , paste0("to_timestamp('", Literatur_data[lit, reqColLiteratur$uEnde], "', '", dbTimestampPattern, "')::timestamptz at time zone '", feederTimeZoneIdentifier, "', "),
+                        dynamicValues, "
                           FROM ref, param, pns;")
         dbSendQuery(db, insert)
       }
