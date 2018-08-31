@@ -441,9 +441,9 @@ observeEvent(input$storeDBData, {
                                         identifier AS probeid,
                                         pns_id,
                                         lab_id AS sensorId,
-                                        to_char(resulttime::date, '",  dbTimestampPattern, "') AS resulTime,
-                                        to_char(phenomenontimestart::date, '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(phenomenontimeend::date, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                        to_char(resulttime::timestamp, '",  dbTimestampPattern, "') AS resulTime,
+                                        to_char(phenomenontimestart::timestamp, '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(phenomenontimeend::timestamp, '",  dbTimestampPattern, "') AS phenTimeEnd
                                       FROM
                                         probe
                                       WHERE
