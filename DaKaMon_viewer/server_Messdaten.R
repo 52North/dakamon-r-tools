@@ -253,7 +253,18 @@ data <- reactive({
     
     resDf <- NULL
     
-    columnCount <- (length(input$selObsPhen) * 5) + 4
+    phenValueCount <- 3
+    postfix <- c("Wert", "Einheit", "Stoffgruppe")
+    if (input$showBG) {
+      postfix <- append(postfix, "BG")
+      phenValueCount <-  phenValueCount + 1
+    }
+    if (input$showNG) {
+      postfix <- append(postfix, "NG")
+      phenValueCount <-  phenValueCount + 1
+    }
+    
+    columnCount <- (length(input$selObsPhen) * phenValueCount) + 4
     
     colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
@@ -272,7 +283,7 @@ data <- reactive({
       obsPropSel <- obsProp()$name %in% input$selObsPhen
       
       uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
-      postfix <- c("Wert", "Einheit", "BG", "NG", "Stoffgruppe")
+      
       as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))) 
       
       
@@ -329,9 +340,13 @@ data <- reactive({
                 resDfRow[valueRow] <- res[obs, "value"]
               }
               resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
-              resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
-              resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
               resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
+              if (input$showBG) {
+                resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
+              }
+              if (input$showNG) {
+                resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+              }
             }
           }
           
