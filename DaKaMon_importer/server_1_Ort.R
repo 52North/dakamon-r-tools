@@ -267,10 +267,12 @@ observeEvent(input$storeDBOrt, {
           #   insertOrt, ";")
 
 
-          query <- paste0("WITH insert_ort as(
+          query <- paste0("WITH select_type as (
+              SELECT featureofinteresttypeid as id FROM featureofinteresttype WHERE featureofinteresttype = '", foiType,"'
+              ), insert_ort as (
               INSERT INTO featureofinterest
               (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
-              VALUES (nextval('featureofinterestid_seq'), 1", ", ",
+              VALUES (nextval('featureofinterestid_seq'), (SELECT id FROM select_type)", ", ",
               paste0("'", Ort_data[ort, reqColOrt$id], "'"), ", ",
               paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", ",
               paste("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
