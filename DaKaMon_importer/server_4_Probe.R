@@ -178,7 +178,7 @@ observeEvent(input$storeDBProbe, {
       registeredColumns <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('probe', 'global')"))[,1]
       probeColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                     WHERE prefixid IN ('probe') AND columnid LIKE 'col%'"))
-      missingColumns <- which(sapply(Probe_header, # TODO drop ID, Probeent identifier
+      missingColumns <- which(sapply(Probe_header,
                               function(x) is.na(match(x, registeredColumns))))
 
       if (length(missingColumns > 0)) {

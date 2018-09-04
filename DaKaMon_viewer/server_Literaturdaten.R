@@ -21,8 +21,6 @@ observeEvent(input$fromParamtoThematik, {
 #####################
 litThematikDf<- reactive({
   
-  # TODO: load all Literaturwerte containing the parameter selection input$litPar
-  
   ## Thematik
   db <- connectToDB()
   
@@ -51,7 +49,6 @@ observeEvent(input$fromThematikToPub, {
 #####################
 ######  TAB 3  ######
 #####################
-# TODO: load all Literaturwerte containing the parameter selection input$litThematik
 
 litPubIdDf<- reactive({
   ## Publikation # z.B. alle Werte, die in Kaiser2012a ermittelt wurden, pubId wird vom KIT erstellt und mit csv hoch geladen
@@ -91,8 +88,6 @@ observeEvent(input$fromPubToLit, {
 #####################
 ######  TAB 4  ######
 #####################
-# TODO: load all Literaturwerte containing the pubId selection input$litPubId
-
 litDf<- reactive({
   db <- connectToDB()
   

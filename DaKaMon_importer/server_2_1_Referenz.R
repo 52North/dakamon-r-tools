@@ -165,7 +165,7 @@ observeEvent(input$storeDBReferenz, {
     regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ref', 'global')"))[,1]
     referenzColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
                                                   WHERE prefixid IN ('ref') AND columnid LIKE 'col%'"))
-    misCols <- which(sapply(Referenz_header, # TODO drop ID and Name
+    misCols <- which(sapply(Referenz_header,
                             function(x) is.na(match(x, regCols))))
 
     if (length(misCols > 0)) {

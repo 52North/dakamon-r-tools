@@ -6,18 +6,31 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 library(stringi)
+library(pool)
 
 source("conf.R", local = TRUE, encoding = "UTF-8")$value
 
 
 ## tools
 
+
+pool <- dbPool(
+  drv = RPostgreSQL::PostgreSQL(),
+  dbname = dbName,
+  host = dbHost,
+  user = dbUser,
+  password = dbPassword,
+  port = dbPort,
+  minSize = 3,
+  maxSize = 10,
+  idleTimeout = 30000 # 30sec
+)
+
 connectToDB <- function() {
-  db <- dbConnect("PostgreSQL", host=dbHost, dbname=dbName, user=dbUser, password=dbPassword, port=dbPort)
-  
-  if (Sys.info()["sysname"] == "Windows")
+  db <- poolCheckout(pool)
+  if (Sys.info()["sysname"] == "Windows") {
     dbSendQuery(db, "set client_encoding='windows-1252'")
-  
+  }
   db
 }
 
@@ -40,7 +53,7 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       actionButton("fromOrtToPNS", "Weiter...")),
                              ## PNS
                              tabPanel(
-                               "Probenahemstelle(n) auswählen",
+                               "Probenahmestelle(n) auswählen",
                                DTOutput('tablePNS'),
                                conditionalPanel(
                                  "$('#tablePNS').hasClass('recalculating')",
@@ -58,22 +71,26 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                           uiOutput("elemGroup"),
                                           uiOutput("obsPhen"),
                                           checkboxInput("showBG",
-                                                        label = "Zeige BG-Wert",
-                                                        value = TRUE),
+                                                        label = "Lade BG-Wert",
+                                                        value = FALSE),
                                           checkboxInput("showNG",
-                                                        label = "Zeige NG-Wert",
-                                                        value = TRUE),
+                                                        label = "Lade NG-Wert",
+                                                        value = FALSE),
+                                          checkboxInput("showSG",
+                                                        label = "Lade Stoffgruppe",
+                                                        value = FALSE),
                                           radioButtons("repBG",
-                                                       label = "Ersetzung der Werte unterhalb der Bestimmungsgrenze durch:",
+                                                       label = "Ersetze Werte unterhalb der Bestimmungsgrenze durch:",
                                                        choices = c("'BG'", "0", "BG/2", "BG"), 
                                                        selected = "'BG'", inline=TRUE),
                                           checkboxInput("randomId",
-                                                        label = "IDs anonymisieren",
+                                                        label = "Anonymisiere IDs",
                                                         value = FALSE),
                                           actionButton("refreshData", "Lade Daten aus der DB."),
                                           checkboxInput("computeStat",
-                                                        label = "Statistiken berechnen",
+                                                        label = "Berechne Statistiken",
                                                         value = FALSE),
+                                          textOutput("warnUnit"),
                                           downloadButton("exportDataCSV", "Export als csv-Datei."),
                                           downloadButton("exportDataRData", "Export als RData-Datei."),
                                           width = 2),
@@ -85,7 +102,7 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                           ),
                                           textOutput("selTextDaten"),
                                           br(),
-                                          DTOutput('tableStat'),
+                                          DTOutput('tableStatistik'),
                                           conditionalPanel(
                                             "$('#tableStat').hasClass('recalculating')",
                                             tags$div('Berechne ... ')
@@ -113,9 +130,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       uiOutput("litPubIdInput"),
                                       DTOutput("tableLitPubId"),
                                       actionButton("fromPubToLit", "Weiter...")),
-                            tabPanel("Literatur", # literatur
-                                     uiOutput("litInput"),
-                                     DTOutput("tableLit")))
+                             tabPanel("Literatur", # literatur
+                                      uiOutput("litInput"),
+                                      DTOutput("tableLit")))
 )
 
 server <- function(input, output, session) {
@@ -131,4 +148,12 @@ server <- function(input, output, session) {
 
 
 
-shinyApp(ui, server)
+shinyApp(ui, server, 
+         onStart = function() {
+           cat("Starting Application ...")
+           # Ensure the DB pool closes all connections
+           onStop(function() {
+             cat("Closing DB connection pool")
+             poolClose(pool)
+           })
+         })

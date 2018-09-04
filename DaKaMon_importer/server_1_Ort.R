@@ -13,27 +13,27 @@ decOrt <- decSep
 observeEvent(input$csvFileOrt, {
   valiOrt$validated <- FALSE
   checkDBOrt$checked <- FALSE
-
+  
   # check whether an encoding has been set; fallback: guess the eoncoding using readr
   if (is.null(csvEncode)) {
     csvEncode <- readr::guess_encoding(input$csvFileOrt$datapath)
     csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
   }
-
+  
   inCSVOrt$csvEncode <- csvEncode
-
+  
   inCSVOrt$df <- read.csv(input$csvFileOrt$datapath,
                           header = TRUE,
                           sep = sepOrt, dec = decOrt,
                           stringsAsFactors = FALSE,
                           fileEncoding = inCSVOrt$csvEncode)
-
+  
   inCSVOrt$headAsChar <- colnames(inCSVOrt$df)
-
+  
   ## validation of Ort csv-file
   # look for required column names
   # check whether columns have unique names
-
+  
   txt <- NULL
   if (!(reqColOrt$id %in% inCSVOrt$headAsChar) || length(unique(inCSVOrt$df[,reqColOrt$id])) != length(inCSVOrt$df[,reqColOrt$id]))
     txt <- paste0(txt, "<li>Jeder Ort benötigt eine persistente und eindeutige ID in der Spalte '", reqColOrt$id, "'.</li>")
@@ -41,12 +41,12 @@ observeEvent(input$csvFileOrt, {
     if (!(reqColName %in% inCSVOrt$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
-
+  
   if(length(unique(inCSVOrt$headAsChar)) != length(inCSVOrt$headAsChar))
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
-
+  
   valiOrt$txt <- txt
-
+  
   valiOrt$validated <- TRUE
 })
 
@@ -74,9 +74,9 @@ observeEvent(input$checkDBOrt, {
   tryCatch({
     progress <- shiny::Progress$new()
     on.exit(progress$close(), add = T)
-
+    
     progress$set(message = "Prüfe bereits registrierte Orte.", value = 0)
-
+    
     # get all Orte from the DB that have any of the identifiers in the CSV
     OrtInDB <- dbGetQuery(db, paste0("SELECT featureofinterestid, identifier FROM featureofinterest WHERE identifier IN ('",
                                      paste(inCSVOrt$df[,reqColOrt$id], collapse="', '"),"')"))
@@ -86,9 +86,9 @@ observeEvent(input$checkDBOrt, {
     } else {
       checkDBOrt$txt <- NULL
     }
-
+    
     checkDBOrt$OrtInDB <- OrtInDB
-
+    
     checkDBOrt$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -114,21 +114,21 @@ output$OrtDBConsistencyOut <- renderUI({
 output$tableOrt <- renderDataTable({
   if (!is.null(inCSVOrt$df)) {
     showTab <- inCSVOrt$df
-
+    
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
+    
     showHead <- paste0(showHead, "</span>")
-
+    
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sort=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-
+    
     # if DB consistency has been checked, apply colors
     if (checkDBOrt$checked) {
       rowColors <- rep("white", nrow(showTab))
-
+      
       if (nrow(checkDBOrt$OrtInDB) > 0) {
         rowColors[showTab$ID %in% checkDBOrt$OrtInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
@@ -147,101 +147,101 @@ observeEvent(input$storeDBOrt, {
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {
-
-    Ort_data <- inCSVOrt$df
-    Ort_header <- inCSVOrt$headAsChar
-
-    Ort_empty_cols <- apply(Ort_data, 2, function(x) all(is.na(x)))
-
-    Ort_header <- Ort_header[!Ort_empty_cols]
-    Ort_data <- Ort_data[,!Ort_empty_cols]
-
-    nRowDf <- nrow(Ort_data)
-
-    progress <- shiny::Progress$new()
-    on.exit(progress$close(), add=T)
-
-    progress$set(message = "Füge Orte in DB ein.", value = 0)
-
+      
+      Ort_data <- inCSVOrt$df
+      Ort_header <- inCSVOrt$headAsChar
+      
+      Ort_empty_cols <- apply(Ort_data, 2, function(x) all(is.na(x)))
+      
+      Ort_header <- Ort_header[!Ort_empty_cols]
+      Ort_data <- Ort_data[,!Ort_empty_cols]
+      
+      nRowDf <- nrow(Ort_data)
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close(), add=T)
+      
+      progress$set(message = "Füge Orte in DB ein.", value = 0)
+      
       ## add missing columns
-    regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
+      regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('ort', 'global')"))[,1]
       ortColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                   WHERE prefixid IN ('ort') AND columnid LIKE 'col%'"))
-    misCols <- which(sapply(Ort_header, # TODO drop ID and Name
-                            function(x) is.na(match(x, regCols))))
-
-    if (length(misCols > 0)) {
-      for (i in 1:length(misCols)) {# i <- 1
-        colId <- sprintf("col%03d", i + length(regCols))
+      misCols <- which(sapply(Ort_header,
+                              function(x) is.na(match(x, regCols))))
+      
+      if (length(misCols > 0)) {
+        for (i in 1:length(misCols)) {# i <- 1
+          colId <- sprintf("col%03d", i + length(regCols))
           coltype <- switch(class(Ort_data[,misCols[i]]),
-                         integer = "numeric",
-                         numeric = "numeric",
-                         character = "character varying(255)")
+                            integer = "numeric",
+                            numeric = "numeric",
+                            character = "character varying(255)")
           colHeader <- Ort_header[misCols[i]]
           colMetadataExists = dbGetQuery(db, paste0("SELECT count(columnid) > 0
                                                     FROM column_metadata
                                                     WHERE columnid='", colId, "'
                                                     AND prefixid='ort' ;"))
           if (!colMetadataExists) {
-            print(paste0("add to column_metadata: id='", colId, "', dede='", colHeader, "', prefix='ort'"))
+            # print(paste0("add to column_metadata: id='", colId, "', dede='", colHeader, "', prefix='ort'"))
             dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
                                     VALUES ('", paste(colId, 'ort', Ort_header[misCols[i]], sep="', '"),"');"))
           }
-
+          
           colExists = dbGetQuery(db, paste0("SELECT count(column_name) > 0
                                              FROM information_schema.columns
                                              WHERE table_name='ort_data'
                                              AND column_name='", colId, "';"))
           if (!colExists) {
-            print(paste0("add column '", colId, "' ('", colHeader, "') to ort_data"))
+            # print(paste0("add column '", colId, "' ('", colHeader, "') to ort_data"))
             dbSendQuery(db, paste0("ALTER TABLE ort_data ADD COLUMN ", colId, " ", coltype, ";"))
           }
-      }
+        }
         ortColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                     WHERE prefixid IN ('ort') AND columnid LIKE 'col%'"))
-    }
-
-    for (ort in 1:nrow(Ort_data)) {
-      dynamicDf <- NULL
-      dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortColumnMappings)))
-      colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-      for (col in 1:nrow(ortColumnMappings)) {
+      }
+      
+      for (ort in 1:nrow(Ort_data)) {
+        dynamicDf <- NULL
         dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortColumnMappings)))
         colnames(dynamicDfRow) <- c("columnid", "dede", "value")
-        dynamicDfRow$columnid <- ortColumnMappings[col, "columnid"]
-        dynamicDfRow$dede <- ortColumnMappings[col, "dede"]
-        value = Ort_data[ort, ortColumnMappings[col, "dede"]]
-        if (is.null(value) || is.na(value) || value == '') {
-          dynamicDfRow$value <- "EMPTY"
-        } else {
-          if (class(value) == "character") {
-            value <- paste0("'", value, "'")
+        for (col in 1:nrow(ortColumnMappings)) {
+          dynamicDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = length(ortColumnMappings)))
+          colnames(dynamicDfRow) <- c("columnid", "dede", "value")
+          dynamicDfRow$columnid <- ortColumnMappings[col, "columnid"]
+          dynamicDfRow$dede <- ortColumnMappings[col, "dede"]
+          value = Ort_data[ort, ortColumnMappings[col, "dede"]]
+          if (is.null(value) || is.na(value) || value == '') {
+            dynamicDfRow$value <- "EMPTY"
+          } else {
+            if (class(value) == "character") {
+              value <- paste0("'", value, "'")
+            }
+            dynamicDfRow$value = value
           }
-          dynamicDfRow$value = value
+          dynamicDf <- rbind(dynamicDf, dynamicDfRow)
         }
-        dynamicDf <- rbind(dynamicDf, dynamicDfRow)
-      }
-
+        
         # if there are already Orte in the DB that are again in the CSV
-      if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
+        if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
           query <- paste0("with update_ort as (
           UPDATE featureofinterest SET
           name = ", paste0("'", Ort_data[ort, reqColOrt$name], "'"), ",
           geom = ", paste0("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
-                         " ", Ort_data[ort, reqColOrt$lon], ")', 4326) "),
-          " WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
-          " RETURNING featureofinterestid
+                           " ", Ort_data[ort, reqColOrt$lon], ")', 4326) "),
+                          " WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
+                          " RETURNING featureofinterestid
           )
           UPDATE ort_data SET ",
-            paste0(paste0(dynamicDf[["columnid"]],
-                          " = ",
-                          gsub("EMPTY", "NULL", dynamicDf[["value"]])),
-                   collapse = ", "),
-          " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort);"
-        )
+                          paste0(paste0(dynamicDf[["columnid"]],
+                                        " = ",
+                                        gsub("EMPTY", "NULL", dynamicDf[["value"]])),
+                                 collapse = ", "),
+                          " WHERE featureofinterestid = (SELECT featureofinterestid FROM update_ort);"
+          )
           dbSendQuery(db, query)
-      } else {
-        ## INSERT FoI and data via SQL ##
+        } else {
+          ## INSERT FoI and data via SQL ##
           if (length(ortColumnMappings) > 0) {
             #dynamicColumns = paste0(dynamicDf[["columnid"]], collapse = ", ")
             dynamicColumns <- paste0(ortColumnMappings[, 1], collapse = ", ")
@@ -250,7 +250,7 @@ observeEvent(input$storeDBOrt, {
             dynamicColumns <- NULL
             dynamicValues <- NULL
           }
-
+          
           # insertFeature = paste("INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
           #              VALUES (nextval('featureofinterestid_seq'), 1",
           #   paste0("'", Ort_data[ort, reqColOrt$id], "'"),
@@ -265,31 +265,31 @@ observeEvent(input$storeDBOrt, {
           #   dynamicValues, " FROM insert_ort")
           # query = paste("WITH insert_ort as (", insertFeature, " RETURNING featureofinterestid as ort_id)",
           #   insertOrt, ";")
-
-
+          
+          
           query <- paste0("WITH select_type as (
               SELECT featureofinteresttypeid as id FROM featureofinteresttype WHERE featureofinteresttype = '", foiType,"'
               ), insert_ort as (
               INSERT INTO featureofinterest
               (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
               VALUES (nextval('featureofinterestid_seq'), (SELECT id FROM select_type)", ", ",
-              paste0("'", Ort_data[ort, reqColOrt$id], "'"), ", ",
-              paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", ",
-              paste("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
-                  Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
-              "RETURNING featureofinterestid as ort_id)",
-              "INSERT INTO ort_data
+                          paste0("'", Ort_data[ort, reqColOrt$id], "'"), ", ",
+                          paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", ",
+                          paste("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
+                                Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
+                          "RETURNING featureofinterestid as ort_id)",
+                          "INSERT INTO ort_data
               (featureofinterestid, rndid, lat, lon, thematik", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")
               SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int), ", Ort_data[ort, reqColOrt$lat],", ", 
-              Ort_data[ort, reqColOrt$lon], ", '", Ort_data[ort, reqColOrt$thematik], "'",
-              ifelse(is.null(dynamicColumns), "", ","), dynamicValues,
-              " FROM insert_ort")
-
-        dbSendQuery(db, query)
+                          Ort_data[ort, reqColOrt$lon], ", '", Ort_data[ort, reqColOrt$thematik], "'",
+                          ifelse(is.null(dynamicColumns), "", ","), dynamicValues,
+                          " FROM insert_ort")
+          
+          dbSendQuery(db, query)
+        }
       }
-    }
-
-    message <- paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt.")
+      
+      message <- paste0(nrow(Ort_data) , " Orte wurden erfolgreich in der Datenbank angelegt.")
       showModalMessage(title="Vorgang abgeschlossen", message)
     })
   }, error = modalErrorHandler, finally = poolReturn(db))

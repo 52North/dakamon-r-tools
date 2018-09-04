@@ -171,11 +171,10 @@ observeEvent(input$storeDBParameter, {
       regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('param', 'global')"))[,1]
       paramColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                     WHERE prefixid IN ('param') AND columnid LIKE 'col%'"))
-      misCols <- which(sapply(PAR_header, # TODO drop ID, parent identifier
+      misCols <- which(sapply(PAR_header,
                               function(x) is.na(match(x, regCols))))
 
       if (length(misCols > 0)) {
-        # TODO adjust to new column_metadata workflow
         for (i in 1:length(misCols)) {# i <- 1
           colId <- paste0(sprintf("col%03d", i + length(regCols)))
           coltype = switch(class(PAR_data[,misCols[i]]),
@@ -213,7 +212,6 @@ observeEvent(input$storeDBParameter, {
         # if there are already PARe in the DB that are again in the CSV
         if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
           ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
-          # TODO switch to workflow with dynamic columns
           query <- paste0("with update_param as (
             UPDATE observableproperty
             SET

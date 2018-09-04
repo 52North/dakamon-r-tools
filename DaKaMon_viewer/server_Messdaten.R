@@ -14,11 +14,9 @@ output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
 ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier 
                   FROM featureofinterest AS foi
                   RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid")
-                  # RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
-                  # RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
-dbDisconnect(db)
-
-cat("foo \n")
+# RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
+# RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
+poolReturn(db)
 
 # if any
 if (nrow(ort) > 0) {
@@ -43,6 +41,8 @@ if (nrow(ort) > 0) {
     
     if (nrow(ortData) > 0)
       colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
+    
+    poolReturn(db)
     
     ortData
   })
@@ -97,11 +97,10 @@ if (nrow(ort) > 0) {
       save(df, file = file)
     }
   )
-  dbDisconnect(db)
 }
 
 observeEvent(input$fromOrtToPNS, {
-  updateTabsetPanel(session, "inNavbarpage",selected = "Probenahemstelle(n) auswählen")
+  updateTabsetPanel(session, "inNavbarpage",selected = "Probenahmestelle(n) auswählen")
 })
 
 
@@ -119,7 +118,7 @@ if(!is.null(ortData)) {
     
     pnsColColumns <- NULL
     if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
-        pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+      pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
     }
     
     pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id", 
@@ -130,7 +129,7 @@ if(!is.null(ortData)) {
                                LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
                                WHERE fr.parentfeatureid in (", 
                                  paste(ortData()[sOrt(),1], collapse=", "), ")"))
-    dbDisconnect(db)
+    poolReturn(db)
     
     if (nrow(pns) > 0)
       colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
@@ -163,10 +162,14 @@ if(!is.null(ortData)) {
   })
   
   output$selTextPNS <- renderText({
-    if (length(sPNS()) == 1) {
-      paste("Zeile", sPNS(), "ist ausgewählt.")
+    if (length(sPNS()) == 0) {
+      "Keine zugehörigen Probenahmestellen vorhanden."
     } else {
-      paste("Zeilen", paste(sPNS(), collapse=", "), "sind ausgewählt.")
+      if (length(sPNS()) == 1) {
+        paste("Zeile", sPNS(), "ist ausgewählt.")
+      } else {
+        paste("Zeilen", paste(sPNS(), collapse=", "), "sind ausgewählt.")
+      }
     }
   })
   
@@ -205,14 +208,13 @@ observeEvent(input$fromPNStoMessdaten, {
 elemGroup <- reactive({
   db <- connectToDB()
   res <- NULL  
-  print(str(col))
   
   col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
   if (nrow(col) != 0) {
     res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
                                WHERE ", col, " IS NOT NULL"))
   }
-  dbDisconnect(db)
+  poolReturn(db)
   
   res
 })
@@ -226,6 +228,7 @@ output$elemGroup <- renderUI(selectInput("selElemGroup", "Stoffgruppenauswahl:",
 obsProp <- reactive({
   if (is.null(input$selElemGroup))
     return(NULL)
+  
   db <- connectToDB()
   colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
   op <- NULL
@@ -240,10 +243,9 @@ obsProp <- reactive({
                       LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
                       RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
                      WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
-    cat(query)
     op <- rbind(op, dbGetQuery(db, query))
   }
-  dbDisconnect(db)
+  poolReturn(db)
   
   op
 })
@@ -254,12 +256,11 @@ output$obsPhen <- renderUI(selectInput("selObsPhen", "Parameterauswahl:",
 
 data <- reactive({
   if (!is.null(input$selObsPhen)) {
-    db <- connectToDB()
     
     resDf <- NULL
     
-    phenValueCount <- 3
-    postfix <- c("Wert", "Einheit", "Stoffgruppe")
+    phenValueCount <- 2
+    postfix <- c("Wert", "Einheit")
     if (input$showBG) {
       postfix <- append(postfix, "BG")
       phenValueCount <-  phenValueCount + 1
@@ -268,8 +269,13 @@ data <- reactive({
       postfix <- append(postfix, "NG")
       phenValueCount <-  phenValueCount + 1
     }
-    
+    if (input$showSG) {
+      postfix <- append(postfix, "Stoffgruppe")
+      phenValueCount <-  phenValueCount + 1
+    }
     columnCount <- (length(input$selObsPhen) * phenValueCount) + 4
+    
+    db <- connectToDB()
     
     colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
@@ -314,12 +320,12 @@ data <- reactive({
       query <- paste0(query, " AND (o.phenomenontimestart >= to_timestamp('", as.character(minPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
                       AND (o.phenomenontimestart <= to_timestamp('", as.character(maxPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
                       OR o.phenomenontimeend <= to_timestamp('", as.character(maxPhenTimeEnd), "','YYYY-mm-DD HH24:MI:SS'))) " )
-
+      
       res <- dbGetQuery(db, query)
       
       if(!is.null(res)) {
         for (ft in 1:nrow(foiTimes)) {
-        #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1] 
+          #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1] 
           resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
           colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
           
@@ -334,7 +340,7 @@ data <- reactive({
               valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
               if (res[obs, "value"] < res[obs, "bg"]) {
                 if (input$repBG == 'BG') {
-                resDfRow[valueRow] <- res[obs, "bg"]
+                  resDfRow[valueRow] <- res[obs, "bg"]
                 } else if (input$repBG == 'BG/2') {
                   resDfRow[valueRow] <- res[obs, "bg"]/2
                 } else {
@@ -344,12 +350,14 @@ data <- reactive({
                 resDfRow[valueRow] <- res[obs, "value"]
               }
               resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
-              resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
               if (input$showBG) {
                 resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
               }
               if (input$showNG) {
                 resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+              }
+              if (input$showSG) {
+                resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
               }
             }
           }
@@ -359,7 +367,7 @@ data <- reactive({
       }
       
     }
-    dbDisconnect(db)
+    poolReturn(db)
     
     if (input$randomId) {
       db <- connectToDB()
@@ -371,7 +379,7 @@ data <- reactive({
                                        LEFT OUTER JOIN featureofinterest f ON pnsd.featureofinterestid = f.featureofinterestid
                                        WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
       resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), "rndid"]
-      dbDisconnect(db)
+      poolReturn(db)
     }
     
     #resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
@@ -397,48 +405,48 @@ output$tableDaten <- renderDT({
   
   showTab <- isolate(data()[["resDf"]])
   
-  isolate({
-    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
-    
-    # if (!is.null(data()[["uom"]])) {
-    #   showUoM <- sapply(data()[["uom"]], function(x) {
-    #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-    #       paste0(" [",x,"]")
-    #     } else {
-    #       ""
-    #     }
-    #   })
-    #   showHead <- paste0(showHead, showUoM)
-    # }
-    # 
-    # if (!is.null(data()[["bg"]])) {
-    #   showBg <- sapply(data()[["bg"]], function(x) {
-    #     if (!is.na(x) & nchar(x) > 0 & x != "NA") {
-    #       paste0("<br> BG: ", x)
-    #     } else {
-    #       "<br>"
-    #     }
-    #   })
-    #   showHead <- paste0(showHead, showBg)
-    # }
-    # 
-    # if (!is.null(data()[["stgr"]])) {
-    #   showStgr <- sapply(data()[["stgr"]], function(x) {
-    #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-    #       paste0("<br>", x)
-    #     } else {
-    #       "<br>"
-    #     }
-    #   })
-    #   showHead <- paste0(showHead, showStgr)
-    # }
-    
-    showHead <- paste0(showHead, "</span>")
-  })
+  # isolate({
+  #   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+  
+  
+  # if (!is.null(data()[["uom"]])) {
+  #   showUoM <- sapply(data()[["uom"]], function(x) {
+  #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
+  #       paste0(" [",x,"]")
+  #     } else {
+  #       ""
+  #     }
+  #   })
+  #   showHead <- paste0(showHead, showUoM)
+  # }
+  # 
+  # if (!is.null(data()[["bg"]])) {
+  #   showBg <- sapply(data()[["bg"]], function(x) {
+  #     if (!is.na(x) & nchar(x) > 0 & x != "NA") {
+  #       paste0("<br> BG: ", x)
+  #     } else {
+  #       "<br>"
+  #     }
+  #   })
+  #   showHead <- paste0(showHead, showBg)
+  # }
+  # 
+  # if (!is.null(data()[["stgr"]])) {
+  #   showStgr <- sapply(data()[["stgr"]], function(x) {
+  #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
+  #       paste0("<br>", x)
+  #     } else {
+  #       "<br>"
+  #     }
+  #   })
+  #   showHead <- paste0(showHead, showStgr)
+  # }
+  
+  #   showHead <- paste0(showHead, "</span>")
+  # })
   
   if (!is.null(showTab)) {
-    colnames(showTab) <- showHead
+    # colnames(showTab) <- showHead
     datatable(showTab, #colnames=showHead,
               filter="top", 
               options=list(paging=FALSE,dom = 'Brt',
@@ -460,16 +468,26 @@ output$tableStatistik <- renderDataTable({
   if (!is.null(selData()) & input$computeStat) {
     input$refreshData
     
+    output$warnUnit <- renderText("Achtung: Messwerte eines Parameters können verschiedene Einheiten haben und werden nicht konvertiert.")
+    
     filterData <- isolate(data()$resDf[selData(),])
     
     stat <- apply(filterData[,-c(1:2), drop=FALSE], 2, function(x) {
-      xSum <- round(summary(as.numeric(x)),3)
+      xSum <- suppressWarnings(as.numeric(x))
+      if (all(is.na(xSum))) {
+        xSum <- c(rep(NA,7), length(levels(as.factor(x))))
+      } else {
+        xSum <- summary(xSum)
+      }
       if (length(xSum) == 6) 
-        xSum <- c(xSum,0)
+        xSum <- c(xSum, 0, NA)
+      if (length(xSum) == 7) 
+        xSum <- c(xSum, NA)
+      
       xSum
     })
     
-    rownames(stat) <- c("Min.","1st Qu.","Median","Mittelw.", "3rd Qu.","Max.", "NA")
+    rownames(stat) <- c("Min.","1. Qu.","Median","Mittelw.", "3. Qu.","Max.", "NA", "Anz. Fakt.")
     
     datatable(stat,
               options=list(paging=FALSE, dom = 'Brt',

@@ -95,7 +95,7 @@ observeEvent(input$checkDBPNS, {
       checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVPNS$df[,reqColPNS$geo], collapse="</li><li>"))
     } else {
-      misingOrte <- which(sapply(inCSVPNS$df[,reqColPNS$geo], # TODO drop ID, parent identifier
+      misingOrte <- which(sapply(inCSVPNS$df[,reqColPNS$geo],
                               function(x) is.na(match(x, OrtInDB$identifier))))
       if (length(misingOrte > 0)) {
         checkDBPNS$txt <- paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
@@ -143,7 +143,6 @@ output$tablePNS <- renderDataTable({
       rowColors <- rep("white", nrow(showTab))
 
       if (nrow(checkDBPNS$PNSInDB) > 0) {
-        cat(is.null(inCSVPNS$df))
         rowColors[showTab$ID %in% checkDBPNS$PNSInDB$identifier] <- "red"
         showDT <- formatStyle(showDT, "ID", target="row",
                               backgroundColor = styleEqual(showTab$ID, rowColors))
@@ -181,7 +180,7 @@ observeEvent(input$storeDBPNS, {
       regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('pns', 'global')"))[,1]
       pnsColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata
                                                   WHERE prefixid IN ('pns') AND columnid LIKE 'col%'"))
-      misCols <- which(sapply(PNS_header, # TODO drop ID, parent identifier
+      misCols <- which(sapply(PNS_header,
                               function(x) is.na(match(x, regCols))))
 
       if (length(misCols > 0)) {
@@ -192,7 +191,6 @@ observeEvent(input$storeDBPNS, {
                            numeric = "numeric",
                            character = "character varying(255)")
 
-          # TODO adopt to new FoI table
           dbSendQuery(db, paste0("ALTER TABLE pns_data ADD COLUMN ", colId, " ", coltype, ";"))
 
           dbSendQuery(db, paste0("INSERT INTO column_metadata (columnid, prefixid, dede)
@@ -234,7 +232,6 @@ observeEvent(input$storeDBPNS, {
 
         # if there are already PNSn in the DB that are again in the CSV
         if (PNS_data[pns,"ID"] %in% checkDBPNS$PNSInDB$identifier) { # -> UPDATE
-          # TODO switch to workflow with dynamic columns
           query <- paste0("with update_pns as (
           UPDATE featureofinterest
             SET

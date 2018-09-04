@@ -12,7 +12,7 @@ pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE
 # Add Prefix zu Spaltennamen
 pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
 
-# Query alle PNS TODO: Namen genügen
+# Query alle PNS
 probenPNS <- dbGetQuery(db, paste0("SELECT DISTINCT foi.name
                                     FROM featureofinterest foi
                     RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
@@ -29,38 +29,41 @@ output$probenPNSInput <- renderUI(selectInput("probenPNS", "Probenahmestelle:",
 # Alle Proben/Global Spaltennamen
 allProben <- reactive({
   
-    db <- connectToDB()
-
-    # Alle Probe/Global Spaltennamen
-    probeDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe', 'global')"))
-    
-    # Nur Probe Spaltename
-    probeDataProbeMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe')"))
-    
-    # Add Prefix zu Spaltennamen
-    probeColColumns <- paste0("pro.", grep("col*", probeDataProbeMetaData$columnid, value = TRUE))
-    
-    # Query alle Proben mit PNS-Identifier TODO: Filter PNS aus input$probenPNS
-    query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", paste0(probeColColumns, collapse=", "), 
-                   " FROM probe pro 
+  db <- connectToDB()
+  
+  # Alle Probe/Global Spaltennamen
+  probeDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe', 'global')"))
+  
+  # Nur Probe Spaltename
+  probeDataProbeMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe')"))
+  
+  # Add Prefix zu Spaltennamen
+  colNumId <- grep("col*", probeDataProbeMetaData$columnid, value = F)
+  probeDataProbeMetaData$columnid[colNumId] <- paste0("pro.", probeDataProbeMetaData$columnid[colNumId])
+  
+  
+  # Query alle Proben mit PNS-Identifier
+  query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", 
+                 paste0(probeDataProbeMetaData$columnid, collapse=", "), 
+                 " FROM probe pro 
                    LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id") # FIXME: in meiner tAbelle taucht nur col047 für pns_id auf ..?
-    
-    if (!is.null(input$probenPNS)) {
-      slectedPNS <- input$probenPNS
-      if (Sys.info()["sysname"] == "Windows") {
-        slectedPNS <- stri_enc_tonative(input$probenPNS)
-      }
-      query <- paste0(query, " WHERE pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
+  
+  if (!is.null(input$probenPNS)) {
+    slectedPNS <- input$probenPNS
+    if (Sys.info()["sysname"] == "Windows") {
+      slectedPNS <- stri_enc_tonative(input$probenPNS)
     }
-
-    allPro <- dbGetQuery(db, query)
- 
-    dbDisconnect(db)
-    
-    if (nrow(allPro) > 0)
-      colnames(allPro) <- probeDataMetaData$dede[match(colnames(allPro), probeDataMetaData$columnid)]
-    
-    allPro 
+    query <- paste0(query, " WHERE pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
+  }
+  
+  allPro <- dbGetQuery(db, query)
+  
+  dbDisconnect(db)
+  
+  if (nrow(allPro) > 0)
+    colnames(allPro) <- probeDataMetaData$dede[match(colnames(allPro), probeDataMetaData$columnid)]
+  
+  allPro 
 })
 
 output$tableProben  <- renderDT({
