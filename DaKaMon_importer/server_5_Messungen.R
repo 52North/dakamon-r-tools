@@ -394,6 +394,7 @@ observeEvent(input$checkDBData, {
 
     #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
 
+    # TODO continue implementation of consistency check
     # missingProben <- NULL
     # missingParameter <- NULL
     # observationInDB <- NULL
