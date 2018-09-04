@@ -13,10 +13,12 @@ output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
 # load all super FoI from DB
 ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier 
                   FROM featureofinterest AS foi
-                  RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
-                  RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
-                  RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
+                  RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid")
+                  # RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
+                  # RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
 dbDisconnect(db)
+
+cat("foo \n")
 
 # if any
 if (nrow(ort) > 0) {
@@ -125,7 +127,6 @@ if(!is.null(ortData)) {
                                  " FROM featureofinterest foi
                                RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
-                               RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid   
                                LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
                                WHERE fr.parentfeatureid in (", 
                                  paste(ortData()[sOrt(),1], collapse=", "), ")"))
@@ -203,10 +204,14 @@ observeEvent(input$fromPNStoMessdaten, {
 
 elemGroup <- reactive({
   db <- connectToDB()
+  res <- NULL  
+  print(str(col))
   
   col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-  res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
+  if (nrow(col) != 0) {
+    res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
                                WHERE ", col, " IS NOT NULL"))
+  }
   dbDisconnect(db)
   
   res
@@ -269,7 +274,6 @@ data <- reactive({
     colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
     for (foi in pnsData()[sPNS(), "ID"]) {
-     
       
       selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
       
