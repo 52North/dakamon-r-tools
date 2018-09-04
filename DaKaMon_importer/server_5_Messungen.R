@@ -755,7 +755,7 @@ observeEvent(input$storeDBData, {
               content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
               showModalMessage(title="Vorgang abgeschlossen", content)
             }
-          }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close)
+          }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
         }
       })
     }, error = modalErrorHandler, finally = poolReturn(db))
