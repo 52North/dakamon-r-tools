@@ -749,6 +749,10 @@ observeEvent(input$storeDBData, {
             } else {
               content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
               showModalMessage(title="Vorgang abgeschlossen", content)
+              ## TODO delete files after successful run!
+              # file.remove(logFile)
+              # file.remove(feedConf)
+              # file.remove(feedCSV)
             }
           }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
         }
