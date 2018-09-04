@@ -667,15 +667,13 @@ observeEvent(input$storeDBData, {
           # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
 
           # FIXME: unit, bg and ng are optional!!!
-          insertUnitQuery <- if (is.null(row[4]) || is.na(row[4]) || row[4] == '') {
-            "insert_unit AS (
-                                 SELECT NULL::bigint as unit_id
-                               )"
+          insertUnitQuery <- if (is.null(row[reqColData$uom]) || is.na(row[reqColData$uom]) || row[reqColData$uom] == '') {
+            "insert_unit AS (SELECT NULL::bigint as unit_id)"
           } else {
             paste0("insert_unit AS (
                                             INSERT INTO unit (unitid, unit)
-                                            VALUES(nextval('unitid_seq'),'", row[4], "')
-                                            ON CONFLICT (unit) DO UPDATE SET unit = '", row[4], "'
+                                            VALUES(nextval('unitid_seq'),'", row[reqColData$uom], "')
+                                            ON CONFLICT (unit) DO UPDATE SET unit = '", row[reqColData$uom], "'
                                             RETURNING unitid as unit_id
                                           )")
           }
@@ -683,37 +681,37 @@ observeEvent(input$storeDBData, {
           query <- paste0("WITH query_probe_id AS (
                       SELECT id as probe_id
                       FROM probe
-                      WHERE identifier = '", row[1], "'
+                      WHERE identifier = '", row[reqColData$probeId], "'
                     ),
                     query_parameter_id AS (
                       SELECT observablepropertyid as para_id
                       FROM observableproperty
-                        WHERE identifier = '", row[2], "' ),",
+                        WHERE identifier = '", row[reqColData$obsProp], "' ),",
                           insertUnitQuery,
                           " INSERT INTO probe_parameter
                     SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ",
-                          ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
+                          ifelse (is.null(row[reqColData$bg]) || is.na(row[reqColData$bg]) || row[reqColData$bg] == '', "NULL", row[reqColData$bg]),
                           ", ",
-                          ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
+                          ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " FROM query_probe_id, query_parameter_id, insert_unit
                     ON CONFLICT ON CONSTRAINT probe_parameter_pkey
                         DO UPDATE SET
                             pp_unit = (SELECT unit_id FROM insert_unit),
-                              bg = ", ifelse (is.null(row[5]) || is.na(row[5]) || row[5] == '', "NULL", row[5]),
-                              ", ng = ", ifelse (is.null(row[6]) || is.na(row[6]) || row[6] == '', "NULL", row[6]),
+                              bg = ", ifelse (is.null(row[reqColData$bg]) || is.na(row[reqColData$bg]) || row[reqColData$bg] == '', "NULL", row[reqColData$bg]),
+                              ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           dbExecute(db, query)
-          newDataRow <- c(row[2], # Parameter
-                              row[3], # Wert
-                              row[4], # Einheit
-                              paste0(probenMetadata[is.element(probenMetadata$probeid, row[1]),3],"_", observedproperties[is.element(observedproperties$identifier, row[2]),2]), # SensorId
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),4], # resultTime
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),5], # phenTimeStart
-                              probenMetadata[is.element(probenMetadata$probeid, row[1]),6], # phenTimeEnd
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),4], # foiIdentifier
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),2], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[1]),2]),3]  # Lon
+          newDataRow <- c(row[reqColData$obsProp], # Parameter
+                              row[reqColData$value], # Wert
+                              row[reqColData$uom], # Einheit
+                              paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_", observedproperties[is.element(observedproperties$identifier, row[reqColData$obsProp]),"identifier"]), # SensorId
+                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
+                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
+                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
+                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"]  # Lon
                               )
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
