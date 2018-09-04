@@ -188,6 +188,123 @@ createFeederConfiguration <- function(csvPath,
   </SosImportConfiguration>")
 }
 
+queryProbenMetadata <- function(Messungen_data, db) {
+  connected <- is.null(db)
+  if (!connected) {
+    db <- connectToDB()
+  }
+  tryCatch({
+    # notes
+    # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
+    # - obsProp: parameter (observableProperty.identifier)
+    # - feature: PNS + sup: ort (probe->pns_id->feature-identifier&geom) + featurerelation: child featureid =: pns_id, parentfeatureid =: ort_id
+    #
+    # get sensor information
+    # SELECT probe.col015 AS identifier, probe.col016 AS name
+    # FROM probe
+    # WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
+    #
+    probeIdIndex <- match(reqColData$probeId, reqColData)
+    proben <- Messungen_data[,probeIdIndex]
+    probenQuerySection <- paste0(unique(proben), collapse = "','")
+    probenMetadataQuery <- paste0("SELECT DISTINCT
+                                        pro.identifier AS probeid,
+                                        pro.pns_id,
+                                        foi.identifier AS pnsid,
+                                        pro.lab_id AS sensorid,
+                                        to_char(pro.resulttime::timestamp, '",  dbTimestampPattern, "') AS resultTime,
+                                        to_char(pro.phenomenontimestart::timestamp, '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(pro.phenomenontimeend::timestamp, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                      FROM
+                                        probe AS pro
+                                      LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
+                                      WHERE
+                                        pro.identifier IN ('",
+                                  probenQuerySection,
+                                  "')")
+    print(probenMetadataQuery)
+    probenMetadata <- dbGetQuery(db, probenMetadataQuery)
+  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+}
+
+queryParameter <- function(Messungen_data, db) {
+  connected <- is.null(db)
+  if (!connected) {
+    db <- connectToDB()
+  }
+  tryCatch({
+    # SELECT observableproperty.identifier, observableproperty.name
+    # FROM observableproperty
+    # WHERE observableproperty.identifier IN ('Blei','Amonium')
+    #
+    parameterIndex <- match(reqColData$obsProp, reqColData)
+    parameter <- Messungen_data[,parameterIndex]
+    parameterQuerySection <- paste0(unique(parameter), collapse = "','")
+    observedpropertiesQuery <- paste0("SELECT DISTINCT
+                                        observablepropertyid,
+                                        identifier,
+                                        name
+                                      FROM
+                                        observableproperty
+                                      WHERE
+                                        identifier IN ('",
+                                      parameterQuerySection,
+                                      "')")
+    observedproperties <- dbGetQuery(db, observedpropertiesQuery)
+  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+}
+
+queryProbenParameterMetadata <- function(Messungen_data, db) {
+  connected <- is.null(db)
+  if (!connected) {
+    db <- connectToDB()
+  }
+  tryCatch({
+    probeIdIndex <- match(reqColData$probeId, reqColData)
+    proben <- Messungen_data[,probeIdIndex]
+    probenQuerySection <- paste0(unique(proben), collapse = "','")
+    parameterIndex <- match(reqColData$obsProp, reqColData)
+    parameter <- Messungen_data[,parameterIndex]
+    parameterQuerySection <- paste0(unique(parameter), collapse = "','")
+    probenParameterMetadataQuery <- paste0("SELECT DISTINCT
+                                        pro.identifier As probeid,
+                                        param.identifier AS paramid,
+                                        u.unit,
+                                        pp.bg,
+                                        pp.ng
+                                      FROM
+                                        probe_parameter pp
+                                      LEFT OUTER JOIN probe AS pro ON (pro.id = pp.probe_id)
+                                      LEFT OUTER JOIN observableproperty AS param ON (param.observablepropertyid = pp.parameter_id)
+                                      LEFT OUTER JOIN unit AS u ON (u.unitid = pp.pp_unit)
+                                      WHERE
+                                        pro.identifier IN ('",
+                                           probenQuerySection,
+                                      "')
+                                      AND
+                                        param.identifier IN ('",
+                                        parameterQuerySection,
+                                      "')")
+    probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
+  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+}
+
+createObsIdentifier <- function(probenMetadata, parameter) {
+  #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
+  paste0(probenMetadata$resulttime, probenMetadata$phentimestart, "/", probenMetadata$phentimeend, parameter, probenMetadata$pnsid)
+}
+
+queryObservationInDB <- function(identifier, db) {
+  connected <- is.null(db)
+  if (!connected) {
+    db <- connectToDB()
+  }
+  tryCatch({
+    query <- paste0("SELECT identifier FROM observation WHERE identifier IN ('", identifier,"');")
+    length(dbGetQuery(db, probenParameterMetadataQuery)) > 0
+  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+}
+
 ## /tools
 
 # reactive variables
@@ -252,7 +369,6 @@ output$dataValidationOut <- renderUI({
   }
 })
 
-
 ########################
 ## DB consistency checks
 # check whether the ProbeIDs exist
@@ -265,28 +381,40 @@ observeEvent(input$checkDBData, {
   tryCatch({
 
     # check whether the ProbeIDs exist
+    probenMetadata <- queryProbenMetadata(inCSVData$df, db)
+
     # check whether the Parameter exist
+    observedproperties <- queryParameter(inCSVData$df, db)
+
     # check whether the combination of ProbeId and Parameter already corresponds to some time series data
+    # TODO unklar, warume es geprüft werden soll?
 
-    # TODO implement messungen check database
-    # dbSendQuery(db, paste0("WITH query_pro AS (
-    #   SELECT id as probe_id FROM probe WHERE identifier = 'probe_id_var'
-    # ),
-    # query_para AS (
-    #   SELECT observablepropertyid as para_id FROM observableproperty WHERE identifier = 'parameter_id_var'
-    # ),
-    # insert_unit AS (
-    #   INSERT INTO unit
-    #   (unitid, unit)
-    #   VALUES(nextval('unitid_seq'),
-    #          'pro_para_col003_var'
-    #   )
-    #   ON CONFLICT (unit) DO UPDATE SET unit = 'pro_para_col003_var'
-    #   RETURNING unitid as unit_id
-    # )
-    # INSERT INTO probe_parameter
-    # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit"))
+    # check for existing observations
+    probenParameterMetadata <- queryProbenParameterMetadata(inCSVData$df, db)
 
+    #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
+
+    # missingProben <- NULL
+    # missingParameter <- NULL
+    # observationInDB <- NULL
+    # for(csv in 1:nrow(inCSVData$df)) {
+    #   if (!inCSVData$df[csv, reqColData$probeId] %in% probenMetadata["probeid"]) {
+    #     missingProben <- append(missingProben, inCSVData$df[csv, reqColData$probeId])
+    #   }
+    #   if (!inCSVData$df[csv, reqColData$obsProp] %in% observedproperties["identifier"]) {
+    #     missingParameter <- append(missingParameter, inCSVData$df[csv, reqColData$obsProp])
+    #   }
+    #   if (length(missingProben) == 0 && length(missingParameter) == 0) {
+    #     obsIdentifier <- createObsIdentifier(probenMetadata[match(inCSVData$df[csv, reqColData$probeId], probenMetadata["probeid"]),],
+    #                                          inCSVData$df[csv, reqColData$obsProp])
+    #     if (queryObservationInDB(obsIdentifier, db)) {
+    #        observationInDB <- append(observationInDB, obsIdentifier)
+    #     }
+    #   }
+    # }
+    #
+    # inCSVData$missingProben <- unique(missingProben)
+    # inCSVData$missingParameter <- unique(missingParameter)
     CheckDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -430,49 +558,13 @@ observeEvent(input$storeDBData, {
         # - feature: PNS + sup: ort (probe->pns_id->feature-identifier&geom) + featurerelation: child featureid =: pns_id, parentfeatureid =: ort_id
         #
         # get sensor information
-        # SELECT probe.col015 AS identifier, probe.col016 AS name
-        # FROM probe
-        # WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
-        #
-        probeIdIndex <- match(reqColData$probeId, reqColData)
-        proben <- Messungen_data[,probeIdIndex]
-        probenQuerySection <- paste0(proben, collapse = "','")
-        probenMetadataQuery <- paste0("SELECT
-                                        identifier AS probeid,
-                                        pns_id,
-                                        lab_id AS sensorId,
-                                        to_char(resulttime::timestamp, '",  dbTimestampPattern, "') AS resulTime,
-                                        to_char(phenomenontimestart::timestamp, '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(phenomenontimeend::timestamp, '",  dbTimestampPattern, "') AS phenTimeEnd
-                                      FROM
-                                        probe
-                                      WHERE
-                                        identifier IN ('",
-                                      probenQuerySection,
-                                      "')")
-        probenMetadata <- dbGetQuery(db, probenMetadataQuery)
+        probenMetadata <- queryProbenMetadata(Messungen_data, db)
         progress$inc(1)
 
         #
         # get observed property information
-        # SELECT observableproperty.identifier, observableproperty.name
-        # FROM observableproperty
-        # WHERE observableproperty.identifier IN ('Blei','Amonium')
         #
-        parameterIndex <- match(reqColData$obsProp, reqColData)
-        parameter <- Messungen_data[,parameterIndex]
-        parameterQuerySection <- paste0(unique(parameter), collapse = "','")
-        observedpropertiesQuery <- paste0("SELECT
-                                        observablepropertyid,
-                                        identifier,
-                                        name
-                                      FROM
-                                        observableproperty
-                                      WHERE
-                                        identifier IN ('",
-                                          parameterQuerySection,
-                                          "')")
-        observedproperties <- dbGetQuery(db, observedpropertiesQuery)
+        observedproperties <- queryParameter(Messungen_data, db)
         progress$inc(1)
 
         #
@@ -626,7 +718,7 @@ observeEvent(input$storeDBData, {
 
           progress$inc(1)
         }
-        
+
         progress$inc(1)
 
         #
@@ -645,11 +737,11 @@ observeEvent(input$storeDBData, {
             # result <- system2("java", stdout=TRUE, args = c("-jar", feederPath, "-c", feedConf))
             result <- ""
             system2("java", args = c("-jar", feederPath, "-c", feedConf), wait=FALSE)
-            
+
             print("Done!")
             progress$inc(1)
-            
-            
+
+
             ## TODO Logs des Feeders in eine Datei speichern (via system2 testen)
             ## TODO Meldung anpassen, dass nun die Daten (asynchron) importiert werden
             ##      mit Hinweis auf Downloadlink

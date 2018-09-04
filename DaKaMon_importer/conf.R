@@ -68,6 +68,8 @@ timestampRegExPattern <- "^[[:digit:]]{2}-[[:digit:]]{2}-[[:digit:]]{4} [[:digit
 # FIXME verbose <- local vs. verbose <- TRUE (above) !?
 verbose <- local
 
+foiType <- "http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint"
+
 #
 # FEEDER
 #

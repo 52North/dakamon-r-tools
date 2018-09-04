@@ -266,10 +266,12 @@ observeEvent(input$storeDBPNS, {
           dbSendQuery(db, query)
         } else { # -> INSERT
           ## INSERT FoI and data via SQL, mind the parental FoI ##
-          query = paste0("WITH
+          query = paste0("WITH select_type as (
+                            SELECT featureofinteresttypeid as id FROM featureofinteresttype WHERE featureofinteresttype = '", foiType,"'
+                        ),
                         insert_pns AS (
                         INSERT INTO featureofinterest (featureofinterestid, featureofinteresttypeid, identifier, name, geom)
-                        VALUES (nextval('featureofinterestid_seq'), 1,'",
+                        VALUES (nextval('featureofinterestid_seq'), (SELECT id FROM select_type),'",
                         PNS_data[pns,reqColPNS$id], "',",
                         "'", PNS_data[pns,reqColPNS$name], "',",
                         " ST_GeomFromText('POINT (",
