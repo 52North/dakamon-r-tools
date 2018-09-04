@@ -595,6 +595,7 @@ observeEvent(input$storeDBData, {
         # ORDER BY
         #   my_pns_id.pns_id ASC
         #
+        probenQuerySection <- paste0(unique(Messungen_data[,match(reqColData$probeId, reqColData)]), collapse = "','")
         pnsQuery <- paste0("WITH
                          my_pns_id AS (
                            SELECT DISTINCT probe.pns_id
