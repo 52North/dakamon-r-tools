@@ -733,19 +733,13 @@ observeEvent(input$storeDBData, {
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
-            print("Start feeding data values ...")
-            # result <- system2("java", stdout=TRUE, args = c("-jar", feederPath, "-c", feedConf))
-            result <- ""
-            system2("java", args = c("-jar", feederPath, "-c", feedConf), wait=FALSE)
+            print(paste("Start feeding data values from: ", feedCSV))
+            logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
+            system2("java", args = c("-jar", feederPath, "-c", feedConf), stdout = logFile)
 
             print("Done!")
             progress$inc(1)
-
-
-            ## TODO Logs des Feeders in eine Datei speichern (via system2 testen)
-            ## TODO Meldung anpassen, dass nun die Daten (asynchron) importiert werden
-            ##      mit Hinweis auf Downloadlink
-            ## TODO Die Log Datei zum Download anbieten
+            result <- read_lines(logFile, locale = locale())
 
             if (length(grep("Exception", result, value = TRUE)) > 0) {
               print("Errors occured during import! Consult importer logs.")
