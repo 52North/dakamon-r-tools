@@ -620,7 +620,7 @@ observeEvent(input$storeDBData, {
         features <- dbGetQuery(db, pnsQuery)
         progress$inc(1)
 
-        feedTmpConfigDirectory <- tempdir(check = TRUE)
+        feedTmpConfigDirectory <- tempdir()
         #
         # Create global CSV file
         #
