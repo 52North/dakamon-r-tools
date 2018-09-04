@@ -127,7 +127,6 @@ if(!is.null(ortData)) {
                                  " FROM featureofinterest foi
                                RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
                                RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
-                               RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid   
                                LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
                                WHERE fr.parentfeatureid in (", 
                                  paste(ortData()[sOrt(),1], collapse=", "), ")"))
@@ -275,7 +274,6 @@ data <- reactive({
     colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     
     for (foi in pnsData()[sPNS(), "ID"]) {
-     
       
       selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
       
