@@ -6,6 +6,7 @@ library(httr)
 library(rjson)
 library(RPostgreSQL)
 library(pool)
+library(readr)
 
 source("conf.R")
 
