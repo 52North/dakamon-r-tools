@@ -15,7 +15,9 @@ source("conf.R")
 ui <- navbarPage("Datenimport",
                  navbarMenu("Messdaten",
                             ## Ort
-                            tabPanel("Ort anlegen", useShinyjs(),
+                            tabPanel(dataStep1$title,
+                                     useShinyjs(),
+                                     h3(style=tabTitleStyle,class="tab-title", dataStep1$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("ortFileEnc", "Encoding der Datei", 
@@ -32,7 +34,8 @@ ui <- navbarPage("Datenimport",
                                      )),
                             
                             ## Probenahmestelle (PNS)
-                            tabPanel("Probenahmestelle anlegen",
+                            tabPanel(dataStep2$title,
+                                     h3(style=tabTitleStyle,class="tab-title", dataStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("pnsFileEnc", "Encoding der Datei", 
@@ -49,7 +52,8 @@ ui <- navbarPage("Datenimport",
                                      )),
                             
                             ## Parameter (PAR)
-                            tabPanel("Parameter anlegen",
+                            tabPanel(dataStep3$title,
+                                     h3(style=tabTitleStyle,class="tab-title", dataStep3$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("parFileEnc", "Encoding der Datei",
@@ -66,7 +70,8 @@ ui <- navbarPage("Datenimport",
                                      )),
                             
                             ## Probe
-                            tabPanel("Probe anlegen",
+                            tabPanel(dataStep4$title,
+                                     h3(style=tabTitleStyle,class="tab-title", dataStep4$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("probeFileEnc", "Encoding der Datei", 
@@ -83,7 +88,8 @@ ui <- navbarPage("Datenimport",
                                      )),
                             
                             ##  Messungen hochladen
-                            tabPanel("Messungen hochladen",
+                            tabPanel(dataStep5$title,
+                                     h3(style=tabTitleStyle,class="tab-title", dataStep5$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("dataFileEnc", "Encoding der Datei", 
@@ -110,7 +116,8 @@ ui <- navbarPage("Datenimport",
                  
                  navbarMenu("Literaturdaten",
                             ## Referenz (Ref)
-                            tabPanel("Referenz anlegen",
+                            tabPanel(litStep1$title,
+                                     h3(style=tabTitleStyle,class="tab-title", litStep1$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          fileInput("csvFileReferenz", "CSV-Datei mit Referenzen", 
@@ -124,7 +131,8 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(dataTableOutput('tableReferenz'))
                                      )),
                             
-                            tabPanel("Literaturdaten hochladen",
+                            tabPanel(litStep2$title,
+                                     h3(style=tabTitleStyle,class="tab-title", litStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
                                          fileInput("csvFileLiteratur", "CSV-Datei mit Literaturwerten", 
@@ -139,7 +147,8 @@ ui <- navbarPage("Datenimport",
                                      ))),
                  
                  ## Dateien
-                 tabPanel("Dateien hochladen",
+                 tabPanel(filesTab$title,
+                          h3(style=tabTitleStyle,class="tab-title", filesTab$title),
                           selectInput("DateiSelType", "Wähle eine Kategorie", 
                                       choices = list(Messdaten=list("Ort", "Probenahmestelle", "Parameter", "Probe"), 
                                                      Literaturdaten=list("Literatur"))),

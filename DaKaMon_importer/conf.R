@@ -11,6 +11,7 @@ decSep <- ","
 # encoding
 csvEncode <- "UTF-8"
 localEncoding <- strsplit(Sys.getlocale("LC_COLLATE"), ".", fixed=TRUE)[[1]][2]
+tabTitleStyle <- "text-align: center;margin-top: 0px; margin-bottom: 5px; color: #777;"
 
 
 #
@@ -18,6 +19,14 @@ localEncoding <- strsplit(Sys.getlocale("LC_COLLATE"), ".", fixed=TRUE)[[1]][2]
 #
 # language
 lngJSON <- "http://cdn.datatables.net/plug-ins/1.10.11/i18n/German.json"
+dataStep1 <- list(title = "Ort anlegen")
+dataStep2 <- list(title = "Probenahmestelle anlegen")
+dataStep3 <- list(title = "Parameter anlegen")
+dataStep4 <- list(title = "Probe anlegen")
+dataStep5 <- list(title = "Messungen hochladen")
+litStep1  <- list(title = "Referenz anlegen")
+litStep2  <- list(title = "Literaturdaten hochladen")
+filesTab  <- list(title = "Dateien hochladen")
 
 
 csvInfo <- paste0("Die CSV-Datei muss \"", colSep, "\" als Spaltentrennzeichen und \"", decSep, "\" als Dezimaltrennzeichen verwenden und in \"", csvEncode, "\" enkodiert sein.")
