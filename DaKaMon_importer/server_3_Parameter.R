@@ -14,19 +14,11 @@ observeEvent(input$csvFilePAR, {
   valiPAR$validated <- FALSE
   checkDBPAR$checked <- FALSE
 
-  # check whether an encoding has been set; fallback: guess the eoncoding using readr
-  if (is.null(csvEncode)) {
-    csvEncode <- readr::guess_encoding(input$csvFilePAR$datapath)
-    csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
-  }
-
-  inCSVPAR$csvEncode <- csvEncode
-
   inCSVPAR$df <- read.csv(input$csvFilePAR$datapath,
                           header = TRUE,
                           sep = sepPAR, dec = decPAR,
                           stringsAsFactors = FALSE,
-                          fileEncoding = inCSVPAR$csvEncode)
+                          fileEncoding = input$parFileEnc)
 
   inCSVPAR$headAsChar <- colnames(inCSVPAR$df)
 

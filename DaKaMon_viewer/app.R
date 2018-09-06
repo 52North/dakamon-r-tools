@@ -10,10 +10,7 @@ library(pool)
 
 source("conf.R", local = TRUE, encoding = "UTF-8")$value
 
-
 ## tools
-
-
 pool <- dbPool(
   drv = RPostgreSQL::PostgreSQL(),
   dbname = dbName,

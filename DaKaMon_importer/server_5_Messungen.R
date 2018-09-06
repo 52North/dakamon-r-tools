@@ -319,17 +319,10 @@ observeEvent(input$dataCsvFile, {
 
   if (!is.null(input$dataCsvFile$datapath)) {
 
-    if (is.null(csvEncode)) {
-      csvEncode <- readr::guess_encoding(input$csvFileOrt$datapath)
-      csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
-    }
-
-    inCSVData$csvEncode <- csvEncode
-
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = TRUE,
                              sep = dataSeparator, dec = dataDecimalSeparator,
                              stringsAsFactors = FALSE,
-                             fileEncoding = inCSVData$csvEncode)
+                             fileEncoding = input$dataFileEnc)
     inCSVData$headAsChar <- colnames(inCSVData$df)
   }
 

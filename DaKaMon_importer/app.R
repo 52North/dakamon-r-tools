@@ -5,18 +5,7 @@ library(shinyjs)
 library(httr)
 library(rjson)
 library(RPostgreSQL)
-
-if (!"pool" %in% (rownames(installed.packages()))) {
-  # get pool from GitHub, since it's not yet on CRAN
-  devtools::install_github("rstudio/pool")
-}
-
 library(pool)
-
-# guess an encoding
-library(readr)
-
-# consts and config:
 
 source("conf.R")
 
@@ -28,6 +17,8 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Ort anlegen", useShinyjs(),
                                      sidebarLayout(
                                        sidebarPanel(
+                                         selectInput("ortFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8 (linux)'="UTF-8", 'ISO-8859-1 (windows)'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFileOrt", "CSV-Datei mit Orten", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -43,6 +34,8 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Probenahmestelle anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
+                                         selectInput("pnsFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8 (linux)'="UTF-8", 'ISO-8859-1 (windows)'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFilePNS", "CSV-Datei mit Probenahmestellen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -58,8 +51,8 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Parameter anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("sepPAR", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("decPAR", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                                         selectInput("parFileEnc", "Encoding der Datei",
+                                                     list('UTF-8 (linux)'="UTF-8", 'ISO-8859-1 (windows)'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFilePAR", "CSV-Datei mit Parametern", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -75,7 +68,8 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Probe anlegen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("decProbe", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                                         selectInput("probeFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8 (linux)'="UTF-8", 'ISO-8859-1 (windows)'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFileProbe", "CSV-Datei mit Proben", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -91,8 +85,8 @@ ui <- navbarPage("Datenimport",
                             tabPanel("Messungen hochladen",
                                      sidebarLayout(
                                        sidebarPanel(
-                                         # textInput("dataSep", "Spaltentrennzeichen:", value = ";", width = "80%"),
-                                         # textInput("dataDec", "Dezimaltrennzeichen:", value = ".", width = "80%"),
+                                         selectInput("dataFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8 (linux)'="UTF-8", 'ISO-8859-1 (windows)'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("dataCsvFile", "CSV-Datei mit Messungen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
