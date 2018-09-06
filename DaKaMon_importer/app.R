@@ -35,6 +35,7 @@ ui <- navbarPage("Datenimport",
                             
                             ## Probenahmestelle (PNS)
                             tabPanel(dataStep2$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -53,6 +54,7 @@ ui <- navbarPage("Datenimport",
                             
                             ## Parameter (PAR)
                             tabPanel(dataStep3$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep3$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -71,6 +73,7 @@ ui <- navbarPage("Datenimport",
                             
                             ## Probe
                             tabPanel(dataStep4$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep4$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -89,6 +92,7 @@ ui <- navbarPage("Datenimport",
                             
                             ##  Messungen hochladen
                             tabPanel(dataStep5$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep5$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -117,6 +121,7 @@ ui <- navbarPage("Datenimport",
                  navbarMenu("Literaturdaten",
                             ## Referenz (Ref)
                             tabPanel(litStep1$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", litStep1$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -132,6 +137,7 @@ ui <- navbarPage("Datenimport",
                                      )),
                             
                             tabPanel(litStep2$title,
+                                     useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", litStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
@@ -148,6 +154,7 @@ ui <- navbarPage("Datenimport",
                  
                  ## Dateien
                  tabPanel(filesTab$title,
+                          useShinyjs(),
                           h3(style=tabTitleStyle,class="tab-title", filesTab$title),
                           selectInput("DateiSelType", "Wähle eine Kategorie", 
                                       choices = list(Messdaten=list("Ort", "Probenahmestelle", "Parameter", "Probe"), 
