@@ -184,6 +184,10 @@ createFeederConfiguration <- function(csvPath,
         <Key>TIMEOUT_BUFFER</Key>
         <Value>", timeoutBuffer, "</Value>
       </Metadata>
+      <Metadata>
+        <Key>FEEDER_CLASS</Key>
+        <Value>org.n52.sos.importer.feeder.SingleThreadFeeder</Value>
+      </Metadata>
     </AdditionalMetadata>
   </SosImportConfiguration>")
 }
@@ -719,6 +723,7 @@ observeEvent(input$storeDBData, {
         #
         print(paste("writing import data to: ", feedCSV))
         write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
+        print("Done!")
         progress$inc(1)
 
         if (!file.exists(feederPath)) {
@@ -728,7 +733,12 @@ observeEvent(input$storeDBData, {
           tryCatch({
             print(paste("Start feeding data values from: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
-            system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            print(paste("Logfile: ", logFile))
+            system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+            while (check == 1) {
+              check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+            }
             print("Done!")
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())

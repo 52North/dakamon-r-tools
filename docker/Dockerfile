@@ -28,7 +28,7 @@ RUN mkdir -pv /usr/local/52n &&\
     mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/local/52n/ &&\
     rm -rf /tmp/sos-importer &&\
     apt-get purge git maven openjdk-8-jdk --assume-yes &&\
-    apt-get install openjdk-8-jre --assume-yes --no-install-recommends &&\
+    apt-get install openjdk-8-jre procps --assume-yes --no-install-recommends &&\
     apt-get autoremove --purge --assume-yes
 RUN chown shiny:shiny /var/lib/shiny-server && apt-get clean --assume-yes &&\
     rm -rf /var/cache/apt/archives &&\

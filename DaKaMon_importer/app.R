@@ -17,7 +17,7 @@ ui <- navbarPage("Datenimport",
                             ## Ort
                             tabPanel(dataStep1$title,
                                      useShinyjs(),
-                                     h3(style=tabTitleStyle,class="tab-title", dataStep1$title),
+                                     div(class="row",div(class="col-sm-12",h3(style=tabTitleStyle,class="tab-title", dataStep1$title))),
                                      sidebarLayout(
                                        sidebarPanel(
                                          selectInput("ortFileEnc", "Encoding der Datei", 

@@ -101,8 +101,8 @@ feederTimeZoneIdentifier <- "Europe/Berlin"
 #
 feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleObservationImporter"
 # the next two are used, when feederImporterClass is switched to
-# org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter
-feederHunkSize <- 5
+# feederImporterClass <- "org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter"
+feederHunkSize <- 1024
 feederTimeoutBuffer <- 50000
 
 stndTime <- "T12:00:00+00:00"
