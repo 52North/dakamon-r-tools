@@ -13,6 +13,8 @@ EXPOSE 3838
 
 WORKDIR /tmp
 
+ADD docker/importer_logback.xml /tmp/logback.xml
+
 # install sos-importer
 RUN apt-get update &&\
     apt-get --assume-yes upgrade &&\
@@ -20,6 +22,7 @@ RUN apt-get update &&\
     ln -sv /usr/lib/jvm/java-8-openjdk-amd64 /usr/lib/jvm/default-java
 RUN git clone https://github.com/EHJ-52n/sos-importer.git &&\
     cd sos-importer &&\
+    mv /tmp/logback.xml feeder/src/main/resources &&\
     mvn package -e -Pcheck
 RUN mkdir -pv /usr/local/52n &&\
     mv /tmp/sos-importer/feeder/target/52n-sos-importer-feeder-bin.jar /usr/local/52n/ &&\

@@ -728,8 +728,7 @@ observeEvent(input$storeDBData, {
           tryCatch({
             print(paste("Start feeding data values from: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
-            system2("java", args = c("-jar", feederPath, "-c", feedConf), stdout = logFile)
-
+            system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
             print("Done!")
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())
