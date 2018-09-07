@@ -29,7 +29,7 @@ createFeederConfiguration <- function(csvPath,
       <Offering generate=\"true\" />
       <Version>2.0.0</Version>
       <Binding>POX</Binding>
-      <Importer>", importerClass, "</Importer>
+      <Importer importerThreads=\"1\">", importerClass, "</Importer>
     </SosMetadata>
     <CsvMetadata>
       <ColumnAssignments>
