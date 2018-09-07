@@ -13,6 +13,10 @@ csvEncode <- "UTF-8"
 localEncoding <- strsplit(Sys.getlocale("LC_COLLATE"), ".", fixed=TRUE)[[1]][2]
 tabTitleStyle <- "text-align: center;margin-top: 0px; margin-bottom: 5px; color: #777;"
 
+# width of the panels (the sum MUST be 12)
+sideBarWidth <- 3
+mainPanelWidth <- 9
+
 
 #
 # I18N

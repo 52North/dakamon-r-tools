@@ -29,8 +29,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owOrt", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("OrtValidationOut"),
                                          uiOutput("OrtDBConsistencyOut"),
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tableOrt'))
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tableOrt'),
+                                         width = mainPanelWidth)
                                      )),
                             
                             ## Probenahmestelle (PNS)
@@ -48,8 +50,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owPNS", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("PNSValidationOut"),
                                          uiOutput("PNSDBConsistencyOut"),
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tablePNS'))
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tablePNS'),
+                                         width = mainPanelWidth)
                                      )),
                             
                             ## Parameter (PAR)
@@ -67,8 +71,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owPAR", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("PARValidationOut"),
                                          uiOutput("PARDBConsistencyOut"),
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tablePAR'))
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tablePAR'),
+                                         width = mainPanelWidth)
                                      )),
                             
                             ## Probe
@@ -86,8 +92,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("ProbeValidationOut"),
                                          uiOutput("ProbeDBConsistencyOut"), # DBConsistencyActionOut
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tableProbe'))
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tableProbe'),
+                                         width = mainPanelWidth)
                                      )),
                             
                             ##  Messungen hochladen
@@ -110,8 +118,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("dataOW", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("dataValidationOut"),
                                          uiOutput("dataDBConsistencyOut"),
-                                         width=2),
-                                       mainPanel(dataTableOutput('tableData'))
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tableData'),
+                                         width = mainPanelWidth)
                                      ))),
                  
                  ######################
@@ -132,9 +142,11 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owReferenz", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("ReferenzValidationOut"),
                                          uiOutput("ReferenzDBConsistencyOut"),
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tableReferenz'))
-                                     )),
+                                         width = sideBarWidth),
+                                       mainPanel(
+                                         dataTableOutput('tableReferenz'),
+                                         width = mainPanelWidth)
+                                     ))),
                             
                             tabPanel(litStep2$title,
                                      useShinyjs(),
@@ -148,9 +160,10 @@ ui <- navbarPage("Datenimport",
                                          checkboxInput("owLiteratur", "Alle Daten überschreiben?", FALSE), 
                                          uiOutput("LiteraturValidationOut"),
                                          uiOutput("LiteraturDBConsistencyOut"),
-                                         width = 2),
-                                       mainPanel(dataTableOutput('tableLiteratur'))
-                                     ))),
+                                         width = sideBarWidth),
+                                       mainPanel(dataTableOutput('tableLiteratur'),
+                                                 width = mainPanelWidth)
+                                     )),
                  
                  ## Dateien
                  tabPanel(filesTab$title,
