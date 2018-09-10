@@ -735,6 +735,9 @@ observeEvent(input$storeDBData, {
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
             system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
+            # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
+            Sys.sleep(1)
             check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
             while (check == 1) {
               check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)

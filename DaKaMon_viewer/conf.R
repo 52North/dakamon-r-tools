@@ -99,7 +99,7 @@ feederEpsgCode <- "4326"
 feederTimestampPattern <- "dd-MM-yyyy HH:mm"
 feederTimeZoneIdentifier <- "Europe/Berlin"
 #
-feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleObservationImporter"
+feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleThreadSingleObservationImporter"
 # the next two are used, when feederImporterClass is switched to
 # feederImporterClass <- "org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter"
 feederHunkSize <- 1024
