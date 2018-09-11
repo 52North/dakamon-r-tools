@@ -10,6 +10,24 @@ sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE)
   Sys.sleep(wait)
 }
 
+sosDeleteDeletedObservations <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
+  POST(url = paste0(SOSWebApp, "admin/datasource/deleteDeletedObservations"),
+       config=conf, body="a")
+  Sys.sleep(wait)
+}
+
+sosDeleteObservationsByIdentifier <- function(observationIdentifiers) {
+  POST(paste0(SOSWebApp, "service"),
+       body =  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+           <sosdo:DeleteObservation
+         xmlns:sosdo=\"http://www.opengis.net/sosdo/1.0\" version=\"2.0.0\" service=\"SOS\"><sosdo:observation>",
+           #<sosdo:observation>", observationIdentifiers, "</sosdo:observation>
+           paste(observationIdentifiers, collapse = "</sosdo:observation><sosdo:observation>"),
+           "</sosdo:observation></sosdo:DeleteObservation>"),
+       content_type_xml(), accept_json())
+  Sys.sleep(0.5)
+}
+
 createFeederConfiguration <- function(csvPath,
                                       url=SOSWebApp, timestampPattern = feederTimestampPattern,
                                       timeZone = feederTimeZoneIdentifier, epsgCode = feederEpsgCode,
@@ -501,13 +519,8 @@ observeEvent(input$storeDBData, {
           # delete observations already in the DB
           progress <- Progress$new()
           progress$set(message = "Bereite DB vor.", value = 0)
-
-          for (id in inCSVData$obsIdsInDB) {
-            progress$inc(1/length(inCSVData$obsIdsInDB))
-            POST(paste0(SOSWebApp, "service"),
-                 body = SOSdelObsByID(id),
-                 content_type_xml(), accept_json())
-          }
+          sosDeleteObservationsByIdentifier(inCSVData$obsIdsInDB)
+          sosDeleteDeletedObservations()
           progress$close()
         }
 
