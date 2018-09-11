@@ -106,10 +106,8 @@ feederHunkSize <- 1024
 feederTimeoutBuffer <- 50000
 
 stndTime <- "T12:00:00+00:00"
-adminPwd <- "p"
-ifelse(local,
-       adminConf <- authenticate("a", adminPwd),
-       adminConf <-   authenticate("dakamon-administrator", adminPwd))
+adminPwd <- "p" 
+adminConf <- authenticate("dakamon-administrator", adminPwd)
 
 ## DB="GUI/CSV"
 # FIXME is the order of the header label fixed here, e.g. is in all data files the value column the third one following R's index policy?
