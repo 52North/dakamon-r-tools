@@ -208,8 +208,7 @@ queryProbenMetadata <- function(Messungen_data, db) {
     # FROM probe
     # WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
     #
-    probeIdIndex <- match(reqColData$probeId, reqColData)
-    proben <- Messungen_data[,probeIdIndex]
+    proben <- Messungen_data[,reqColData$probeI]
     probenQuerySection <- paste0(unique(proben), collapse = "','")
     probenMetadataQuery <- paste0("SELECT DISTINCT
                                         pro.identifier AS probeid,
@@ -241,8 +240,7 @@ queryParameter <- function(Messungen_data, db) {
     # FROM observableproperty
     # WHERE observableproperty.identifier IN ('Blei','Amonium')
     #
-    parameterIndex <- match(reqColData$obsProp, reqColData)
-    parameter <- Messungen_data[,parameterIndex]
+    parameter <- Messungen_data[,reqColData$obsProp]
     parameterQuerySection <- paste0(unique(parameter), collapse = "','")
     observedpropertiesQuery <- paste0("SELECT DISTINCT
                                         observablepropertyid,
@@ -264,11 +262,9 @@ queryProbenParameterMetadata <- function(Messungen_data, db) {
     db <- connectToDB()
   }
   tryCatch({
-    probeIdIndex <- match(reqColData$probeId, reqColData)
-    proben <- Messungen_data[,probeIdIndex]
+    proben <- Messungen_data[,reqColData$probeId]
     probenQuerySection <- paste0(unique(proben), collapse = "','")
-    parameterIndex <- match(reqColData$obsProp, reqColData)
-    parameter <- Messungen_data[,parameterIndex]
+    parameter <- Messungen_data[,reqColData$obsProp]
     parameterQuerySection <- paste0(unique(parameter), collapse = "','")
     probenParameterMetadataQuery <- paste0("SELECT DISTINCT
                                         pro.identifier As probeid,
@@ -384,12 +380,14 @@ observeEvent(input$checkDBData, {
     observedproperties <- queryParameter(inCSVData$df, db)
 
     # check whether the combination of ProbeId and Parameter already corresponds to some time series data
-    # TODO unklar, warume es geprüft werden soll?
+    # TODO unklar, warum es geprüft werden soll?
 
-    # check for existing observations
+    # TODO check for existing observations
     probenParameterMetadata <- queryProbenParameterMetadata(inCSVData$df, db)
 
     #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
+    # SELECT observation.identifier FROM observations where observation.identifier IN (^ )
+    # save result list in inCSVData$obsIdsInDB
 
     # TODO continue implementation of consistency check
     # missingProben <- NULL
@@ -498,7 +496,6 @@ observeEvent(input$storeDBData, {
     tryCatch({
       dbWithTransaction(db, {
 
-        # FIXME where is the value inCSVData$obsIdsInDB set?
         if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
 
           # delete observations already in the DB
@@ -519,36 +516,41 @@ observeEvent(input$storeDBData, {
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
 
-        valueIndex <- match(reqColData$value, reqColData)
         # convert value column BG, NG values in numbers and the whole column in numeric values
-        if (any(Messungen_data[,valueIndex] == BGchar, na.rm = TRUE)) {
-          column <- Messungen_data[,valueIndex]
+        if (any(Messungen_data[,reqColData$value] == BGchar)) {
+          column <- Messungen_data[,reqColData$value]
           column[column == BGchar] <- BGencode
-          Messungen_data[,valueIndex] <- column
+          Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
 
-        if (any(Messungen_data[,valueIndex] == NGchar, na.rm = TRUE)) {
-          column <- Messungen_data[,valueIndex]
+        if (any(Messungen_data[,reqColData$value] == NGchar)) {
+          column <- Messungen_data[,reqColData$value]
           column[column == NGchar] <- NGencode
-          Messungen_data[,valueIndex] <- column
+          Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
 
         #
-        # FIXME convert "," decimal separator to system separator
+        # Convert "," decimal separator to system separator
         #
-        if (any(grepl(",", Messungen_data[,valueIndex]))) {
-          column <- Messungen_data[,valueIndex]
+        # In der Spalte stehen z.B. auch BG o.ä. Dadurch ist sie im Dataframe
+        # eine Character-Spalte und die Konvertierung der Dezimalzahlen von
+        # Local-Format ins R interne Format funktioniert nicht. Daher müssen
+        # wir händisch hinterher nach dem Komma suchen und es durch Punkt
+        # ersetzen.
+        #
+        if (any(grepl(",", Messungen_data[,reqColData$value]))) {
+          column <- Messungen_data[,reqColData$value]
           for (j in 1:length(column)) {
             column[j] <- gsub(",",".", column[j])
           }
-          Messungen_data[,valueIndex] <- column
+          Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
 
         #convert value column to numeric values
-        Messungen_data[,valueIndex] <- as.numeric(Messungen_data[,valueIndex])
+        Messungen_data[,reqColData$value] <- as.numeric(Messungen_data[,reqColData$value])
 
         # notes
         # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
@@ -567,8 +569,6 @@ observeEvent(input$storeDBData, {
 
         #
         # get PNS and Ort
-        #
-        # FIXME where to add DISTINCT in the queries
         #
         # probeid -> pns_id (=foiId) -> pns_data -> lat, lon; featureofinterest -> identifier, name; feature_relation -> orts_id -> parentfeature-identifier
         # WITH
@@ -640,7 +640,6 @@ observeEvent(input$storeDBData, {
           # 1        2         3    4       5  6
           # ProbenID;Parameter;Wert;Einheit;BG;NG
           # probe_id (in CSV, col#1), parameter_id, pp_unit (in CSV, col), bg, ng
-          # TODO continue here
           #
           # INSERT DATA
           #
@@ -663,8 +662,7 @@ observeEvent(input$storeDBData, {
           # )
           # INSERT INTO probe_parameter
           # SELECT pro.probe_id, para.para_id, unit.unit_id, 'pro_para_col004_var', 'pro_para_col005_var' FROM pro, para, unit
-
-          # FIXME: unit, bg and ng are optional!!!
+          #
           insertUnitQuery <- if (is.null(row[reqColData$uom]) || is.na(row[reqColData$uom]) || row[reqColData$uom] == '') {
             "insert_unit AS (SELECT NULL::bigint as unit_id)"
           } else {
@@ -731,7 +729,8 @@ observeEvent(input$storeDBData, {
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
-            print(paste("Start feeding data values from: ", feedCSV))
+            print(paste("Start feeding data values")
+            print(paste("CsvFile: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
             system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
