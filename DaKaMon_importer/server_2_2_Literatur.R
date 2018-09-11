@@ -112,7 +112,7 @@ observeEvent(input$checkDBLiteratur, {
       checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Referenzen sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVLiteratur$df[,reqColLiteratur$refId], collapse="</li><li>")))
     } else {
-      misingReferenz <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$refId], # TODO drop ID, parent identifier
+      misingReferenz <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$refId],
                                  function(x) is.na(match(x, RefInDB$identifier))))
       if (length(misingReferenz > 0)) {
         checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Referenzen sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
@@ -128,7 +128,7 @@ observeEvent(input$checkDBLiteratur, {
       checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="</li><li>")))
     } else {
-      misingParam <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$paramId], # TODO drop ID, parent identifier
+      misingParam <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$paramId],
                                  function(x) is.na(match(x, ParamInDB$identifier))))
       if (length(misingParam > 0)) {
         checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
@@ -144,7 +144,7 @@ observeEvent(input$checkDBLiteratur, {
       checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                               paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="</li><li>")))
     } else {
-      misingPns <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId], # TODO drop ID, parent identifier
+      misingPns <- which(sapply(inCSVLiteratur$df[,reqColLiteratur$pnsId],
                                  function(x) is.na(match(x, PnsInDB$identifier))))
       if (length(misingPns > 0)) {
         checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Orte sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
@@ -274,7 +274,7 @@ observeEvent(input$storeDBLiteratur, {
     regCols <- dbGetQuery(db, paste0("SELECT dede FROM column_metadata WHERE prefixid IN ('lit', 'global')"))[,1]
     literaturColumnMappings <- dbGetQuery(db, paste0("SELECT columnid, prefixid, dede FROM column_metadata 
                                                     WHERE prefixid IN ('lit') AND columnid LIKE 'col%'"))
-    misCols <- which(sapply(Literatur_header, # TODO drop ID and Name
+    misCols <- which(sapply(Literatur_header,
                             function(x) is.na(match(x, regCols))))
     
     if (length(misCols > 0)) {

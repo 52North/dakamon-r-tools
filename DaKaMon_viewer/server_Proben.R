@@ -46,7 +46,7 @@ allProben <- reactive({
   query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", 
                  paste0(probeDataProbeMetaData$columnid, collapse=", "), 
                  " FROM probe pro 
-                   LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id") # FIXME: in meiner tAbelle taucht nur col047 für pns_id auf ..?
+                   LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id")
   
   if (!is.null(input$probenPNS)) {
     slectedPNS <- input$probenPNS

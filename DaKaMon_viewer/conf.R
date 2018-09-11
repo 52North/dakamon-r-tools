@@ -35,9 +35,6 @@ filesTab  <- list(title = "Dateien hochladen")
 
 csvInfo <- paste0("Die CSV-Datei muss \"", colSep, "\" als Spaltentrennzeichen und \"", decSep, "\" als Dezimaltrennzeichen verwenden und in \"", csvEncode, "\" enkodiert sein.")
 
-# FIXME verbose <- local (below) vs. verbose <- TRUE !?
-verbose <- TRUE
-
 #
 # DETECTION LIMIT
 #
@@ -78,7 +75,7 @@ dbTimestampPattern<- "DD-MM-YYYY HH24:MI"
 # sync with dbTimestampPattern and feederTimestampPattern
 timestampRegExPattern <- "^[[:digit:]]{2}-[[:digit:]]{2}-[[:digit:]]{4} [[:digit:]]{2}:[[:digit:]]{2}$"
 
-# FIXME verbose <- local vs. verbose <- TRUE (above) !?
+# verbose <- TRUE
 verbose <- local
 
 foiType <- "http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint"
@@ -112,7 +109,6 @@ ifelse(local,
        adminConf <-   authenticate("dakamon-administrator", adminPwd))
 
 ## DB="GUI/CSV"
-# FIXME is the order of the header label fixed here, e.g. is in all data files the value column the third one following R's index policy?
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
