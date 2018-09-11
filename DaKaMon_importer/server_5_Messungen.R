@@ -4,10 +4,20 @@
 dataSeparator <- colSep
 dataDecimalSeparator <- decSep
 ## tools
+
+isLoadingCacheUpdate <- function(conf=adminConf) {
+  loadingUrl <- paste0(SOSWebApp, "admin/cache/loading")
+  response <- GET(url=loadingUrl, config=conf)
+  fromJSON(rawToChar(response$content))[["loading"]]
+}
+
 sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
-  POST(url = paste0(SOSWebApp, "admin/cache/reload"),
-       config=conf, body="a")
-  Sys.sleep(wait)
+  reloadUrl <- paste0(SOSWebApp, "admin/cache/reload")
+  POST(url = reloadUrl, config=conf, body="a")
+  while(isLoadingCacheUpdate(conf)) {
+    print("Wait until SOS cache update finishes ...")
+    Sys.sleep(wait)
+  }
 }
 
 sosDeleteDeletedObservations <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
@@ -332,12 +342,12 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                             LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
                                             WHERE
                                             pro.identifier IN ('",
-                                            probenQuerySection,
-                                            "')
+                                           probenQuerySection,
+                                           "')
                                             AND
                                             param.identifier IN ('",
-                                            parameterQuerySection,
-                                            "')")
+                                           parameterQuerySection,
+                                           "')")
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -766,6 +776,7 @@ observeEvent(input$storeDBData, {
         }
         
         progress$inc(1)
+        sosCacheUpdate(wait=1)
         
         #
         # write global csv file
@@ -782,21 +793,46 @@ observeEvent(input$storeDBData, {
           tryCatch({
             print("Start feeding data values")
             print(paste("CsvFile: ", feedCSV))
+            print(paste("Feeding config: ", feedConf))
+            numberOfRunningJavaExeBeforeFeeding <- 0
+            if (Sys.info()["sysname"] != "Windows") {
+              # check if there are other java processes running before starting feeder
+              numberOfRunningJavaExeBeforeFeeding <- length(grep("java.exe", tasks))
+            }
+            
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
-            system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            #system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
             # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
             # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
             Sys.sleep(1)
-            check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
-            while (check == 1) {
+            if (Sys.info()["sysname"] != "Windows") {
               check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+              while (check == 1) {
+                check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+              }
+            } else {
+              
+              # TODO find an equivalent for "ps aux" for windows
+              #print("Under Windows: wait 30s for import to complete")
+              #Sys.sleep(30)
+              
+              # FIXME fragile when java processes are stopped/started during import
+              print("Under Windows: do NOT run/stop another java.exe during import!")
+              tasks <- system(paste0("tasklist"), intern = TRUE)
+              #while (length(grep("java.exe", tasks)) != 0) {
+              while (length(grep("java.exe", tasks)) > numberOfRunningJavaExeBeforeFeeding) {
+                tasks <- system(paste0("tasklist"), intern = TRUE)
+                Sys.sleep(2)
+              }
             }
+            
             print("Done!")
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())
             
-            if (length(grep("Exception", result, value = TRUE)) > 0) {
+            if (length(grep("Failed observations: 0", result, value = TRUE)) == 0) {
               print("Errors occured during import! Consult importer logs.")
               content <- div("Some Text hier",
                              pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
