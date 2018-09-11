@@ -4,10 +4,20 @@
 dataSeparator <- colSep
 dataDecimalSeparator <- decSep
 ## tools
+
+isLoadingCacheUpdate <- function(conf=adminConf) {
+  loadingUrl <- paste0(SOSWebApp, "admin/cache/loading")
+  response <- GET(url=loadingUrl, config=conf)
+  fromJSON(rawToChar(response$content))[["loading"]]
+}
+
 sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
-  POST(url = paste0(SOSWebApp, "admin/cache/reload"),
-       config=conf, body="a")
-  Sys.sleep(wait)
+  reloadUrl <- paste0(SOSWebApp, "admin/cache/reload")
+  POST(url = reloadUrl, config=conf, body="a")
+  while(isLoadingCacheUpdate(conf)) {
+    print("Wait until SOS cache update finishes ...")
+    Sys.sleep(wait)
+  }
 }
 
 createFeederConfiguration <- function(csvPath,
@@ -715,7 +725,9 @@ observeEvent(input$storeDBData, {
 
           progress$inc(1)
         }
-
+        
+        progress$inc(1)
+        sosCacheUpdate(wait=1)
         progress$inc(1)
 
         #
