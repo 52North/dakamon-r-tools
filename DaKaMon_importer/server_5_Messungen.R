@@ -759,7 +759,7 @@ observeEvent(input$storeDBData, {
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())
 
-            if (length(grep("Exception", result, value = TRUE)) > 0) {
+            if (length(grep("Failed observations: 0", result, value = TRUE)) == 0) {
               print("Errors occured during import! Consult importer logs.")
               content <- div("Some Text hier",
                 pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
