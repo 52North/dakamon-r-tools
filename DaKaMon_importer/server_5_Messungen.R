@@ -743,18 +743,42 @@ observeEvent(input$storeDBData, {
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
+            numberOfRunningJavaExeBeforeFeeding <- 0
+            if (Sys.info()["sysname"] != "Windows") {
+              # check if there are other java processes running before starting feeder
+              numberOfRunningJavaExeBeforeFeeding <- length(grep("java.exe", tasks))
+            }
+            
             print(paste("Feeding config: ", feedConf))
             print(paste("Start feeding data values from: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
-            system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+            #system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
             # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
             # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
             Sys.sleep(1)
-            check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
-            while (check == 1) {
+            if (Sys.info()["sysname"] != "Windows") {
               check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+              while (check == 1) {
+                check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+              }
+            } else {
+              
+              # TODO find an equivalent for "ps aux" for windows
+              #print("Under Windows: wait 30s for import to complete")
+              #Sys.sleep(30)
+              
+              # FIXME fragile when java processes are stopped/started during import
+              print("Under Windows: do NOT run/stop another java.exe during import!")
+              tasks <- system(paste0("tasklist"), intern = TRUE)
+              #while (length(grep("java.exe", tasks)) != 0) {
+              while (length(grep("java.exe", tasks)) > numberOfRunningJavaExeBeforeFeeding) {
+                tasks <- system(paste0("tasklist"), intern = TRUE)
+                Sys.sleep(2)
+              }
             }
+            
             print("Done!")
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())
