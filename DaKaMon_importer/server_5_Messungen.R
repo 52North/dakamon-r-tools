@@ -743,6 +743,7 @@ observeEvent(input$storeDBData, {
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
+            print(paste("Feeding config: ", feedConf))
             print(paste("Start feeding data values from: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
