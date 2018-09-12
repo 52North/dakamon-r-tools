@@ -369,12 +369,12 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
 # reactive variables
 inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
-CheckDBData <- reactiveValues(checked = FALSE)
+checkDBData <- reactiveValues(checked = FALSE)
 
 
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
-  CheckDBData$checked <- FALSE
+  checkDBData$checked <- FALSE
   
   if (!is.null(input$dataCsvFile$datapath)) {
     
@@ -433,7 +433,7 @@ output$dataValidationOut <- renderUI({
 
 observeEvent(input$checkDBData, {
   db <- connectToDB()
-  checkDBData <- NULL
+
   tryCatch({
     
     # check whether the ProbeIDs exist
@@ -450,7 +450,7 @@ observeEvent(input$checkDBData, {
     # check whether the Parameter exist
     observedproperties <- queryParameter(inCSVData$df, db)
     
-    uniqueInCSVDataParId <- c(unique(inCSVData$df[[reqColData$obsProp]]), "foo")
+    uniqueInCSVDataParId <- unique(inCSVData$df[[reqColData$obsProp]])
     matchParId <- match(uniqueInCSVDataParId, observedproperties$identifier)
     if (any(is.na(matchParId))) {
       checkDBData$txt <- paste(checkDBData$txt,
@@ -482,29 +482,32 @@ observeEvent(input$checkDBData, {
 
 
 output$dataDBConsistencyOut <- renderUI({ #
-  if (CheckDBData$checked) {
-    if (!is.null(CheckDBData$txt)) {
-      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", CheckDBData$txt, "</li></ul></div></html")))
+  if (checkDBData$checked) {
+    if (!is.null(checkDBData$txt)) {
+      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html")))
     }
-    if (all(inCSVData$obsInDB < 2)) {
-      if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
-        actionButton("storeDBData", "Speichere in DB!")
-      } else {
-        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Einige Daten sind bereits in der DB (siehe gelbe Zellen).</div></html>")
-      }
-    } else {
-      if (any( inCSVData$obsInDB == 2)) {
-        HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Bestimmungsgrenze und/oder Maßeinheit sind in csv und DB unterschiedlich (siehe rote Zellen).</div></html>")
-      } else {
-        if (input$dataOW) {
+    
+    cat(checkDBData$txt)
+    
+    # if (all(inCSVData$obsInDB < 2)) {
+    #   if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
+    #     actionButton("storeDBData", "Speichere in DB!")
+    #   } else {
+    #     HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Einige Daten sind bereits in der DB (siehe gelbe Zellen).</div></html>")
+    #   }
+    # } else {
+    #   if (any( inCSVData$obsInDB == 2)) {
+    #     HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Bestimmungsgrenze und/oder Maßeinheit sind in csv und DB unterschiedlich (siehe rote Zellen).</div></html>")
+    #   } else {
+    #     if (input$dataOW) {
           actionButton("dataStoreDB", "Speichere in DB!")
-        } else {
-          HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Elementgruppen sind in csv und DB unterschiedlich (siehe blaue Zellen).</div></html>")
-        }
-      }
-    }
-  } else {
-    HTML("")
+  #       } else {
+  #         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Elementgruppen sind in csv und DB unterschiedlich (siehe blaue Zellen).</div></html>")
+  #       }
+  #     }
+  #   }
+  # } else {
+  #   HTML("")
   }
 })
 
@@ -530,7 +533,7 @@ output$tableData <- renderDataTable({
     showDT <- formatSignif(showDT, c('NG', 'BG'), 1, dec.mark=",")
     
     # if DB consistency has been checked, apply colors
-    if (CheckDBData$checked) {
+    if (checkDBData$checked) {
       if (any(inCSVData$obsInDB > 0)) {
         cat(inCSVData$obsInDB, "\n")
         for (colDf in 4:ncol(inCSVData$df)) {
@@ -844,3 +847,4 @@ observeEvent(input$storeDBData, {
     }, error = modalErrorHandler, finally = poolReturn(db))
   }
 }, ignoreInit=TRUE)
+
