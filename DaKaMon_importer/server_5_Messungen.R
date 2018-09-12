@@ -795,7 +795,7 @@ observeEvent(input$storeDBData, {
             print("Start feeding data values")
             print(paste("Config File: ", feedConf))
             print(paste("Feeder Jar : ", feederPath))
-            print(paste("CsvFile: ", feedCSV))
+            print(paste("CSV File   : ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Log File   : ", logFile))
             system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
