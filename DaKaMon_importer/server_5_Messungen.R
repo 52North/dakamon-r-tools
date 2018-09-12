@@ -234,9 +234,9 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.pns_id,
                                         foi.identifier AS pnsid,
                                         pro.lab_id AS sensorid,
-                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamp), '",  dbTimestampPattern, "') AS resultTime,
-                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamp), '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamp), '",  dbTimestampPattern, "') AS phenTimeEnd
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resultTime,
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamptz), '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamptz), '",  dbTimestampPattern, "') AS phenTimeEnd
                                       FROM
                                         probe AS pro
                                       LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
@@ -321,9 +321,9 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
     # if (obsid == proId+Par) TODO drop timestamps and adjust logic below in the DB checks
     probenParameterMetadataQuery <- paste0("SELECT
                                             pro.identifier As probeid,
-                                            to_char(pro.resulttime::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS resultTime,
-                                            to_char(pro.phenomenontimestart::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS phenTimeStart,
-                                            to_char(pro.phenomenontimeend::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS phenTimeEnd,
+                                            to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resultTime,
+                                            to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamptz), '",  dbTimestampPattern, "') AS phenTimeStart,
+                                            to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamptz), '",  dbTimestampPattern, "') AS phenTimeEnd,
                                             param.identifier AS paramid,
                                             foi.identifier AS foiid
                                             FROM
