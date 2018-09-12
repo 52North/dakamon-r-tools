@@ -462,11 +462,11 @@ observeEvent(input$checkDBData, {
     # TODO check for existing observations
     observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
     
-    #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
+    # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
     # SELECT observation.identifier FROM observations where observation.identifier IN (^ )
     # save result list in inCSVData$obsIdsInDB
     
-    # TODO decide about change in observation id and continue to implemenmt the checks
+    # TODO continue to implemenmt the checks
     
     probenMetadata$resulttime <- as.numeric(strptime(probenMetadata$resulttime, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
     probenMetadata$phentimestart <- as.numeric(strptime(probenMetadata$phentimestart, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
@@ -487,8 +487,6 @@ output$dataDBConsistencyOut <- renderUI({ #
       return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html")))
     }
     
-    cat(checkDBData$txt)
-    
     # if (all(inCSVData$obsInDB < 2)) {
     #   if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
     #     actionButton("storeDBData", "Speichere in DB!")
@@ -500,7 +498,7 @@ output$dataDBConsistencyOut <- renderUI({ #
     #     HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Bestimmungsgrenze und/oder Maßeinheit sind in csv und DB unterschiedlich (siehe rote Zellen).</div></html>")
     #   } else {
     #     if (input$dataOW) {
-          actionButton("dataStoreDB", "Speichere in DB!")
+          actionButton("storeDBData", "Speichere in DB!")
   #       } else {
   #         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Elementgruppen sind in csv und DB unterschiedlich (siehe blaue Zellen).</div></html>")
   #       }
