@@ -754,14 +754,10 @@ observeEvent(input$storeDBData, {
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
-            print(paste("Start feeding data values")
-            print(paste("CsvFile: ", feedCSV))
+            
+            print(paste("Start feeding data values"))
             print(paste("Feeding config: ", feedConf))
-            numberOfRunningJavaExeBeforeFeeding <- 0
-            if (Sys.info()["sysname"] != "Windows") {
-              # check if there are other java processes running before starting feeder
-              numberOfRunningJavaExeBeforeFeeding <- length(grep("java.exe", tasks))
-            }
+            print(paste("CsvFile: ", feedCSV))
             
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
             print(paste("Logfile: ", logFile))
@@ -776,18 +772,16 @@ observeEvent(input$storeDBData, {
                 check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
               }
             } else {
+              isFeederRunning <- function() {
+                processListCmd <- paste0("WMIC PROCESS GET Caption,Processid,Commandline")
+                tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE)
+                length(grep(logFile, tasks)) > 0
+              }
               
-              # TODO find an equivalent for "ps aux" for windows
-              #print("Under Windows: wait 30s for import to complete")
-              #Sys.sleep(30)
-              
-              # FIXME fragile when java processes are stopped/started during import
-              print("Under Windows: do NOT run/stop another java.exe during import!")
-              tasks <- system(paste0("tasklist"), intern = TRUE)
-              #while (length(grep("java.exe", tasks)) != 0) {
-              while (length(grep("java.exe", tasks)) > numberOfRunningJavaExeBeforeFeeding) {
-                tasks <- system(paste0("tasklist"), intern = TRUE)
+              importInProgress <- isFeederRunning()
+              while (importInProgress) {
                 Sys.sleep(2)
+                importInProgress <- isFeederRunning()
               }
             }
             

@@ -58,7 +58,7 @@ SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:
 # DATABASE
 #
 dbHost <- ifelse(local, "localhost", "db")
-dbPort <- "5432"
+dbPort <- "5433"
 dbUser <- "postgres"
 dbPassword <- "postgres"
 dbName <- "sos"
