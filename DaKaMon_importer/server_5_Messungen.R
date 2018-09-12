@@ -11,31 +11,30 @@ isLoadingCacheUpdate <- function(conf=adminConf) {
   fromJSON(rawToChar(response$content))[["loading"]]
 }
 
-sosCacheUpdate <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
+sosCacheUpdate <- function(wait=0.5, conf=adminConf, verbose=FALSE) {
   reloadUrl <- paste0(SOSWebApp, "admin/cache/reload")
   POST(url = reloadUrl, config=conf, body="a")
   while(isLoadingCacheUpdate(conf)) {
     print("Wait until SOS cache update finishes ...")
-  Sys.sleep(wait)
+    Sys.sleep(wait)
   }
 }
 
-sosDeleteDeletedObservations <- function(gmlId="tmp", wait=0.5, conf=adminConf, verbose=FALSE) {
+sosDeleteDeletedObservations <- function(wait=0.5, conf=adminConf, verbose=FALSE) {
   POST(url = paste0(SOSWebApp, "admin/datasource/deleteDeletedObservations"),
        config=conf, body="a")
   Sys.sleep(wait)
 }
 
-sosDeleteObservationsByIdentifier <- function(observationIdentifiers) {
+sosDeleteObservationsByIdentifier <- function(observationIdentifiers, wait = 0.5) {
   POST(paste0(SOSWebApp, "service"),
        body =  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
            <sosdo:DeleteObservation
          xmlns:sosdo=\"http://www.opengis.net/sosdo/1.0\" version=\"2.0.0\" service=\"SOS\"><sosdo:observation>",
-           #<sosdo:observation>", observationIdentifiers, "</sosdo:observation>
            paste(observationIdentifiers, collapse = "</sosdo:observation><sosdo:observation>"),
            "</sosdo:observation></sosdo:DeleteObservation>"),
        content_type_xml(), accept_json())
-  Sys.sleep(0.5)
+  Sys.sleep(wait)
 }
 
 createFeederConfiguration <- function(csvPath,
@@ -777,8 +776,8 @@ observeEvent(input$storeDBData, {
           progress$inc(1)
         }
 
-        progress$inc(1)
         sosCacheUpdate(wait=1)
+        progress$inc(1)
 
         #
         # write global csv file
@@ -794,12 +793,12 @@ observeEvent(input$storeDBData, {
         } else {
           tryCatch({
             print("Start feeding data values")
-            print(paste("Feeding config: ", feedConf))
+            print(paste("Config File: ", feedConf))
+            print(paste("Feeder Jar : ", feederPath))
             print(paste("CsvFile: ", feedCSV))
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
-            print(paste("Logfile: ", logFile))
+            print(paste("Log File   : ", logFile))
             system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
-            #system2("/usr/bin/java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
             # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
             # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
             Sys.sleep(1)
