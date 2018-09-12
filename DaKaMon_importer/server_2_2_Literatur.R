@@ -379,7 +379,7 @@ observeEvent(input$storeDBLiteratur, {
       }
     }
     
-    message = paste0(nrow(Literatur_data) , " Literaturn wurden erfolgreich in der Datenbank angelegt.")
+    message = paste0(nrow(Literatur_data) , " Literatur-Einträge wurde erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
