@@ -65,7 +65,7 @@ dbName <- "sos"
 # Documentation: https://www.postgresql.org/docs/9.6/static/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE
 # sync with feederTimestampPattern and feederTimestampPattern
 dbTimestampPattern <- "DD-MM-YYYY HH24:MI TZ"
-# R time samp pattern as returned by the DB after to_char ^ 
+# R time samp pattern as returned by the DB after to_char ^
 RtimestampPattern <- "%d-%m-%Y %H:%M"
 
 #
@@ -106,7 +106,7 @@ feederHunkSize <- 1024
 feederTimeoutBuffer <- 50000
 
 stndTime <- "T12:00:00+00:00"
-adminPwd <- "p" 
+adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
 
 ## DB="GUI/CSV"
