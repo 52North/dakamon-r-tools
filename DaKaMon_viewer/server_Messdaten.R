@@ -22,29 +22,28 @@ poolReturn(db)
 if (nrow(ort) > 0) {
   ortData <- reactive({
     db <- connectToDB()
-    
-    ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
-    ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
-    ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
-    selectedThematik <- input$ews
-    if (Sys.info()["sysname"] == "Windows") {
-      selectedThematik <- stri_enc_tonative(input$ews)
-    }
-    query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
-                    " FROM featureofinterest foi
-                                     RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
-                                     WHERE foi.featureofinterestid IN (", 
-                    paste0(ort$featureofinterestid, collapse=", "), ")
-                                     AND od.thematik IN (", paste0("'", selectedThematik, "'" ,collapse=", ") ,")")
-    ortData <- dbGetQuery(db, query)
-    
-    
-    if (nrow(ortData) > 0)
-      colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
-    
-    poolReturn(db)
-    
-    ortData
+    tryCatch({
+      ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
+      ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
+      ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
+      selectedThematik <- input$ews
+      if (Sys.info()["sysname"] == "Windows") {
+        selectedThematik <- stri_enc_tonative(input$ews)
+      }
+      query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
+                      " FROM featureofinterest foi
+                                       RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
+                                       WHERE foi.featureofinterestid IN (", 
+                      paste0(ort$featureofinterestid, collapse=", "), ")
+                                       AND od.thematik IN (", paste0("'", selectedThematik, "'" ,collapse=", ") ,")")
+      ortData <- dbGetQuery(db, query)
+      
+      
+      if (nrow(ortData) > 0)
+        colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
+      
+      ortData
+    }, error = modalErrorHandler, finally = poolReturn(db))
   })
   
   output$tableOrt  <- renderDT({
@@ -112,29 +111,29 @@ observeEvent(input$fromOrtToPNS, {
 if(!is.null(ortData)) {
   pnsData <- reactive({
     db <- connectToDB()
-    
-    pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
-    pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
-    
-    pnsColColumns <- NULL
-    if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
-      pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
-    }
-    
-    pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id", 
-                                 paste0(pnsColColumns),
-                                 " FROM featureofinterest foi
-                               RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
-                               RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
-                               LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
-                               WHERE fr.parentfeatureid in (", 
-                                 paste(ortData()[sOrt(),1], collapse=", "), ")"))
-    poolReturn(db)
-    
-    if (nrow(pns) > 0)
-      colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
-    
-    pns
+    tryCatch({
+      
+      pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
+      pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
+      
+      pnsColColumns <- NULL
+      if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
+        pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+      }
+      
+      pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id", 
+                                   paste0(pnsColColumns),
+                                   " FROM featureofinterest foi
+                                 RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
+                                 RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
+                                 LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
+                                 WHERE fr.parentfeatureid in (", 
+                                   paste(ortData()[sOrt(),1], collapse=", "), ")"))
+      if (nrow(pns) > 0)
+        colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
+      
+      pns
+    }, error = modalErrorHandler, finally = poolReturn(db))
   })
   
   
@@ -207,16 +206,17 @@ observeEvent(input$fromPNStoMessdaten, {
 
 elemGroup <- reactive({
   db <- connectToDB()
-  res <- NULL  
   
-  col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-  if (nrow(col) != 0) {
-    res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
-                               WHERE ", col, " IS NOT NULL"))
-  }
-  poolReturn(db)
-  
-  res
+  tryCatch({
+    res <- NULL  
+    
+    col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+    if (nrow(col) != 0) {
+      res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
+                                    WHERE ", col, " IS NOT NULL"))
+    }
+    res
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
 output$elemGroup <- renderUI(selectInput("selElemGroup", "Stoffgruppenauswahl:", 
@@ -230,24 +230,24 @@ obsProp <- reactive({
     return(NULL)
   
   db <- connectToDB()
-  colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-  op <- NULL
-  for (i in 1:length(sPNS())) { # i <- 1
-    query <- paste0("SELECT DISTINCT op.observablepropertyid, op.identifier, op.name, foi.identifier AS foiid,
-                      foi.featureofinterestid, s.seriesid
-                     FROM observableproperty AS op
-                      LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
-                      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-                      LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
-                      LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
-                      LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
-                      RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                     WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
-    op <- rbind(op, dbGetQuery(db, query))
-  }
-  poolReturn(db)
-  
-  op
+  tryCatch({
+    colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
+    op <- NULL
+    for (i in 1:length(sPNS())) { # i <- 1
+      query <- paste0("SELECT DISTINCT op.observablepropertyid, op.identifier, op.name, foi.identifier AS foiid,
+                        foi.featureofinterestid, s.seriesid
+                       FROM observableproperty AS op
+                        LEFT OUTER JOIN series AS s ON (op.observablepropertyid = s.observablepropertyid)
+                        LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+                        LEFT OUTER JOIN procedure AS p ON (s.procedureid = p.procedureid)
+                        LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
+                        LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
+                        RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+                       WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
+      op <- rbind(op, dbGetQuery(db, query))
+    }
+    op
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
 output$obsPhen <- renderUI(selectInput("selObsPhen", "Parameterauswahl:", 
@@ -276,127 +276,125 @@ data <- reactive({
     columnCount <- (length(input$selObsPhen) * phenValueCount) + 4
     
     db <- connectToDB()
-    
-    colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-    
-    for (foi in pnsData()[sPNS(), "ID"]) {
+    tryCatch({
+      colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
       
-      selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
-      
-      if(length(selObsPropFoi$seriesid) == 0) next;
-      
-      # lookup observed time stamps for all series of this FoI
-      foiTimes <- dbGetQuery(db, paste0("SELECT DISTINCT phenomenontimestart, phenomenontimeend, resulttime
-                                               FROM observation
-                                               WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))
-      
-      obsPropSel <- obsProp()$name %in% input$selObsPhen
-      
-      uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
-      
-      as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))) 
-      
-      
-      query <- paste0("SELECT DISTINCT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime,
-                                       u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", colStoffgruppe, " AS stgrname 
-                  FROM observation o
-                      LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
-                      LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
-                      LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
-                      LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
-                      LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
-                      LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
-                      LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
-                      RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                      WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")")
-      
-      if (!is.null(input$selObsPhen))
-        query <- paste0(query, " AND op.identifier IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
-      
-      minPhenTimeStart <- foiTimes[which.min(as.POSIXct(foiTimes$phenomenontimestart)), "phenomenontimestart"]
-      maxPhenTimeStart <- foiTimes[which.max(as.POSIXct(foiTimes$phenomenontimestart)), "phenomenontimestart"]
-      maxPhenTimeEnd <- foiTimes[which.max(as.POSIXct(foiTimes$phenomenontimeend)), "phenomenontimeend"]
-      
-      query <- paste0(query, " AND (o.phenomenontimestart >= to_timestamp('", as.character(minPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
-                      AND (o.phenomenontimestart <= to_timestamp('", as.character(maxPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
-                      OR o.phenomenontimeend <= to_timestamp('", as.character(maxPhenTimeEnd), "','YYYY-mm-DD HH24:MI:SS'))) " )
-      
-      res <- dbGetQuery(db, query)
-      
-      if(!is.null(res)) {
-        for (ft in 1:nrow(foiTimes)) {
-          #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1] 
-          resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
-          colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
-          
-          resDfRow$PNS_ID <- foi
-          for (obs in 1:nrow(res)) {
-            if ( strftime(foiTimes[ft,"phenomenontimestart"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
-                 & strftime(foiTimes[ft,"phenomenontimeend"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
-                 & strftime(foiTimes[ft,"resulttime"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')) {
-              resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
-              resDfRow$Ereignisbeginn <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
-              resDfRow$Ereignisende <- strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
-              valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
-              if (res[obs, "value"] < res[obs, "bg"]) {
-                if (input$repBG == 'BG') {
-                  resDfRow[valueRow] <- res[obs, "bg"]
-                } else if (input$repBG == 'BG/2') {
-                  resDfRow[valueRow] <- res[obs, "bg"]/2
+      for (foi in pnsData()[sPNS(), "ID"]) {
+        
+        selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
+        
+        if(length(selObsPropFoi$seriesid) == 0) next;
+        
+        # lookup observed time stamps for all series of this FoI
+        foiTimes <- dbGetQuery(db, paste0("SELECT DISTINCT phenomenontimestart, phenomenontimeend, resulttime
+                                                 FROM observation
+                                                 WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))
+        
+        obsPropSel <- obsProp()$name %in% input$selObsPhen
+        
+        uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
+        
+        as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))) 
+        
+        
+        query <- paste0("SELECT DISTINCT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime,
+                                         u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", colStoffgruppe, " AS stgrname 
+                    FROM observation o
+                        LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+                        LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+                        LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+                        LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+                        LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
+                        LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+                        LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
+                        RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+                        WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")")
+        
+        if (!is.null(input$selObsPhen))
+          query <- paste0(query, " AND op.identifier IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
+        
+        minPhenTimeStart <- foiTimes[which.min(as.POSIXct(foiTimes$phenomenontimestart)), "phenomenontimestart"]
+        maxPhenTimeStart <- foiTimes[which.max(as.POSIXct(foiTimes$phenomenontimestart)), "phenomenontimestart"]
+        maxPhenTimeEnd <- foiTimes[which.max(as.POSIXct(foiTimes$phenomenontimeend)), "phenomenontimeend"]
+        
+        query <- paste0(query, " AND (o.phenomenontimestart >= to_timestamp('", as.character(minPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
+                        AND (o.phenomenontimestart <= to_timestamp('", as.character(maxPhenTimeStart), "','YYYY-mm-DD HH24:MI:SS') 
+                        OR o.phenomenontimeend <= to_timestamp('", as.character(maxPhenTimeEnd), "','YYYY-mm-DD HH24:MI:SS'))) " )
+        
+        res <- dbGetQuery(db, query)
+        
+        if(!is.null(res)) {
+          for (ft in 1:nrow(foiTimes)) {
+            #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1] 
+            resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
+            colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
+            
+            resDfRow$PNS_ID <- foi
+            for (obs in 1:nrow(res)) {
+              if ( strftime(foiTimes[ft,"phenomenontimestart"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
+                   & strftime(foiTimes[ft,"phenomenontimeend"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
+                   & strftime(foiTimes[ft,"resulttime"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')) {
+                resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
+                resDfRow$Ereignisbeginn <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
+                resDfRow$Ereignisende <- strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
+                valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
+                if (res[obs, "value"] < res[obs, "bg"]) {
+                  if (input$repBG == 'BG') {
+                    resDfRow[valueRow] <- res[obs, "bg"]
+                  } else if (input$repBG == 'BG/2') {
+                    resDfRow[valueRow] <- res[obs, "bg"]/2
+                  } else {
+                    resDfRow[valueRow] <- input$repBG
+                  }
                 } else {
-                  resDfRow[valueRow] <- input$repBG
+                  resDfRow[valueRow] <- res[obs, "value"]
                 }
-              } else {
-                resDfRow[valueRow] <- res[obs, "value"]
-              }
-              resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
-              if (input$showBG) {
-                resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
-              }
-              if (input$showNG) {
-                resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
-              }
-              if (input$showSG) {
-                resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
+                resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
+                if (input$showBG) {
+                  resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
+                }
+                if (input$showNG) {
+                  resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+                }
+                if (input$showSG) {
+                  resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
+                }
               }
             }
+            
+            resDf <- rbind(resDf, resDfRow)
           }
-          
-          resDf <- rbind(resDf, resDfRow)
         }
+        
       }
+    
+      if (input$randomId) {
+        dbIdMap <- dbGetQuery(db, paste0("SELECT f.identifier, od.rndid FROM ort_data od 
+                                         LEFT OUTER JOIN featureofinterest f ON od.featureofinterestid = f.featureofinterestid
+                                         WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')
+                                         UNION
+                                         SELECT f.identifier, pnsd.rndid FROM pns_data pnsd 
+                                         LEFT OUTER JOIN featureofinterest f ON pnsd.featureofinterestid = f.featureofinterestid
+                                         WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
+        resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), "rndid"]
+      }
+    
+      #resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+      #colnames(resUom) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
+      #resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+      #colnames(resBg) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
+      #resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
+      #colnames(resStgr) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
       
-    }
-    poolReturn(db)
-    
-    if (input$randomId) {
-      db <- connectToDB()
-      dbIdMap <- dbGetQuery(db, paste0("SELECT f.identifier, od.rndid FROM ort_data od 
-                                       LEFT OUTER JOIN featureofinterest f ON od.featureofinterestid = f.featureofinterestid
-                                       WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')
-                                       UNION
-                                       SELECT f.identifier, pnsd.rndid FROM pns_data pnsd 
-                                       LEFT OUTER JOIN featureofinterest f ON pnsd.featureofinterestid = f.featureofinterestid
-                                       WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
-      resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), "rndid"]
-      poolReturn(db)
-    }
-    
-    #resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-    #colnames(resUom) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-    #resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-    #colnames(resBg) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-    #resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-    #colnames(resStgr) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-    
-    #for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
-    #  frid <- match(obsPropId, obsProp()$identifier)
-    #  resUom[[obsPropId]] <- obsProp()[frid, "unit"]
-    #  resBg[[obsPropId]] <- obsProp()[frid, "bg"]
-    #  resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
-    #}
-    
-    list(resDf=resDf)
+      #for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
+      #  frid <- match(obsPropId, obsProp()$identifier)
+      #  resUom[[obsPropId]] <- obsProp()[frid, "unit"]
+      #  resBg[[obsPropId]] <- obsProp()[frid, "bg"]
+      #  resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
+      #}
+      
+      list(resDf=resDf)
+    }, error = modalErrorHandler, finally = poolReturn(db))
   }
 })
 

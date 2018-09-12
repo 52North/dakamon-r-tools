@@ -144,6 +144,16 @@ server <- function(input, output, session) {
 }
 
 
+modalErrorHandler <- function(e) {
+  if (!is.null(e)) {
+    print(e)
+  }
+  showModalMessage(title="Fehler", e["message"])
+}
+
+showModalMessage <- function(..., title="Title") {
+  showModal(modalDialog(..., title = title, footer = modalButton("Ok")))
+}
 
 shinyApp(ui, server, 
          onStart = function() {
