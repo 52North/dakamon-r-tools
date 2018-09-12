@@ -15,19 +15,11 @@ observeEvent(input$csvFileLiteratur, {
   valiLiteratur$validated <- FALSE
   checkDBLiteratur$checked <- FALSE
   
-  # check whether an encoding has been set; fallback: guess the eoncoding using readr
-  if (is.null(csvEncode)) {
-    csvEncode <- readr::guess_encoding(input$csvFileLiteratur$datapath)
-    csvEncode <- csvEncode$encoding[which.max(csvEncode$confidence)]
-  }
-  
-  inCSVLiteratur$csvEncode <- csvEncode
-  
   inCSVLiteratur$df <- read.csv(input$csvFileLiteratur$datapath,
                                header = TRUE,
                                sep = sepLiteratur, dec = decLiteratur,
                                stringsAsFactors = FALSE,
-                               fileEncoding = inCSVLiteratur$csvEncode)
+                               fileEncoding = input$litFileEnc)
   
   inCSVLiteratur$headAsChar <- colnames(inCSVLiteratur$df)
   
@@ -379,7 +371,7 @@ observeEvent(input$storeDBLiteratur, {
       }
     }
     
-    message = paste0(nrow(Literatur_data) , " Literaturn wurden erfolgreich in der Datenbank angelegt.")
+    message = paste0(nrow(Literatur_data) , " Literatur-Einträge wurde erfolgreich in der Datenbank angelegt.")
     showModalMessage("Vorgang abgeschlossen", message)
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
