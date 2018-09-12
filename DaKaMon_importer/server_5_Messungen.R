@@ -204,14 +204,6 @@ createFeederConfiguration <- function(csvPath,
     </CsvMetadata>
     <AdditionalMetadata>
       <Metadata>
-        <Key>HUNK_SIZE</Key>
-        <Value>", hunkSize, "</Value>
-      </Metadata>
-      <Metadata>
-        <Key>TIMEOUT_BUFFER</Key>
-        <Value>", timeoutBuffer, "</Value>
-      </Metadata>
-      <Metadata>
         <Key>FEEDER_CLASS</Key>
         <Value>org.n52.sos.importer.feeder.SingleThreadFeeder</Value>
       </Metadata>
