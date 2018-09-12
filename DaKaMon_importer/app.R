@@ -135,6 +135,8 @@ ui <- navbarPage("Datenimport",
                                      h3(style=tabTitleStyle,class="tab-title", litStep1$title),
                                      sidebarLayout(
                                        sidebarPanel(
+                                         selectInput("refFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFileReferenz", "CSV-Datei mit Referenzen", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
@@ -153,6 +155,8 @@ ui <- navbarPage("Datenimport",
                                      h3(style=tabTitleStyle,class="tab-title", litStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
+                                         selectInput("litFileEnc", "Encoding der Datei", 
+                                                     list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
                                          fileInput("csvFileLiteratur", "CSV-Datei mit Literaturwerten", 
                                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
