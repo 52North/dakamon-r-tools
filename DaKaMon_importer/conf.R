@@ -102,6 +102,7 @@ dbTimeZoneIdentifier <- "Europe/Berlin"
 feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleThreadSingleObservationImporter"
 # the next two are used, when feederImporterClass is switched to
 # feederImporterClass <- "org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter"
+feederTimeoutBuffer <- 120000
 
 stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"

@@ -207,6 +207,10 @@ createFeederConfiguration <- function(csvPath,
         <Key>FEEDER_CLASS</Key>
         <Value>org.n52.sos.importer.feeder.SingleThreadFeeder</Value>
       </Metadata>
+      <Metadata>
+        <Key>TIMEOUT_BUFFER</Key>
+        <Value>", timeoutBuffer, "</Value>
+      </Metadata>
     </AdditionalMetadata>
   </SosImportConfiguration>")
 }
