@@ -31,9 +31,9 @@ sosDeleteObservationsByIdentifier <- function(observationIdentifiers) {
        body =  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
            <sosdo:DeleteObservation
          xmlns:sosdo=\"http://www.opengis.net/sosdo/1.0\" version=\"2.0.0\" service=\"SOS\"><sosdo:observation>",
-           #<sosdo:observation>", observationIdentifiers, "</sosdo:observation>
-           paste(observationIdentifiers, collapse = "</sosdo:observation><sosdo:observation>"),
-           "</sosdo:observation></sosdo:DeleteObservation>"),
+                      #<sosdo:observation>", observationIdentifiers, "</sosdo:observation>
+                      paste(observationIdentifiers, collapse = "</sosdo:observation><sosdo:observation>"),
+                      "</sosdo:observation></sosdo:DeleteObservation>"),
        content_type_xml(), accept_json())
   Sys.sleep(0.5)
 }
@@ -45,7 +45,7 @@ createFeederConfiguration <- function(csvPath,
                                       importerClass = feederImporterClass, hunkSize = feederHunkSize,
                                       timeoutBuffer = feederTimeoutBuffer) {
   paste0(
-  "<SosImportConfiguration xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
+    "<SosImportConfiguration xmlns=\"http://52north.org/sensorweb/sos/importer/0.5/\">
     <DataFile referenceIsARegularExpression=\"false\">
       <LocalFile>
         <Path>", csvPath, "</Path>
@@ -243,9 +243,9 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.pns_id,
                                         foi.identifier AS pnsid,
                                         pro.lab_id AS sensorid,
-                                        to_char(pro.resulttime::timestamp, '",  dbTimestampPattern, "') AS resultTime,
-                                        to_char(pro.phenomenontimestart::timestamp, '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(pro.phenomenontimeend::timestamp, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                        to_char(pro.resulttime::timestamptz, '",  dbTimestampPattern, "') AS resultTime,
+                                        to_char(pro.phenomenontimestart::timestamptz, '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(pro.phenomenontimeend::timestamptz, '",  dbTimestampPattern, "') AS phenTimeEnd
                                       FROM
                                         probe AS pro
                                       LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
@@ -308,30 +308,61 @@ queryProbenParameterMetadata <- function(Messungen_data, db) {
                                       WHERE
                                         pro.identifier IN ('",
                                            probenQuerySection,
-                                      "')
+                                           "')
                                       AND
                                         param.identifier IN ('",
-                                        parameterQuerySection,
-                                      "')")
+                                           parameterQuerySection,
+                                           "')")
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
 
-createObsIdentifier <- function(probenMetadata, parameter) {
-  #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
-  paste0(probenMetadata$resulttime, probenMetadata$phentimestart, "/", probenMetadata$phentimeend, parameter, probenMetadata$pnsid)
-}
-
-queryObservationInDB <- function(identifier, db) {
+queryObservationCharacteristics <- function(Messungen_data, db) {
   connected <- is.null(db)
   if (!connected) {
     db <- connectToDB()
   }
   tryCatch({
-    query <- paste0("SELECT identifier FROM observation WHERE identifier IN ('", identifier,"');")
-    length(dbGetQuery(db, probenParameterMetadataQuery)) > 0
+    proben <- Messungen_data[,reqColData$probeId]
+    probenQuerySection <- paste0(unique(proben), collapse = "','")
+    parameter <- Messungen_data[,reqColData$obsProp]
+    parameterQuerySection <- paste0(unique(parameter), collapse = "','")
+    # if (obsid == proId+Par) TODO drop timestamps and adjust logic below in the DB checks
+    probenParameterMetadataQuery <- paste0("SELECT 
+                                            pro.identifier As probeid,
+                                            to_char(pro.resulttime::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS resultTime,
+                                            to_char(pro.phenomenontimestart::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS phenTimeStart,
+                                            to_char(pro.phenomenontimeend::timestamptz, 'DD-MM-YYYY HH24:MI TZ') AS phenTimeEnd,
+                                            param.identifier AS paramid,
+                                            foi.identifier AS foiid
+                                            FROM
+                                            probe_parameter pp
+                                            LEFT OUTER JOIN probe AS pro ON (pro.id = pp.probe_id)
+                                            LEFT OUTER JOIN observableproperty AS param ON (param.observablepropertyid = pp.parameter_id)
+                                            LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
+                                            WHERE
+                                            pro.identifier IN ('",
+                                           probenQuerySection,
+                                           "')
+                                            AND
+                                            param.identifier IN ('",
+                                           parameterQuerySection,
+                                           "')")
+    probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
+
+
+# queryObservationInDB <- function(identifier, db) {
+#   connected <- is.null(db)
+#   if (!connected) {
+#     db <- connectToDB()
+#   }
+#   tryCatch({
+#     query <- paste0("SELECT identifier FROM observation WHERE identifier IN ('", identifier,"');")
+#     length(dbGetQuery(db, probenParameterMetadataQuery)) > 0
+#   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+# }
 
 ## /tools
 
@@ -344,16 +375,16 @@ CheckDBData <- reactiveValues(checked = FALSE)
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
   CheckDBData$checked <- FALSE
-
+  
   if (!is.null(input$dataCsvFile$datapath)) {
-
+    
     inCSVData$df <- read.csv(input$dataCsvFile$datapath, header = TRUE,
                              sep = dataSeparator, dec = dataDecimalSeparator,
                              stringsAsFactors = FALSE,
                              fileEncoding = input$dataFileEnc)
     inCSVData$headAsChar <- colnames(inCSVData$df)
   }
-
+  
   #################################
   ## validation of data csv-file ##
   #################################
@@ -363,20 +394,23 @@ observeEvent(input$dataCsvFile, {
   # Einheit
   # BG
   # NG
-
+  
   txt <- NULL
   for (reqColName in reqColData) {
     if (!(reqColName %in% inCSVData$headAsChar))
       txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColName, "' angeben.</li>")
   }
-
+  
   if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar))
     txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein.</li>")
-
+  
+  # check whether each parameter in the csv is reported only once per ProID
+  if (length(unique(paste0(inCSVData$df[[reqColData$probeId]], inCSVData$df[[reqColData$obsProp]]))) != nrow(inCSVData$df)) 
+    txt <- paste0(txt, "<li>Jeder Parameter darf nur einmal je Probe vorkommen.</li>")
+  
   valiData$txt <- txt
   valiData$validated <- TRUE
 })
-
 
 output$dataValidationOut <- renderUI({
   if (valiData$validated) {
@@ -399,47 +433,50 @@ output$dataValidationOut <- renderUI({
 
 observeEvent(input$checkDBData, {
   db <- connectToDB()
+  checkDBData <- NULL
   tryCatch({
-
+    
     # check whether the ProbeIDs exist
     probenMetadata <- queryProbenMetadata(inCSVData$df, db)
-
+    
+    uniqueInCSVDataProbeId <- unique(inCSVData$df[[reqColData$probeId]])
+    matchProbeId <- match(uniqueInCSVDataProbeId, probenMetadata$probeid)
+    if (any(is.na(matchProbeId))) {
+      checkDBData$txt <- paste("Folgende Proben fehlen in der DB: <ul><li>",
+                               paste0(uniqueInCSVDataProbeId[which(is.na(matchProbeId))], collapse="</li><li>"),
+                               "</li></ul>")
+    } 
+    
     # check whether the Parameter exist
     observedproperties <- queryParameter(inCSVData$df, db)
-
-    # check whether the combination of ProbeId and Parameter already corresponds to some time series data
-    # TODO unklar, warum es geprüft werden soll?
-
+    
+    uniqueInCSVDataParId <- c(unique(inCSVData$df[[reqColData$obsProp]]), "foo")
+    matchParId <- match(uniqueInCSVDataParId, observedproperties$identifier)
+    if (any(is.na(matchParId))) {
+      checkDBData$txt <- paste(checkDBData$txt,
+                               paste("Folgende Parameter fehlen in der DB: <ul><li>",
+                                     paste0(uniqueInCSVDataParId[which(is.na(matchParId))], collapse="</li><li>"),
+                                     "</li></ul>"))
+    }
+    
     # TODO check for existing observations
-    probenParameterMetadata <- queryProbenParameterMetadata(inCSVData$df, db)
-
+    observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
+    
     #2018-07-20T00:00:00+02:002018-03-15T00:00:00+01:00/2018-03-17T00:00:00+01:00BleiKAM_BW_EPP_PS
     # SELECT observation.identifier FROM observations where observation.identifier IN (^ )
     # save result list in inCSVData$obsIdsInDB
-
-    # TODO continue implementation of consistency check
-    # missingProben <- NULL
-    # missingParameter <- NULL
-    # observationInDB <- NULL
-    # for(csv in 1:nrow(inCSVData$df)) {
-    #   if (!inCSVData$df[csv, reqColData$probeId] %in% probenMetadata["probeid"]) {
-    #     missingProben <- append(missingProben, inCSVData$df[csv, reqColData$probeId])
-    #   }
-    #   if (!inCSVData$df[csv, reqColData$obsProp] %in% observedproperties["identifier"]) {
-    #     missingParameter <- append(missingParameter, inCSVData$df[csv, reqColData$obsProp])
-    #   }
-    #   if (length(missingProben) == 0 && length(missingParameter) == 0) {
-    #     obsIdentifier <- createObsIdentifier(probenMetadata[match(inCSVData$df[csv, reqColData$probeId], probenMetadata["probeid"]),],
-    #                                          inCSVData$df[csv, reqColData$obsProp])
-    #     if (queryObservationInDB(obsIdentifier, db)) {
-    #        observationInDB <- append(observationInDB, obsIdentifier)
-    #     }
-    #   }
-    # }
-    #
-    # inCSVData$missingProben <- unique(missingProben)
-    # inCSVData$missingParameter <- unique(missingParameter)
-    CheckDBData$checked <- TRUE
+    
+    # TODO decide about change in observation id and continue to implemenmt the checks
+    
+    probenMetadata$resulttime <- as.numeric(strptime(probenMetadata$resulttime, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
+    probenMetadata$phentimestart <- as.numeric(strptime(probenMetadata$phentimestart, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
+    probenMetadata$phentimeend <- as.numeric(strptime(probenMetadata$phentimeend, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
+    
+    inCSVData$obsIdsInDB <- paste0(probenMetadata$phentimestart, probenMetadata$phentimestart, "/", probenMetadata$phentimeend, probenMetadata$pnsid)
+    
+    paste0(probenMetadata$resulttime, paste(probenMetadata$phentimestart,probenMetadata$phentimeend, sep="/") )
+    
+    checkDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
 
@@ -481,24 +518,24 @@ output$tableData <- renderDataTable({
     showTab <- inCSVData$df
     format(showTab, scientific=FALSE)
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", inCSVData$headAsChar)
-
+    
     showHead <- paste0(showHead, "</span>")
-
+    
     showDT <- datatable(showTab, colnames = showHead,
                         options = list(paging=FALSE, bFilter=FALSE,
                                        scrollX=TRUE, sort=FALSE, dom="t",
                                        language=list(url = lngJSON)),
                         escape=FALSE)
-
+    
     showDT <- formatSignif(showDT, c('NG', 'BG'), 1, dec.mark=",")
-
+    
     # if DB consistency has been checked, apply colors
     if (CheckDBData$checked) {
       if (any(inCSVData$obsInDB > 0)) {
         cat(inCSVData$obsInDB, "\n")
         for (colDf in 4:ncol(inCSVData$df)) {
           rowClrs <- c("white", "yellow", "red", "blue")[inCSVData$obsInDB[,colDf-3]+1]
-
+          
           showDT <- formatStyle(showDT, colDf, "ID",
                                 backgroundColor = styleEqual(showTab$ID, rowClrs))
         }
@@ -523,9 +560,9 @@ observeEvent(input$storeDBData, {
     db <- connectToDB()
     tryCatch({
       dbWithTransaction(db, {
-
+        
         if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
-
+          
           # delete observations already in the DB
           progress <- Progress$new()
           progress$set(message = "Bereite DB vor.", value = 0)
@@ -533,12 +570,12 @@ observeEvent(input$storeDBData, {
           sosDeleteDeletedObservations()
           progress$close()
         }
-
+        
         Messungen_data <- inCSVData$df
-
+        
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
-
+        
         # convert value column BG, NG values in numbers and the whole column in numeric values
         if (any(Messungen_data[,reqColData$value] == BGchar)) {
           column <- Messungen_data[,reqColData$value]
@@ -546,14 +583,14 @@ observeEvent(input$storeDBData, {
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-
+        
         if (any(Messungen_data[,reqColData$value] == NGchar)) {
           column <- Messungen_data[,reqColData$value]
           column[column == NGchar] <- NGencode
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-
+        
         #
         # Convert "," decimal separator to system separator
         #
@@ -571,10 +608,10 @@ observeEvent(input$storeDBData, {
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-
+        
         #convert value column to numeric values
         Messungen_data[,reqColData$value] <- as.numeric(Messungen_data[,reqColData$value])
-
+        
         # notes
         # - Sensor: lab (kommen aus der Probe: reqColProbe$LabName, reqColProbe$LabId) + parameter (observableProperty.identifier)
         # - obsProp: parameter (observableProperty.identifier)
@@ -583,13 +620,13 @@ observeEvent(input$storeDBData, {
         # get sensor information
         probenMetadata <- queryProbenMetadata(Messungen_data, db)
         progress$inc(1)
-
+        
         #
         # get observed property information
         #
         observedproperties <- queryParameter(Messungen_data, db)
         progress$inc(1)
-
+        
         #
         # get PNS and Ort
         #
@@ -622,8 +659,8 @@ observeEvent(input$storeDBData, {
                            SELECT DISTINCT probe.pns_id
                            FROM probe
                            WHERE probe.identifier IN ('",
-                            probenQuerySection,
-                            "')
+                           probenQuerySection,
+                           "')
                          )
                          SELECT
                            my_pns_id.pns_id,
@@ -640,7 +677,7 @@ observeEvent(input$storeDBData, {
                            my_pns_id.pns_id = featureofinterest.featureofinterestid")
         features <- dbGetQuery(db, pnsQuery)
         progress$inc(1)
-
+        
         feedTmpConfigDirectory <- tempdir()
         #
         # Create global CSV file
@@ -650,14 +687,14 @@ observeEvent(input$storeDBData, {
         # Create the global configuraton file
         #
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
-
+        
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
-
+        
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
         for (i in 1:nrow(Messungen_data)) {
           row <- Messungen_data[i,]
-
+          
           #
           # Fill probe_parameter table
           # 1        2         3    4       5  6
@@ -696,7 +733,7 @@ observeEvent(input$storeDBData, {
                                             RETURNING unitid as unit_id
                                           )")
           }
-
+          
           query <- paste0("WITH query_probe_id AS (
                       SELECT id as probe_id
                       FROM probe
@@ -717,30 +754,30 @@ observeEvent(input$storeDBData, {
                         DO UPDATE SET
                             pp_unit = (SELECT unit_id FROM insert_unit),
                               bg = ", ifelse (is.null(row[reqColData$bg]) || is.na(row[reqColData$bg]) || row[reqColData$bg] == '', "NULL", row[reqColData$bg]),
-                              ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
+                          ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           dbExecute(db, query)
           newDataRow <- c(row[reqColData$obsProp], # Parameter
-                              row[reqColData$value], # Wert
-                              row[reqColData$uom], # Einheit
-                              paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_", observedproperties[is.element(observedproperties$identifier, row[reqColData$obsProp]),"identifier"]), # SensorId
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"]  # Lon
-                              )
+                          row[reqColData$value], # Wert
+                          row[reqColData$uom], # Einheit
+                          paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",
+                                 observedproperties[is.element(observedproperties$identifier, row[reqColData$obsProp]),"identifier"]), # SensorId
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"]  # Lon
+          )
           feedDataContent <- rbind(feedDataContent, newDataRow)
-
+          
           progress$inc(1)
         }
         
         progress$inc(1)
         sosCacheUpdate(wait=1)
-        progress$inc(1)
-
+        
         #
         # write global csv file
         #
@@ -748,14 +785,13 @@ observeEvent(input$storeDBData, {
         write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
         print("Done!")
         progress$inc(1)
-
+        
         if (!file.exists(feederPath)) {
           print(paste("Feeder path does not exist:", feederPath))
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
-            
-            print(paste("Start feeding data values"))
+            print("Start feeding data values")
             print(paste("Feeding config: ", feedConf))
             print(paste("CsvFile: ", feedCSV))
             
@@ -788,11 +824,11 @@ observeEvent(input$storeDBData, {
             print("Done!")
             progress$inc(1)
             result <- read_lines(logFile, locale = locale())
-
+            
             if (length(grep("Failed observations: 0", result, value = TRUE)) == 0) {
               print("Errors occured during import! Consult importer logs.")
               content <- div("Some Text hier",
-                pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
+                             pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
               showModalMessage(title="Fehler", content, size = "l")
             } else {
               content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
