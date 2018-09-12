@@ -1,25 +1,25 @@
-ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisvolumen;Ereignisvolumeneinheit;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
-PRO-001;KAM_BW_BON_Ablauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
-PRO-002;KAM_BW_EPP_Zulauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;5;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
-PRO-003;KAM_BW_EPP_Ablauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;24;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
-PRO-004;KAM_BW_EPP_PS;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
-PRO-005;KAM_BW_EPP_USS;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
+ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisdauereinheit;Ereignisvolumen;Ereignisvolumeneinheit;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
+PRO-001;KAM_BW_BON_Ablauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;Tage;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
+PRO-002;KAM_BW_EPP_Zulauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;5;Tage;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
+PRO-003;KAM_BW_EPP_Ablauf;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;24;Tage;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
+PRO-004;KAM_BW_EPP_PS;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;Tage;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
+PRO-005;KAM_BW_EPP_USS;18-07-2018 12:00;15-01-2018 12:00;17-01-2018 12:00;25;Tage;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
 
-PRO-011;KAM_BW_BON_Ablauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
-PRO-012;KAM_BW_EPP_Zulauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;5;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
-PRO-013;KAM_BW_EPP_Ablauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;24;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
-PRO-014;KAM_BW_EPP_PS;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
-PRO-015;KAM_BW_EPP_USS;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
+PRO-011;KAM_BW_BON_Ablauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;Tage;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
+PRO-012;KAM_BW_EPP_Zulauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;5;Tage;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
+PRO-013;KAM_BW_EPP_Ablauf;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;24;Tage;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
+PRO-014;KAM_BW_EPP_PS;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;Tage;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
+PRO-015;KAM_BW_EPP_USS;19-07-2018 12:00;15-02-2018 12:00;17-02-2018 12:00;25;Tage;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
 
-PRO-021;KAM_BW_BON_Ablauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
-PRO-022;KAM_BW_EPP_Zulauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;5;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
-PRO-023;KAM_BW_EPP_Ablauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;24;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
-PRO-024;KAM_BW_EPP_PS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
-PRO-025;KAM_BW_EPP_USS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
-STA-2016-KAM_BW_EPP;KAM_BW_EPP_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-EPP-2016
-STA-2016-KAM_NW_BHK;KAM_NW_BHK_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BHK-2016
-STA-2016-KAM_BY_BOB;KAM_BY_BOB_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BOB-2016
-STA-2016-KAM_BW_BON;KAM_BW_BON_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BON-2016
-STA-2016-KAM_SL_BRE;KAM_SL_BRE_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BRE-2016
-STA-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-HBR-2016
-KOM-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;;;;Kommunaleskataster;Stammdaten;;;Kommune;Kom-HBR-2016
+PRO-021;KAM_BW_BON_Ablauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;Tage;52;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123
+PRO-022;KAM_BW_EPP_Zulauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;5;Tage;542;m³;RW;automatischer Probenehmer;24h-Mischprobe;7;l;Lab1;Lab1-124
+PRO-023;KAM_BW_EPP_Ablauf;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;24;Tage;3425;m³;TW;Feststoffsammler;Homogenisierte Mischprobe;2;l;Lab2;Lab2-005
+PRO-024;KAM_BW_EPP_PS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;Tage;152;m³;TW;Feststoffsammler;Überstandswasser;2;l;Lab2;Lab2-006
+PRO-025;KAM_BW_EPP_USS;20-07-2018 12:00;15-03-2018 12:00;17-03-2018 12:00;25;Tage;525;m³;TW;Feststoffsammler;Feststoffprobe;15;l;Lab2;Lab2-007
+STA-2016-KAM_BW_EPP;KAM_BW_EPP_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-EPP-2016
+STA-2016-KAM_NW_BHK;KAM_NW_BHK_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BHK-2016
+STA-2016-KAM_BY_BOB;KAM_BY_BOB_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BOB-2016
+STA-2016-KAM_BW_BON;KAM_BW_BON_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BON-2016
+STA-2016-KAM_SL_BRE;KAM_SL_BRE_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-BRE-2016
+STA-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Jahresbericht;Stammdaten;;;Steckbrief;StBr-HBR-2016
+KOM-2016-KAM_HB_HBR;KAM_HB_HBR_Gesamt;01-01-2017 12:00;01-01-2016 00:00;31-12-2016 23:59;365;Tage;;;;Kommunaleskataster;Stammdaten;;;Kommune;Kom-HBR-2016
