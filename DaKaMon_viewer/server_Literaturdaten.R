@@ -91,24 +91,26 @@ litDf<- reactive({
   db <- connectToDB()
   tryCatch({
   
-  # Nur Pub and Lit Spaltename
-  pubPubMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pub')"))
-  LitLitMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('lit')"))
-  
-  # Add Prefix zu Spaltennamen
-  pubColColumns <- paste0("pub.", grep("col*", pubPubMetaData$columnid, value = TRUE))
-  litColColumns <- paste0("lit.", grep("col*", LitLitMetaData$columnid, value = TRUE))
-  
-  query <-  paste0("SELECT DISTINCT lit.id, pub.pub_id, lit.thematik, op.identifier As param_id, foi.identifier As pns_id, ",
-                   paste0(litColColumns, collapse=", "), ", ", paste0(pubColColumns, collapse=", "),
-                              " FROM literatur AS lit
-                   LEFT OUTER JOIN observableproperty AS op ON (op.observablepropertyid = lit.param_id)
-                   LEFT OUTER JOIN publikation AS pub ON (pub.id = lit.publikation_id)
-                   LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = lit.pns_id)")
-  
     # Alle Pub/lit/Global Spaltennamen
     pubLitMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pub', 'lit', 'global')"))
     
+    # Nur Pub and Lit Spaltename
+    pubPubMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pub')"))
+    LitLitMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('lit')"))
+    
+    # Add Prefix zu Spaltennamen
+    litColColumns <- grep("col*", LitLitMetaData$columnid, value = TRUE)
+    pubColColumns <- grep("col*", pubPubMetaData$columnid, value = TRUE)
+    qLitColColumns <- ifelse(length(litColColumns) > 0, paste0("lit.", litColColumns), NA_character_)
+    qPubColColumns <- ifelse(length(pubColColumns) > 0, paste0("pub.", pubColColumns), NA_character_)
+    
+    query <-  paste0("SELECT DISTINCT lit.id, pub.id, lit.thematik, op.identifier As param_id, foi.identifier As pns_id",
+                     ifelse(is.na(qLitColColumns), "", paste0(",", paste0(qLitColColumns, collapse=", "))),
+                     ifelse(is.na(qPubColColumns), "", paste0(",", paste0(qPubColColumns, collapse=", "))),
+                                " FROM literatur AS lit
+                     LEFT OUTER JOIN observableproperty AS op ON (op.observablepropertyid = lit.param_id)
+                     LEFT OUTER JOIN referenz AS pub ON (pub.id = lit.referenz_id)
+                     LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = lit.pns_id)")
     
     if (!is.null(input$litPar))
       query <- paste0(query," WHERE op.identifier IN (", paste0("'", input$litPar, "'" , collapse=", ") ,")")
