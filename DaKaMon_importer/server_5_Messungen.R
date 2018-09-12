@@ -242,9 +242,9 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.pns_id,
                                         foi.identifier AS pnsid,
                                         pro.lab_id AS sensorid,
-                                        to_char(pro.resulttime::timestamptz, '",  dbTimestampPattern, "') AS resultTime,
-                                        to_char(pro.phenomenontimestart::timestamptz, '",  dbTimestampPattern, "') AS phenTimeStart,
-                                        to_char(pro.phenomenontimeend::timestamptz, '",  dbTimestampPattern, "') AS phenTimeEnd
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamp), '",  dbTimestampPattern, "') AS resultTime,
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamp), '",  dbTimestampPattern, "') AS phenTimeStart,
+                                        to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamp), '",  dbTimestampPattern, "') AS phenTimeEnd
                                       FROM
                                         probe AS pro
                                       LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
