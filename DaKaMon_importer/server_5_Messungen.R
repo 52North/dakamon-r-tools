@@ -237,7 +237,7 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.identifier AS probeid,
                                         pro.pns_id,
                                         foi.identifier AS pnsid,
-                                        pro.lab_id AS sensorid,
+                                        pro.lab AS sensorid,
                                         to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resultTime,
                                         to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamptz), '",  dbTimestampPattern, "') AS phenTimeStart,
                                         to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamptz), '",  dbTimestampPattern, "') AS phenTimeEnd
@@ -342,6 +342,7 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                             param.name IN ('",
                                            parameterQuerySection,
                                            "')")
+    cat(probenParameterMetadataQuery)
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -457,20 +458,27 @@ observeEvent(input$checkDBData, {
     # TODO check for existing observations
     observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
 
+    if (nrow(observationCharacteristics) > 0) {
     # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
     # SELECT observation.identifier FROM observations where observation.identifier IN (^ )
     # save result list in inCSVData$obsIdsInDB
 
     # TODO continue to implemenmt the checks
 
-    probenMetadata$resulttime <- as.numeric(strptime(probenMetadata$resulttime, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
-    probenMetadata$phentimestart <- as.numeric(strptime(probenMetadata$phentimestart, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
-    probenMetadata$phentimeend <- as.numeric(strptime(probenMetadata$phentimeend, format=RtimestampPattern, tz=dbTimeZoneIdentifier))
+    observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
+                                                                 format=RtimestampPattern,
+                                                                 tz=dbTimeZoneIdentifier))
+    observationCharacteristics$phentimestart <- as.numeric(strptime(observationCharacteristics$phentimestart,
+                                                                    format=RtimestampPattern, 
+                                                                    tz=dbTimeZoneIdentifier))
+    observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend, 
+                                                                  format=RtimestampPattern, 
+                                                                  tz=dbTimeZoneIdentifier))
 
     inCSVData$obsIdsInDB <- paste0(probenMetadata$phentimestart, probenMetadata$phentimestart, "/", probenMetadata$phentimeend, probenMetadata$pnsid)
 
     paste0(probenMetadata$resulttime, paste(probenMetadata$phentimestart,probenMetadata$phentimeend, sep="/") )
-
+  }
     checkDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -688,7 +696,7 @@ observeEvent(input$storeDBData, {
         progress$inc(1)
 
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
-        for (i in 1:nrow(Messungen_data)) {
+        for (i in 1:nrow(Messungen_data)) { # i <- 1
           row <- Messungen_data[i,]
 
           #
@@ -738,7 +746,7 @@ observeEvent(input$storeDBData, {
                     query_parameter_id AS (
                       SELECT observablepropertyid as para_id
                       FROM observableproperty
-                        WHERE identifier = '", row[reqColData$obsProp], "' ),",
+                        WHERE name = '", row[reqColData$obsProp], "' ),",
                           insertUnitQuery,
                           " INSERT INTO probe_parameter
                     SELECT query_probe_id.probe_id, query_parameter_id.para_id, insert_unit.unit_id, ",
@@ -753,19 +761,19 @@ observeEvent(input$storeDBData, {
                               ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
+          cat(query)
           dbExecute(db, query)
           newDataRow <- c(row[reqColData$obsProp], # Parameter
-                              row[reqColData$value], # Wert
-                              row[reqColData$uom], # Einheit
+                          row[reqColData$value], # Wert
+                          row[reqColData$uom], # Einheit
                           paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",
-                                 observedproperties[is.element(observedproperties$identifier, row[reqColData$obsProp]),"identifier"]), # SensorId
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
-                              probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
-                              features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"]  # Lon
-                              )
+                                 observedproperties[min(which(is.element(observedproperties$name, row[reqColData$obsProp]))),"identifier"]), # SensorId
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"])  # Lon
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
           progress$inc(1)

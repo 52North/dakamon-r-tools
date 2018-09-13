@@ -75,7 +75,8 @@ observeEvent(input$checkDBParameter, {
     # get all PARs from the DB that have any of the identifiers in the CSV
     if (length(inCSVPAR$df) > 0) {
       PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
-                                     paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"),"')"))
+                                     paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"), "') OR name IN ('",
+                                     paste(inCSVPAR$df[,reqColPAR$name], collapse="', '"), "')"))
 
       if (!is.null(PARInDB) && length(PARInDB) > 0 && nrow(PARInDB) > 0) {
         checkDBPAR$txt <- paste("Folgende Parameter sind bereits in der DB: <ul><li>",
