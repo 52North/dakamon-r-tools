@@ -328,7 +328,8 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                             to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimestart::timestamptz), '",  dbTimestampPattern, "') AS phenTimeStart,
                                             to_char(timezone('",  dbTimeZoneIdentifier,"', pro.phenomenontimeend::timestamptz), '",  dbTimestampPattern, "') AS phenTimeEnd,
                                             param.identifier AS paramid,
-                                            foi.identifier AS foiid
+                                            foi.identifier AS foiid,
+                                            pro.lab AS lab
                                             FROM
                                             probe_parameter pp
                                             LEFT OUTER JOIN probe AS pro ON (pro.id = pp.probe_id)
@@ -430,6 +431,9 @@ output$dataValidationOut <- renderUI({
 observeEvent(input$checkDBData, {
   db <- connectToDB()
   checkDBData$txt <- NULL
+  checkDBData$err <- FALSE
+  checkDBData$checked <- FALSE
+  
   tryCatch({
 
     # check whether the ProbeIDs exist
@@ -441,6 +445,8 @@ observeEvent(input$checkDBData, {
       checkDBData$txt <- paste("Folgende Proben fehlen in der DB: <ul><li>",
                                paste0(uniqueInCSVDataProbeId[which(is.na(matchProbeId))], collapse="</li><li>"),
                                "</li></ul>")
+      
+      checkDBData$err <- TRUE
     }
 
     # check whether the Parameter exist
@@ -453,6 +459,7 @@ observeEvent(input$checkDBData, {
                                paste("Folgende Parameter fehlen in der DB: <ul><li>",
                                      paste0(uniqueInCSVDataParId[which(is.na(matchParId))], collapse="</li><li>"),
                                      "</li></ul>"))
+      checkDBData$err <- TRUE
     }
 
     # TODO check for existing observations
@@ -475,10 +482,29 @@ observeEvent(input$checkDBData, {
                                                                   format=RtimestampPattern, 
                                                                   tz=dbTimeZoneIdentifier))
 
-    inCSVData$obsIdsInDB <- paste0(probenMetadata$phentimestart, probenMetadata$phentimestart, "/", probenMetadata$phentimeend, probenMetadata$pnsid)
-
-    paste0(probenMetadata$resulttime, paste(probenMetadata$phentimestart,probenMetadata$phentimeend, sep="/") )
-  }
+    inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart, 
+                                   observationCharacteristics$phentimestart, 
+                                   "/", 
+                                   observationCharacteristics$phentimeend, 
+                                   observationCharacteristics$foiid,
+                                   observationCharacteristics$lab,
+                                   "_",
+                                   observationCharacteristics$paramid)
+    
+    inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
+               paste(inCSVData$obsIdsInCSV, collapse="', '"),
+               "')"))
+    
+    # TODO: check for mismatches in probe_parameter and observations??? Problem: bricht der Import ab, ist die 
+    # Tabelle abe schon gefüllt wird versucht die DAten erneut einzufügen -> FEhler
+    
+    if (nrow(inCSVData$obsIdsInDB) > 0) {
+      checkDBData$txt <- paste(checkDBData$txt,
+                               paste("Folgende Messungen sind bereits in der DB: <ul><li>",
+                                     paste0(inCSVData$obsIdsInDB, collapse="</li><li>"),
+                                     "</li></ul>"))
+    }
+    }
     checkDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 }, ignoreInit=TRUE)
@@ -486,29 +512,19 @@ observeEvent(input$checkDBData, {
 
 output$dataDBConsistencyOut <- renderUI({ #
   if (checkDBData$checked) {
-    if (!is.null(checkDBData$txt)) {
-      return( HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html")))
-    }
-
-    # if (all(inCSVData$obsInDB < 2)) {
-    #   if (!any(inCSVData$obsInDB > 0) || input$dataOW) {
-    #     actionButton("storeDBData", "Speichere in DB!")
-    #   } else {
-    #     HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Einige Daten sind bereits in der DB (siehe gelbe Zellen).</div></html>")
-    #   }
-    # } else {
-    #   if (any( inCSVData$obsInDB == 2)) {
-    #     HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Bestimmungsgrenze und/oder Maßeinheit sind in csv und DB unterschiedlich (siehe rote Zellen).</div></html>")
-    #   } else {
-    #     if (input$dataOW) {
+    if (checkDBData$err == TRUE) {
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html"))
+    } else {
+      if (!is.null(checkDBData$txt)) {
+        if (input$dataOW) {
+          actionButton("storeDBData", "Speichere in DB!")
+        } else {
+          HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html"))
+        }
+      } else {
         actionButton("storeDBData", "Speichere in DB!")
-  #       } else {
-  #         HTML("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">Elementgruppen sind in csv und DB unterschiedlich (siehe blaue Zellen).</div></html>")
-  #       }
-  #     }
-  #   }
-  # } else {
-  #   HTML("")
+      }
+    }
   }
 })
 
