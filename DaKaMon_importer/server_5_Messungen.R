@@ -272,7 +272,7 @@ queryParameter <- function(Messungen_data, db) {
                                       FROM
                                         observableproperty
                                       WHERE
-                                        identifier IN ('",
+                                        name IN ('",
                                       parameterQuerySection,
                                       "')")
     observedproperties <- dbGetQuery(db, observedpropertiesQuery)
@@ -322,7 +322,6 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
     probenQuerySection <- paste0(unique(proben), collapse = "','")
     parameter <- Messungen_data[,reqColData$obsProp]
     parameterQuerySection <- paste0(unique(parameter), collapse = "','")
-    # if (obsid == proId+Par) TODO drop timestamps and adjust logic below in the DB checks
     probenParameterMetadataQuery <- paste0("SELECT
                                             pro.identifier As probeid,
                                             to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resultTime,
@@ -340,7 +339,7 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                            probenQuerySection,
                                            "')
                                             AND
-                                            param.identifier IN ('",
+                                            param.name IN ('",
                                            parameterQuerySection,
                                            "')")
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
@@ -429,7 +428,7 @@ output$dataValidationOut <- renderUI({
 
 observeEvent(input$checkDBData, {
   db <- connectToDB()
-
+  checkDBData$txt <- NULL
   tryCatch({
 
     # check whether the ProbeIDs exist
@@ -446,8 +445,8 @@ observeEvent(input$checkDBData, {
     # check whether the Parameter exist
     observedproperties <- queryParameter(inCSVData$df, db)
 
-    uniqueInCSVDataParId <- unique(inCSVData$df[[reqColData$obsProp]])
-    matchParId <- match(uniqueInCSVDataParId, observedproperties$identifier)
+    uniqueInCSVDataParId <- unique(inCSVData$df[,reqColData$obsProp])
+    matchParId <- match(uniqueInCSVDataParId, observedproperties$name)
     if (any(is.na(matchParId))) {
       checkDBData$txt <- paste(checkDBData$txt,
                                paste("Folgende Parameter fehlen in der DB: <ul><li>",
