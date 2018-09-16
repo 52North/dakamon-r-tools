@@ -148,7 +148,7 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(
                                          dataTableOutput('tableReferenz'),
                                          width = mainPanelWidth)
-                                     ))),
+                                     )),
                             
                             tabPanel(litStep2$title,
                                      useShinyjs(),
@@ -167,7 +167,7 @@ ui <- navbarPage("Datenimport",
                                          width = sideBarWidth),
                                        mainPanel(dataTableOutput('tableLiteratur'),
                                                  width = mainPanelWidth)
-                                     )),
+                                     ))),
                  
                  ## Dateien
                  tabPanel(filesTab$title,

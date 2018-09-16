@@ -30,7 +30,7 @@ if (nrow(ort) > 0) {
       if (Sys.info()["sysname"] == "Windows") {
         selectedThematik <- stri_enc_tonative(input$ews)
       }
-      query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, ", paste0(ortColColumns, collapse=", "),
+      query <- paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, od.Thematik, lat, lon, ", paste0(ortColColumns, collapse=", "),
                       " FROM featureofinterest foi
                                        RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
                                        WHERE foi.featureofinterestid IN (",
@@ -45,21 +45,31 @@ if (nrow(ort) > 0) {
       ortData
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
-
+  
   output$tableOrt  <- renderDT({
-    showTab <- ortData()[,-1]
-
-    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
-    showHead <- paste0(showHead, "</span>")
-
-    datatable(showTab, colnames = showHead,
-              filter="top",
-              options = list(paging=FALSE, dom = 'Brt',
-                             language=list(url = lngJSON)),
-              escape=FALSE)
+    if (nrow(ortData()) > 0) {
+      showTab <- ortData()[,-1]
+      
+      showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+      
+      showHead <- paste0(showHead, "</span>")
+      
+      dt <- datatable(showTab, colnames = showHead,
+                      filter="top",
+                      options = list(paging=FALSE, dom = 'Brt',
+                                     language=list(decimal=",",
+                                                   url = lngJSON)),
+                      escape=FALSE)
+      colNoneLatLon <- colnames(showTab)[!colnames(showTab)  %in% c("lat", "lon")]
+      numCol <- colNoneLatLon[which(as.logical(sapply(showTab[,colNoneLatLon],is.numeric)))]
+      numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+      numCol <- numCol[!is.na(numCol)]
+      dt <- formatRound(dt, c("lat", "lon"), digits=6, dec.mark=",", mark=".")
+      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+      dt
+    }
   })
-
+  
   sOrt <- reactive({
     sr <- input$tableOrt_rows_selected
     if(is.null(sr)) {
@@ -68,7 +78,7 @@ if (nrow(ort) > 0) {
       sort(sr)
     }
   })
-
+  
   output$selTextOrt <- renderText({
     if (length(sOrt()) == 1) {
       paste("Zeile", sOrt(), "ist ausgewählt.")
@@ -77,22 +87,22 @@ if (nrow(ort) > 0) {
     }
   })
 
-  output$exportKaCSV <- downloadHandler(
+  output$exportOrtCSV <- downloadHandler(
     filename = function() {
-      paste("Orte-", Sys.Date(), ".csv", sep="")
+      paste("Ort-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(ortData[sOrt(),-1]), file, sep = ";",
+      write.table(isolate(ortData()[sOrt(),-1]), file, sep = ";", dec=",",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
 
-  output$exportKaRData <- downloadHandler(
+  output$exportOrtRData <- downloadHandler(
     filename = function() {
-      paste("Orte-", Sys.Date(), ".RData", sep="")
+      paste("Ort-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(ortData[sOrt(),-1])
+      df <- isolate(ortData()[sOrt(),-1])
       save(df, file = file)
     }
   )
@@ -172,19 +182,19 @@ if(!is.null(ortData)) {
     }
   })
 
-  output$exportPnsCSV <- downloadHandler(
+  output$exportPNSCSV <- downloadHandler(
     filename = function() {
-      paste("Probenahmestellen-", Sys.Date(), ".csv", sep="")
+      paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";",
+      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
 
-  output$exportPnsRData <- downloadHandler(
+  output$exportPNSRData <- downloadHandler(
     filename = function() {
-      paste("Probenahmestellen-", Sys.Date(), ".RData", sep="")
+      paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
       df <- isolate(pnsData()[sPNS(),])
@@ -506,10 +516,9 @@ output$selTextDaten <- renderText({
 output$exportDataCSV <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
+    df <- isolate(data()$resDf[selData(),])
 
-    df <- data()$resDf[selData(),]
-
-    write.table(isolate(df), file, sep = ";",
+    write.table(df, file, sep = ";", dec = ",",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
 )
@@ -517,16 +526,8 @@ output$exportDataCSV <- downloadHandler(
 output$exportDataRData <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".RData", sep=""),
   content = function(file) {
-    df <- data()$resDf[selData(),]
-
-    if (input$includeMetaHead) {
-      dfCol <- colnames(df)
-      df <- rbind(setNames(data()[["uom"]], dfCol),
-                  setNames(data()[["bg"]], dfCol),
-                  setNames(data()[["stgr"]], dfCol),
-                  df)
-    }
-
+    df <- isolate(data()$resDf[selData(),])
+    
     save(df, file = file)
   }
 )

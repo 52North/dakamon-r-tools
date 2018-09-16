@@ -462,15 +462,10 @@ observeEvent(input$checkDBData, {
       checkDBData$err <- TRUE
     }
 
-    # TODO check for existing observations
     observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
 
     if (nrow(observationCharacteristics) > 0) {
     # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
-    # SELECT observation.identifier FROM observations where observation.identifier IN (^ )
-    # save result list in inCSVData$obsIdsInDB
-
-    # TODO continue to implemenmt the checks
 
     observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
                                                                  format=RtimestampPattern,
@@ -494,9 +489,6 @@ observeEvent(input$checkDBData, {
     inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
                paste(inCSVData$obsIdsInCSV, collapse="', '"),
                "')"))
-    
-    # TODO: check for mismatches in probe_parameter and observations??? Problem: bricht der Import ab, ist die 
-    # Tabelle abe schon gefüllt wird versucht die DAten erneut einzufügen -> FEhler
     
     if (nrow(inCSVData$obsIdsInDB) > 0) {
       checkDBData$txt <- paste(checkDBData$txt,

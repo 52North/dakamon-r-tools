@@ -44,8 +44,8 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                         tags$div('Lade ... ')
                                       ),
                                       textOutput("selTextOrt"),
-                                      downloadButton("exportKaCSV", "Export als csv-Datei."),
-                                      downloadButton("exportKaRData", "Export als RData-Datei."),
+                                      downloadButton("exportOrtCSV", "Export als csv-Datei."),
+                                      downloadButton("exportOrtRData", "Export als RData-Datei."),
                                       br(),
                                       actionButton("fromOrtToPNS", "Weiter...")),
                              ## PNS
@@ -57,8 +57,8 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                  tags$div('Lade ... ')
                                ),
                                textOutput("selTextPNS"),
-                               downloadButton("exportKaVsCSV", "Export als csv-Datei."),
-                               downloadButton("exportKaVsRData", "Export als RData-Datei."),
+                               downloadButton("exportPNSCSV", "Export als csv-Datei."),
+                               downloadButton("exportPNSRData", "Export als RData-Datei."),
                                br(),
                                actionButton("fromPNStoMessdaten", "Weiter...")),
                              ## Messdaten
