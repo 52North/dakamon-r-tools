@@ -65,7 +65,8 @@ if (nrow(ort) > 0) {
       numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
       numCol <- numCol[!is.na(numCol)]
       dt <- formatRound(dt, c("lat", "lon"), digits=6, dec.mark=",", mark=".")
-      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+      if (length(numCol) > 0)
+        dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
       dt
     }
   })
@@ -131,7 +132,7 @@ if(!is.null(ortData)) {
         pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
       }
 
-      pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id",
+      pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, lat, lon",
                                    paste0(pnsColColumns),
                                    " FROM featureofinterest foi
                                  RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
@@ -148,17 +149,25 @@ if(!is.null(ortData)) {
 
 
   output$tablePNS <- renderDT({
-
+    
     showTab <- pnsData()[,-1]
-
+    
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
+    
     showHead <- paste0(showHead, "</span>")
-
-    datatable(showTab, colnames = showHead, filter="top",
-              options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
-                             language=list(url = lngJSON)),
-              escape=FALSE)
+    
+    dt <- datatable(showTab, colnames = showHead, filter="top",
+                    options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
+                                   language=list(url = lngJSON)),
+                    escape=FALSE)
+    colNoneLatLon <- colnames(showTab)[!colnames(showTab)  %in% c("lat", "lon")]
+    numCol <- colNoneLatLon[which(as.logical(sapply(showTab[,colNoneLatLon],is.numeric)))]
+    numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+    numCol <- numCol[!is.na(numCol)]
+    dt <- formatRound(dt, c("lat", "lon"), digits=6, dec.mark=",", mark=".")
+    if (length(numCol) > 0)
+      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+    dt
   })
 
   sPNS <- reactive({
@@ -413,53 +422,20 @@ output$tableDaten <- renderDT({
 
   showTab <- isolate(data()[["resDf"]])
 
-  # isolate({
-  #   showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
-
-  # if (!is.null(data()[["uom"]])) {
-  #   showUoM <- sapply(data()[["uom"]], function(x) {
-  #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-  #       paste0(" [",x,"]")
-  #     } else {
-  #       ""
-  #     }
-  #   })
-  #   showHead <- paste0(showHead, showUoM)
-  # }
-  #
-  # if (!is.null(data()[["bg"]])) {
-  #   showBg <- sapply(data()[["bg"]], function(x) {
-  #     if (!is.na(x) & nchar(x) > 0 & x != "NA") {
-  #       paste0("<br> BG: ", x)
-  #     } else {
-  #       "<br>"
-  #     }
-  #   })
-  #   showHead <- paste0(showHead, showBg)
-  # }
-  #
-  # if (!is.null(data()[["stgr"]])) {
-  #   showStgr <- sapply(data()[["stgr"]], function(x) {
-  #     if (!is.na(x) & nchar(x) > 0  & x != "NA") {
-  #       paste0("<br>", x)
-  #     } else {
-  #       "<br>"
-  #     }
-  #   })
-  #   showHead <- paste0(showHead, showStgr)
-  # }
-
-  #   showHead <- paste0(showHead, "</span>")
-  # })
-
   if (!is.null(showTab)) {
-    # colnames(showTab) <- showHead
-    datatable(showTab, #colnames=showHead,
+    dt <- datatable(showTab, 
               filter="top",
               options=list(paging=FALSE,dom = 'Brt',
                            language=list(url = lngJSON)),
               escape=FALSE)
+    
+    numCol <- colnames(showTab)
+    numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
+    numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+    numCol <- numCol[!is.na(numCol)]
+    if (length(numCol) > 0)
+      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+    dt
   }
 })
 

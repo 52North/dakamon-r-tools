@@ -108,10 +108,14 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       ))),
                   tabPanel("Parameter anzeigen",
                            uiOutput("paramElemGroupInput"),
-                           DTOutput("tableParameter")),
+                           DTOutput("tableParameter"),
+                           downloadButton("exportParCSV", "Export als csv-Datei."),
+                           downloadButton("exportParRData", "Export als RData-Datei.")),
                   tabPanel("Proben anzeigen",
                            uiOutput("probenPNSInput"),
-                           DTOutput("tableProben")),
+                           DTOutput("tableProben"),
+                           downloadButton("exportProbeCSV", "Export als csv-Datei."),
+                           downloadButton("exportProbeRData", "Export als RData-Datei.")),
                   navbarMenu("Literaturdaten",
                              tabPanel("Parameter",
                                       uiOutput("litParamInput"),
@@ -129,7 +133,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       actionButton("fromPubToLit", "Weiter...")),
                              tabPanel("Literatur", # literatur
                                       uiOutput("litInput"),
-                                      DTOutput("tableLit")))
+                                      DTOutput("tableLit"),
+                                      downloadButton("exportLitCSV", "Export als csv-Datei."),
+                                      downloadButton("exportLitRData", "Export als RData-Datei.")))
 )
 
 server <- function(input, output, session) {

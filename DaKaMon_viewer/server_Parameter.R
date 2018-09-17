@@ -46,16 +46,45 @@ allParameter<- reactive({
     }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
-
 output$tableParameter  <- renderDT({
-    showTab <- allParameter()[,-1]
+  showTab <- allParameter()[,-1]
+  
+  showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+  
+  showHead <- paste0(showHead, "</span>")
+  
+  dt <- datatable(showTab,
+                  filter="top",
+                  options = list(paging=FALSE, dom = 'Brt',
+                                 language=list(url = lngJSON)),
+                  escape=FALSE)
+  
+  numCol <- colnames(showTab)
+  numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
+  numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+  numCol <- numCol[!is.na(numCol)]
+  if (length(numCol) > 0)
+    dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+  dt
+})
 
-    showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
+output$exportParCSV <- downloadHandler(
+  filename = function() {
+    paste("Parameter-", Sys.Date(), ".csv", sep="")
+  },
+  content = function(file) {
+    write.table(isolate(allParameter()), file, sep = ";", dec=",",
+                fileEncoding = "UTF-8", row.names = FALSE)
+  }
+)
 
-    showHead <- paste0(showHead, "</span>")
+output$exportParRData <- downloadHandler(
+  filename = function() {
+    paste("Parameter-", Sys.Date(), ".RData", sep="")
+  },
+  content = function(file) {
+    df <- isolate(allParameter())
+    save(df, file = file)
+  }
+)
 
-    datatable(showTab,
-                                   filter="top",
-                                   options = list(paging=FALSE, dom = 'Brt',
-                                                  language=list(url = lngJSON)),
-                                   escape=FALSE)})
