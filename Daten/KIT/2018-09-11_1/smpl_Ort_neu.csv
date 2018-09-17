@@ -1,0 +1,50 @@
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Thematik;Angeschlossenen_EW;GK;System;Einleitgewässer;Jahresabwassermenge_in_m3;Jahresschmutzwassermenge_in_m3;Fremdwasseranteil_in_prozent;Ausbaugröße_EW
+KAM_NW_BHK;Bergheim-Kenten;Bergheim;Im Rauland;;50127;NW;50.940534;6.656646;Kläranlage;107448;4b;MS;Erft;8864286;5122208;;120000
+KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48.286496;10.829547;Kläranlage;16000;1 bis 3;MS;Wertach;1689800;1270500;16;28000
+KAM_BW_BON;Bondorf-Hailfingen;Rottenburg-Hailfingen;Trailfingerstraße;73;72108;BW;48.534804;8.875112;Kläranlage;7180;4a;MS;Kochhartgraben;1026032;570043;49;9000
+KAM_SL_BRE;Brebach;Saarbrücken;Saargemünder Straße;20;66130;SL;49.210257;7.029439;Kläranlage;81400;4b;MS;Saarbach;12695725;7958000;56.2;135000
+KAM_HB_HBR;Bremen-Seehausen;Bremen;Seehauser Landstraße;99;28197;HB;53.114704;8.712631;Kläranlage;585000;5;MS;Weser;42986442;34901990;10;1000000
+KAM_SN_CHM;Chemnitz-Heinersdorf;Chemnitz;Heinersdorfer Straße;42;9114;SN;50.875033;12.899282;Kläranlage;249000;5b;MS;Chemnitz;28166336;18368625;22;400000
+KAM_HE_DAR;Darmstadt-Eberstadt;Darmstadt;Pfungstädterstraße;196;64297;HE;49.813901;8.620816;Kläranlage;30712;4a;MS;Modau;2208616;1373742;26;50000
+KAM_ST_DES;Dessau;Dessau-Roßlau;Kornhausstraße;147;6846;ST;51.856587;12.215265;Kläranlage;82940;5b;MS;Ellbe;6272800;549043;37.19;145000
+KAM_BY_DON;Donauwörth;Donauwörth;Im Weichselwörth;1;86609;BY;48.710889;10.796233;Kläranlage;28433;4a;MS;Donau;2516000;1781000;18;64000
+KAM_NW_DMD;Dortmund-Deusen;Dortmund;Deusener Straße;128;44369;NW;51.53937;7.425283;Kläranlage;140000;4b;MS;Emscher;52411843;37393690;35;70500
+KAM_HE_EIT;Eitratal;Eiterfeld;Waldwiese;2;36132;HE;50.790102;9.760803;Kläranlage;5050;5b;MS;Eitra;1244660;761190;79.5;7500
+KAM_NI_ELZ;Elze;Elze;Rieheweg;1;31008;NI;52.122484;9.750927;Kläranlage;9184;5b;MS;Riehe;852654;709262;;35000
+KAM_BW_EPP;Eppingen;Eppingen;Scheurlesstraße;52;75301;BW;49.141572;8.925;Kläranlage;18000;5a;MS;Elsenz;3514160;2732315;69.3;31350
+KAM_RP_ERD;Erdesbach;Erdesbach;Am Schleidchen;1;66887;RP;49.572925;7.451218;Kläranlage;12900;4b;MS;Glan;2001800;1047600;33;15900
+KAM_NW_ERF;Erftstadt;Erftstadt-Köttingen;Notweg;52;50374;NW;50.830994;6.793967;Kläranlage;49500;5a;MS;Erft;5080333;3609645;;70000
+KAM_BY_ERL;Erlangen;Erlangen;Bayreuther Straße;105;91054;BY;49.614225;10.999776;Kläranlage;163000;4a;MS;Regnitz;19303000;14243000;20.7;270000
+KAM_SH_EUT;Eutin;Eutin;Diekstauen;3;23701;SH;54.149112;10.60256;Kläranlage;18000;4b;TS;Ehmbruchgraben;1079508;1036551;10;35000
+KAM_BB_FRA;Frankfurt (Oder);Frankfurt (Oder);Mittelweg;8;15234;BB;52.36825;14.545055;Kläranlage;65258;5b;MS;Oder;4512193;3979825;18.46;120000
+KAM_NW_GEL;Geldern;Geldern;Am Mühlenwaßer;130;47608;NW;51.542391;6.314622;Kläranlage;78508;1 bis 3;TS;Niers;3751523;3308192;;149100
+KAM_NI_GIE;Giesen;Giesen;Görbleeksweg;;31180;NI;52.209516;9.890685;Kläranlage;11560;5a;TS;Innerste;592331;553198;;19500
+KAM_NW_HAT;Hattingen;Hattingen;Weg zum Waßerwerk;15-17;45525;NW;51.397103;7.167172;Kläranlage;74664;5b;MS;Ruhr;10329236;7248436;44;100000
+KAM_SH_HET;Hetlingen;Hetlingen;Am Heuhaufen;2;25491;SH;53.600815;9.625642;Kläranlage;460283;4b;MS;Elbe;32808900;28097820;14.36;860000
+KAM_BW_HCK;Hockenheim;Hockenheim;Mörscher Weg;7;68766;BW;49.329779;8.526928;Kläranlage;28000;5b;MS;Kraichach;3095000;2091000;12.6;55000
+KAM_TH_JEN;Jena;Jena;Brückenstraße;13;7743;TH;50.955358;11.628222;Kläranlage;109720;5b ;MS;Saale;6906556;5908764;10;210000
+KAM_BY_KRL;Karlstadt;Karlstadt;Gemünderner Straße;51;97753;BY;49.983211;9.765627;Kläranlage;19500;1 bis 3;MS;Main;1650000;565000;32;18000
+KAM_HE_KHN;Kirchhain;Kirchhain;Am AmöneburgerTor;30;35274;HE;50.815829;8.915578;Kläranlage;30698;4b;MS;Ohm;2088671;2699137;22.61;99000
+KAM_BY_KHL;Kirchhaslach;Kirchhaslach;Industriegebiet;21;87755;BY;48.159848;10.307332;Kläranlage;1017;5b;TS;Haselbach;49000;49000;;1500
+KAM_NW_KRE;Krefeld;Krefeld;Parkstraße;234;47829;NW;51.37804;6.634779;Kläranlage;236542;5b;MS;Rhein;29443577;21994940;;1200000
+KAM_NI_LAM;Lamspringe;Bad Salzdetfurth Östrum;Zuckerfabrik/Bergmühle;12;31162;NI;51.970583;10.021717;Kläranlage;3523;5b;MS;Lamme;397464;223378;62.5;4950
+KAM_BY_LAL;Landsberg/Lech;Landsberg am Lech;Dr. Friedrich Wacker Straße;1;86899;BY;48.065748;10.873992;Kläranlage;46000;4b;MS;Lech;4647000;388000;36;64000
+KAM_BY_LAU;Lauterhofen;Lauterhofen;Brunner Straße/Marktplatz;11;92283;BY;49.375737;11.614735;Kläranlage;3134;4b;MS;Lauterach;401676;185192;12;3800
+KAM_RP_MNZ;Mainz;Mainz (Mombach);Industriestraße;70;55120;RP;50.027435;8.217004;Kläranlage;208570;4b;MS;Rhein;21222659;;10;400000
+KAM_HE_MAR;Marburg-Cappel;Marburg;Umgehungsstraße;47;35043;HE;50.767417;8.758444;Kläranlage;77064;4a;MS;Lahn;9006756;7104110;30.9;155000
+KAM_SN_MKB;Markkleeberg (Leipzig);Markkleeberg;Am Wolfswinkel;2;4416;SN;51.293145;12.355724;Kläranlage;28000;1 bis 3;MS;Augraben;1792301;1505040;30.1;30000
+KAM_NW_MRL;Marl-Lenkerbeck;Marl;Hülsbergstraße;247;45772;NW;51.669391;7.153324;Kläranlage;20244;4a;MS;Lippe;2039620;;;30000
+KAM_BW_NAG;Nagold;Nagold;Calwer Straße;151;72202;BW;48.567617;8.717477;Kläranlage;39871;4b;MS;Nagold;7738835;1633532;68.9;65000
+KAM_BB_NRP;Neuruppin;Neuruppin;Am Eichenhain;5;16816;BB;52.950412;12.815753;Kläranlage;31757;5b;TS;Landwehrgraben + Rieselfelder;1665860;1354967;13;44000
+KAM_NI_NIE;Nienburg;Nienburg;Marschstraße;5;31582;NI;52.653213;9.207132;Kläranlage;32000;1 bis 3;MS;Weser;2785588;2288488;;160000
+KAM_NW_NHB;Nümbrecht Homburg-Bröl;Nümbrecht;Homburgerstraße;1A;51588;NW;50.913506;7.523802;Kläranlage;19347;4a;MS;Bröl;3355274;2036817;32;33000
+KAM_NI_OSN;Osnabrück-Eversberg;Osnabrück;Klöcknerstraße;6;49090;NI;52.298223;8.01812;Kläranlage;148388;4b;TS;Hase;18730927;16178227;13.6;250000
+KAM_SN_REI;Reichenbach;Reichenbach;Öhlischer Weg;4;2894;SN;51.136372;14.764276;Kläranlage;4681;4b;TS;Schwarzer Schöps;259323;211989;;8000
+KAM_NW_ROE;Rösrath;Rösrath;Hans Böckler Straße;19-21;51503;NW;50.88551;7.184716;Kläranlage;27309;5b;MS;Sülz;3607532;2368047;28;35833
+KAM_BE_RUH;Ruhleben;Berlin-Spandau;Freiheit;17;13597;BE;52.530221;13.230732;Kläranlage;1300000;5b;MS;Ruhlebener Altarm/Spree;85762972;77877689;;1600000
+KAM_BE_SLN;Schönerlinde;Berlin-Wandlitz;Mühlenbeckerstraße;8E;16348;BE;52.661164;13.415555;Kläranlage;800000;4b;MS;Blankenfelder Graben;41637926;38593741;;840000
+KAM_MV_SWR;Schwerin;Schwerin;Carl von Linde Straße;6;19061;MV;53.576729;11.40133;Kläranlage;125171;4b;MS;Schwarzer Graben ;7202343;6441537;6.1;200000
+KAM_BW_STR;Stuttgart-Mühlhausen;Stuttgart;Aldingerstraße;212;70378;BW;48.847707;9.24303;Kläranlage;1200000;5b;MS;Neckar;59375306;34730057;18;1200000
+KAM_BY_TRA;Traunstein;Traunstein;Empfing;24;83278;BY;47.886509;12.639719;Kläranlage;33000;4b;MS;Traun;5332000;1257000;25.7;99000
+KAM_BW_WAL;Waldangelbachtal;Angelbachtal;Mühlstraße;23;74918;BW;49.239991;8.763746;Kläranlage;11863;5b;MS;Waldangelbach;1302515;372981;52.3;16000
+KAM_NW_WEV;Wevelinghoven;Grevenbroich;An der Untermühle;95;41516;NW;51.123186;6.630759;Kläranlage;24500;5b;MS;Erft;1813668;;;27000

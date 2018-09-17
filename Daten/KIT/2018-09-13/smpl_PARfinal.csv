@@ -1,0 +1,88 @@
+ID;Name;Stoffgruppe;CAS_Nr.;Wasserlöslichkeit;Kow
+NH4;Ammonium;N-Verbindungen;14798-03-9;1;
+NO3;Nitrat;N-Verbindungen;14797-55-8;1;
+MYT;Methyltriclosan;Biozide/Transformationsprodukte;01.01.4640;0;
+ACN;Acenaphthen;PAK 16;83-32-9;0;
+ACY;Acenaphthylen;PAK 16;208-96-8;0;
+ANT;Anthracen;PAK 16;120-12-7;0;
+BaA;Benzo(a)anthracen;PAK 16;56-55-3;0;
+BaP;Benzo(a)pyren;PAK 16;50-32-8;0;
+BbF;Benzo(b)fluoranthen;PAK 16;205-99-2;0;
+BghiP;Benzo(ghi)perylen;PAK 16;191-24-2;0;
+BkF;Benzo(k)fluoranthen;PAK 16;207-08-9;0;
+Chr;Chrysen;PAK 16;218-01-9;0;
+DahA;Dibenz(ah)anthracen;PAK 16;53-70-3;0;
+Fluo;Fluoranthen;PAK 16;206-44-0;0;
+FL;Fluoren;PAK 16;86-73-7;0;
+IP;Indeno(1,2,3-cd)pyren;PAK 16;193-39-5;0;
+NAP;Naphthalin;PAK 16;91-20-3;0;
+Phe;Phenanthren;PAK 16;85-01-8;0;
+Pyr;Pyren;PAK 16;129-00-0;0;
+2ABM;2-Aminobenzimidazol;Biozide/Transformationsprodukte;934-32-7;;
+ACF;Aclonifen;Biozid;74070-46-5;0;4,04
+ATR;Atrazin;Biozid;1912-24-9;0;
+BOX;Bifenox;Biozid;42576-02-3;1;4,48
+BFM;Brodifacoum;Biozide/Transformationsprodukte;56073-10-0;0;
+CZIM;Carbendazim;Biozide/Transformationsprodukte;10605-21-7;0;
+CYT;Cybutryn;Biozid;28159-98-0;0;
+DEET;DEET;Biozide/Transformationsprodukte;134-62-3;0;
+DLV;Dichlorvos;Biozid;62-73-7;1;1,43
+DCPP;Diclosan;Biozide/Transformationsprodukte;3380-30-1;1;
+DTL;Difethialon;Biozide/Transformationsprodukte;104653-34-1;0;
+DIU;Diuron;Biozid;330-54-1;0;2,78
+IZL;Imazalil;Biozide/Transformationsprodukte;35554-44-0;1;
+IDD;Imidacloprid;Biozide/Transformationsprodukte;138261-41-3;1;
+ISO;Isoproturon;Biozid;34123-59-6;0;2,87
+MYD;Methyldiclosan;Biozide/Transformationsprodukte;07.07.4640;1;
+PMS;Permethrinsäure;Biozide/Transformationsprodukte;55701-05-8;;
+PLN;Prallethrin;Biozide/Transformationsprodukte;103065-19-6;0;
+PCL;Propiconazol;Biozide/Transformationsprodukte;60207-90-1;0;
+TCL;Tebuconazol;Biozide/Transformationsprodukte;107534-96-3;0;
+TBY;Terbutryn;Biozid;886-50-0;0;3,74
+TBD;Thiabendazol;Biozide/Transformationsprodukte;148-79-8;0;
+TCS;Triclosan;Biozide/Transformationsprodukte;3380-34-5;0;
+CYM;Cypermethrin, gesamt;Biozid;52315-07-8;0;6
+DIF;Dicofol;Biozid;115-32-2;0;4,28
+HTC;Heptachlor;Biozid;76-44-8;0;
+cHTCE;cis-Heptachlorepoxid;Biozid;1024-57-3;0;
+tHTCE;trans-Heptachlorepoxid;Biozid;28044-83-9;1;
+PMN;Permethrin;Biozide/Transformationsprodukte;52645-53-1;0;
+QOF;Quinoxyfen;Biozid;124495-18-7;0;
+4TOP;4-tert.-Oktylphenol;Phenole;140-66-9;0;
+4INP;4-iso-Nonylphenol;Phenole;84852-15-3;0;
+Pb;Blei;Schwermetalle;7439-92-1;0;
+Cd;Cadmium;Schwermetalle;7440-43-9;0;
+Ni;Nickel;Schwermetalle;7440-02-0;0;
+Hg;Quecksilber;Schwermetalle;7439-97-6;0;
+DEHP;Di-(2-ethylhexyl)phthalat;DEHP;117-81-7;0;
+PFBA;Perfluorbutanoat (PFBA);Perfluorierte Verbindungen;375-22-4;;
+PFPA;Perfluorpentanoat (PFPA);Perfluorierte Verbindungen;2706-90-3;;
+PFHxA;Perfluorhexanoat (PFHxA);Perfluorierte Verbindungen;307-24-4;;
+PFHpA;Perfluorheptanoat (PFHpA);Perfluorierte Verbindungen;375-85-9;;
+PFOA;Perfluoroctanoat (PFOA);Perfluorierte Verbindungen;335-67-1;;
+PFNA;Perfluornonanoat (PFNA);Perfluorierte Verbindungen;375-95-1;;
+PFDA;Perfluordecanoat (PFDA);Perfluorierte Verbindungen;335-76-2;;
+PFUnA;Perfluorundecanoat (PFUnA);Perfluorierte Verbindungen;2058-94-8;;
+PFDoA;Perfluordodecanoat (PFDoA);Perfluorierte Verbindungen;307-55-1;;
+PFBS;Perfluorbutansulfonat (PFBS);Perfluorierte Verbindungen;375-73-5;;
+PFPeS;Perfluorpentansulfonat (PFPeS);Perfluorierte Verbindungen;2706-91-4;;
+PFHxS;Perfluorhexansulfonat (PFHxS);Perfluorierte Verbindungen;355-46-4;;
+PFHpS;Perfluorheptansulfonat (PFHpS);Perfluorierte Verbindungen;375-92-8;;
+PFOS;Perfluoroctansulfonat (PFOS);Perfluorierte Verbindungen;1763-23-1;;
+PFDS;Perfluordecansulfonat (PFDS);Perfluorierte Verbindungen;335-77-3;;
+H4PFOS;1H,1H,2H,2H-Perfluoroctansulfonat (H4PFOS);Perfluorierte Verbindungen;27619-97-2;;
+12BTZ;1,2-Benzisothiazolinon;Biozide/Transformationsprodukte;2634-33-5;;
+2O3ITZ;2-Octyl-3-isothiazolinon;Biozide/Transformationsprodukte;26530-20-1;;
+123TZL;1,2,4-Triazol;Biozide/Transformationsprodukte;288-88-0;1;
+HBCDD;HBCDD (Summe);Industriechemikalien;3194-55-6;0;
+LF;Leitfähigkeit;Begleitparameter;;;
+pH;pH;Begleitparameter;;;
+AFS;AFS;Begleitparameter;;;
+GVafs;GVafs;Begleitparameter;;;
+Ks4,3;Ks4,3 ;Begleitparameter;;;
+Kb8,2;Kb8,2;Begleitparameter;;;
+CSB;CSB gesamt;Begleitparameter;;;
+CSBgel;CSB gelöst;Begleitparameter;;;
+2M4ITZ;2-Methyl-3-isothiazolinon;Biozid-Metaboliten ;2682-20-4 ;1;
+TBYDM;Terbutryn-Desmethyl;Biozid-Metaboliten ;;;
+TBYSF;Terbutryn-Sulfoxid;Biozid-Metaboliten ;;;

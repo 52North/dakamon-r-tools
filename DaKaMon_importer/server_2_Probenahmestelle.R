@@ -48,7 +48,7 @@ output$PNSValidationOut <- renderUI({
     if (is.null(valiPNS$txt)) {
       actionButton("checkDBPNS", "Prüfe Datenkonsistenz!")
     } else {
-      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPNS$txt, "</ul></div></html"))
+      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPNS$txt, "</ul></div></html>"))
     }
   } else {
     return()
@@ -108,7 +108,7 @@ output$PNSDBConsistencyOut <- renderUI({
     if (is.null(checkDBPNS$txt) || input$owPNS) {
       actionButton("storeDBPNS", "Einfügen in DB!")
     } else {
-      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPNS$txt, "</li></ul></div></html"))
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPNS$txt, "</li></ul></div></html>"))
     }
   } else {
     return()

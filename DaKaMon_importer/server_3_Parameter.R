@@ -49,7 +49,7 @@ output$PARValidationOut <- renderUI({
     if (is.null(valiPAR$txt)) {
       actionButton("checkDBParameter", "Prüfe Datenkonsistenz!")
     } else {
-      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPAR$txt, "</ul></div></html"))
+      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiPAR$txt, "</ul></div></html>"))
     }
   } else {
     return()
@@ -99,7 +99,7 @@ output$PARDBConsistencyOut <- renderUI({
     if (is.null(checkDBPAR$txt) || input$owPAR) {
       actionButton("storeDBParameter", "Einfügen in DB!")
     } else {
-      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPAR$txt, "</li></ul></div></html"))
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBPAR$txt, "</li></ul></div></html>"))
     }
   } else {
     return()

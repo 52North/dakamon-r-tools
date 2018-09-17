@@ -1,0 +1,50 @@
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Thematik;Angeschlossenen_EW;GK;Ausbaugröße_EW;System;Einleitgewässer;Jahresabwassermenge_in_m3;Jahresschmutzwassermenge_in_m3;Fremdwasseranteil_in_prozent;Flächenanteil_Mischsystem_in_prozent;Besondere_industrielle_Einleiter
+KAM_NW_BHK;Bergheim-Kenten;Bergheim;Im Rauland;;50127;NW;50,940534;6,656646;Kläranlage;107448;4b;120000;MS;Erft;8864286;5122208;;10;Glaswerk, Spaltwasser (ca. 250 m^3/a)
+KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48,286496;10,829547;Kläranlage;16000;1 bis 3;28000;MS;Wertach;1689800;1270500;16;28;"Behindertenheim mir erhöhter Medikamentenbelastung; Industrieschlachthof"
+KAM_BW_BON;Bondorf-Hailfingen;Rottenburg-Hailfingen;Trailfingerstraße;73;72108;BW;48,534804;8,875112;Kläranlage;7180;4a;9000;MS;Kochhartgraben;1026032;570043;49;50;Galvanikbetrieb
+KAM_SL_BRE;Brebach;Saarbrücken;Saargemünder Straße;20;66130;SL;49,210257;7,029439;Kläranlage;81400;4b;135000;MS;Saarbach;12695725;7958000;56,2;72;keine
+KAM_HB_HBR;Bremen-Seehausen;Bremen;Seehauser Landstraße;99;28197;HB;53,114704;8,712631;Kläranlage;585000;5;1000000;MS;Weser;42986442;34901990;10;85;9 Becken, Gemeinde betreibt weitere, Jahres RW. Abfluss 520554 m^3
+KAM_SN_CHM;Chemnitz-Heinersdorf;Chemnitz;Heinersdorfer Straße;42;9114;SN;50,875033;12,899282;Kläranlage;249000;5b;400000;MS;Chemnitz;28166336;18368625;22;82;keine
+KAM_HE_DAR;Darmstadt-Eberstadt;Darmstadt;Pfungstädterstraße;196;64297;HE;49,813901;8,620816;Kläranlage;30712;4a;50000;MS;Modau;2208616;1373742;26;100;Abwasser aus Kelterbetrieb September und Oktober
+KAM_ST_DES;Dessau;Dessau-Roßlau;Kornhausstraße;147;6846;ST;51,856587;12,215265;Kläranlage;82940;5b;145000;MS;Ellbe;6272800;549043;37,19;5;keine
+KAM_BY_DON;Donauwörth;Donauwörth;Im WeichselwÃ¶rth;1;86609;BY;48,710889;10,796233;Kläranlage;28433;4a;64000;MS;Donau;2516000;1781000;18;50;Metallverarbeitung, Schlachtbetrieb
+KAM_NW_DMD;Dortmund-Deusen;Dortmund;Deusener Straße;128;44369;NW;51,53937;7,425283;Kläranlage;140000;4b;70500;MS;Emscher;52411843;37393690;35;50;keine
+KAM_HE_EIT;Eitratal;Eiterfeld;Waldwiese;2;36132;HE;50,790102;9,760803;Kläranlage;5050;5b;7500;MS;Eitra;1244660;761190;79,5;55;Industriepark Werk Bobingen Gewerbliche CSB-Belastung, Zulauf CSB der Kläranlage (2016): 2251 mg/L
+KAM_NI_ELZ;Elze;Elze;Rieheweg;1;31008;NI;52,122484;9,750927;Kläranlage;9184;5b;35000;MS;Riehe;852654;709262;;52;keine
+KAM_BW_EPP;Eppingen;Eppingen;Scheurlesstraße;52;75301;BW;49,141572;8,925;Kläranlage;18000;5a;31350;MS;Elsenz;3514160;2732315;69,3;80;Brauerei, Kartoffelverarbeitungsbetrieb
+KAM_RP_ERD;Erdesbach;Erdesbach;Am Schleidchen;1;66887;RP;49,572925;7,451218;Kläranlage;12900;4b;15900;MS;Glan;2001800;1047600;33;32,2;keine
+KAM_NW_ERF;Erftstadt;Erftstadt-Köttingen;Notweg;52;50374;NW;50,830994;6,793967;Kläranlage;49500;5a;70000;MS;Erft;5080333;3609645;;0;keine
+KAM_BY_ERL;Erlangen;Erlangen;Bayreuther Straße;105;91054;BY;49,614225;10,999776;Kläranlage;163000;4a;270000;MS;Regnitz;19303000;14243000;20,7;68,2;keine
+KAM_SH_EUT;Eutin;Eutin;Diekstauen;3;23701;SH;54,149112;10,60256;Kläranlage;18000;4b;35000;TS;Ehmbruchgraben;1079508;1036551;10;30;Gießerei, Waggonbau
+KAM_BB_FRA;Frankfurt (Oder);Frankfurt (Oder);Mittelweg;8;15234;BB;52,36825;14,545055;Kläranlage;65258;5b;120000;MS;Oder;4512193;3979825;18,46;0;Schlachtbetrieb, der i.d.R. mittwochs einleitet, Abweichungen vom sonstigen Abwasser sind nicht zu erkennen
+KAM_NW_GEL;Geldern;Geldern;Am Mühlenwaßer;130;47608;NW;51,542391;6,314622;Kläranlage;78508;1 bis 3;149100;TS;Niers;3751523;3308192;;95;keine
+KAM_NI_GIE;Giesen;Giesen;Görbleeksweg;;31180;NI;52,209516;9,890685;Kläranlage;11560;5a;19500;TS;Innerste;592331;553198;44;90;Veranstaltung Hockenheimring 4-6x pro Jahr
+KAM_NW_HAT;Hattingen;Hattingen;Weg zum Waßerwerk;15-17;45525;NW;51,397103;7,167172;Kläranlage;74664;5b;100000;MS;Ruhr;10329236;7248436;14,36;90;keine
+KAM_SH_HET;Hetlingen;Hetlingen;Am Heuhaufen;2;25491;SH;53,600815;9,625642;Kläranlage;460283;4b;860000;MS;Elbe;32808900;28097820;12,6;22;keine
+KAM_BW_HCK;Hockenheim;Hockenheim;Mörscher Weg;7;68766;BW;49,329779;8,526928;Kläranlage;28000;5b;55000;MS;Kraichach;3095000;2091000;10;60;keine
+KAM_TH_JEN;Jena;Jena;Brückenstraße;13;7743;TH;50,955358;11,628222;Kläranlage;109720;5b ;210000;MS;Saale;6906556;5908764;32;;Molkereiprodukte, Getränkeproduktion, Direkteinspeisung von Spülwasser in die Faulung
+KAM_BY_KRL;Karlstadt;Karlstadt;Gemünderner Straße;51;97753;BY;49,983211;9,765627;Kläranlage;19500;1 bis 3;18000;MS;Main;1650000;565000;22,61;70;Nahrungsmittelindustrie: Fleischverarbeitung, Mehlverarbeitung, Brauereien
+KAM_HE_KHN;Kirchhain;Kirchhain;Am AmöneburgerTor;30;35274;HE;50,815829;8,915578;Kläranlage;30698;4b;99000;MS;Ohm;2088671;2699137;;68,35;Lebensmittel (Süßwaren), Metall (Eisengießerei, Beschläge), Färberei Stoffe, Tapetenfabrik
+KAM_BY_KHL;Kirchhaslach;Kirchhaslach;Industriegebiet;21;87755;BY;48,159848;10,307332;Kläranlage;1017;5b;1500;TS;Haselbach;49000;49000;;98;keine
+KAM_NW_KRE;Krefeld;Krefeld;Parkstraße;234;47829;NW;51,37804;6,634779;Kläranlage;236542;5b;1200000;MS;Rhein;29443577;21994940;62,5;25,5;Brauerei
+KAM_NI_LAM;Lamspringe;Bad Salzdetfurth Ã–strum;Zuckerfabrik/Bergmühle;12;31162;NI;51,970583;10,021717;Kläranlage;3523;5b;4950;MS;Lamme;397464;223378;36;100;Galvanikbetrieb, Molkereiabwasser, AOX von Mülldeponie, vorbeh. Sickerwasser mit A-Kohle
+KAM_BY_LAL;Landsberg/Lech;Landsberg am Lech;Dr. Friedrich Wacker Straße;1;86899;BY;48,065748;10,873992;Kläranlage;46000;4b;64000;MS;Lech;4647000;388000;12;95;keine
+KAM_BY_LAU;Lauterhofen;Lauterhofen;Brunner Straße/Marktplatz;11;92283;BY;49,375737;11,614735;Kläranlage;3134;4b;3800;MS;Lauterach;401676;185192;10;59;keine
+KAM_RP_MNZ;Mainz;Mainz (Mombach);Industriestraße;70;55120;RP;50,027435;8,217004;Kläranlage;208570;4b;400000;MS;Rhein;21222659;;30,9;0;Brauerei, Großschlachterei, großer Tortenhersteller, Häuteverarbeitung
+KAM_HE_MAR;Marburg-Cappel;Marburg;Umgehungsstraße;47;35043;HE;50,767417;8,758444;Kläranlage;77064;4a;155000;MS;Lahn;9006756;7104110;30,1;45;Klinikum, Pharmaindustrie, Uni
+KAM_SN_MKB;Markkleeberg (Leipzig);Markkleeberg;Am Wolfswinkel;2;4416;SN;51,293145;12,355724;Kläranlage;28000;1 bis 3;30000;MS;Augraben;1792301;1505040;;10;Herstellung künstlicher Lab- und Gelatine-Fabrik (Anteil ca. 40% Gesamtabwasser)
+KAM_NW_MRL;Marl-Lenkerbeck;Marl;Hülsbergstraße;247;45772;NW;51,669391;7,153324;Kläranlage;20244;4a;30000;MS;Lippe;2039620;;68,9;30;Sojaverarbeitung (Sojamilch, Jogurt)
+KAM_BW_NAG;Nagold;Nagold;Calwer Straße;151;72202;BW;48,567617;8,717477;Kläranlage;39871;4b;65000;MS;Nagold;7738835;1633532;13;72;Kartonfabrik, Großwäscherei
+KAM_BB_NRP;Neuruppin;Neuruppin;Am Eichenhain;5;16816;BB;52,950412;12,815753;Kläranlage;31757;5b;44000;TS;Landwehrgraben + Rieselfelder;1665860;1354967;;3;4 Krankenhäuser, Kupferverarbeiter (mit Vorbehandlung), Speisehersteller (mit Fettabscheider)
+KAM_NI_NIE;Nienburg;Nienburg;Marschstraße;5;31582;NI;52,653213;9,207132;Kläranlage;32000;1 bis 3;160000;MS;Weser;2785588;2288488;32;84;keine
+KAM_NW_NHB;Nümbrecht Homburg-Bröl;Nümbrecht;Homburgerstraße;1A;51588;NW;50,913506;7,523802;Kläranlage;19347;4a;33000;MS;BrÃ¶l;3355274;2036817;13,6;87;keine
+KAM_NI_OSN;Osnabrück-Eversberg;Osnabrück;Klöcknerstraße;6;49090;NI;52,298223;8,01812;Kläranlage;148388;4b;250000;TS;Hase;18730927;16178227;;72,2;Deponiesickerwasser nach Vorbehandlung
+KAM_SN_REI;Reichenbach;Reichenbach;Ã–hlischer Weg;4;2894;SN;51,136372;14,764276;Kläranlage;4681;4b;8000;TS;Schwarzer SchÃ¶ps;259323;211989;28;91;Brauerei
+KAM_NW_ROE;Rösrath;Rösrath;Hans Böckler Straße;19-21;51503;NW;50,88551;7,184716;Kläranlage;27309;5b;35833;MS;Sülz;3607532;2368047;;54;keine
+KAM_BE_RUH;Ruhleben;Berlin-Spandau;Freiheit;17;13597;BE;52,530221;13,230732;Kläranlage;1300000;5b;1600000;MS;Ruhlebener Altarm/Spree;85762972;77877689;;5;Papierfabriken, Kaffeeverarbeitung, Molkerei, Salatherstellung, Arzneimittelherstellung
+KAM_BE_SLN;Schönerlinde;Berlin-Wandlitz;Mühlenbeckerstraße;8E;16348;BE;52,661164;13,415555;Kläranlage;800000;4b;840000;MS;Blankenfelder Graben;41637926;38593741;6,1;62;Lebensmittel, Brauerei
+KAM_MV_SWR;Schwerin;Schwerin;Carl von Linde Straße;6;19061;MV;53,576729;11,40133;Kläranlage;125171;4b;200000;MS;Schwarzer Graben ;7202343;6441537;18;92;keine
+KAM_BW_STR;Stuttgart-Mühlhausen;Stuttgart;Aldingerstraße;212;70378;BW;48,847707;9,24303;Kläranlage;1200000;5b;1200000;MS;Neckar;59375306;34730057;25,7;100;Edelstahlwerke, Mais verarbeitende Industrie, Fruchtsaftherstellung
+KAM_BY_TRA;Traunstein;Traunstein;Empfing;24;83278;BY;47,886509;12,639719;Kläranlage;33000;4b;99000;MS;Traun;5332000;1257000;52,3;81;keine
+KAM_BW_WAL;Waldangelbachtal;Angelbachtal;Mühlstraße;23;74918;BW;49,239991;8,763746;Kläranlage;11863;5b;16000;MS;Waldangelbach;1302515;372981;;0;keine
+KAM_NW_WEV;Wevelinghoven;Grevenbroich;An der Untermühle;95;41516;NW;51,123186;6,630759;Kläranlage;24500;5b;27000;MS;Erft;1813668;;;80;Schule, Metall- und Elektrobetriebe, Seniorenwohnanlage, Übernachtungen

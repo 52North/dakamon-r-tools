@@ -48,7 +48,7 @@ output$OrtValidationOut <- renderUI({
     if (is.null(valiOrt$txt)) {
       actionButton("checkDBOrt", "Prüfe Datenkonsistenz!")
     } else {
-      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiOrt$txt, "</ul></div></html"))
+      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiOrt$txt, "</ul></div></html>"))
     }
   } else {
     return()
@@ -93,7 +93,7 @@ output$OrtDBConsistencyOut <- renderUI({
     if (is.null(checkDBOrt$txt) || input$owOrt) {
       actionButton("storeDBOrt", "Einfügen in DB!")
     } else {
-      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBOrt$txt, "</li></ul></div></html"))
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBOrt$txt, "</li></ul></div></html>"))
     }
   } else {
     return()

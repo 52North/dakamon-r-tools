@@ -414,7 +414,7 @@ output$dataValidationOut <- renderUI({
     if (is.null(valiData$txt)) {
       actionButton("checkDBData", "Prüfe Datenkonsistenz!")
     } else {
-      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiData$txt, "</ul></div></html"))
+      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiData$txt, "</ul></div></html>"))
     }
   } else {
     return()
@@ -505,13 +505,13 @@ observeEvent(input$checkDBData, {
 output$dataDBConsistencyOut <- renderUI({ #
   if (checkDBData$checked) {
     if (checkDBData$err == TRUE) {
-      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html"))
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html>"))
     } else {
       if (!is.null(checkDBData$txt)) {
         if (input$dataOW) {
           actionButton("storeDBData", "Speichere in DB!")
         } else {
-          HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html"))
+          HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBData$txt, "</li></ul></div></html>"))
         }
       } else {
         actionButton("storeDBData", "Speichere in DB!")

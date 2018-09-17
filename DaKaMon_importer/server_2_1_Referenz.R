@@ -48,7 +48,7 @@ output$ReferenzValidationOut <- renderUI({
     if (is.null(valiReferenz$txt)) {
       actionButton("checkDBReferenz", "Prüfe Datenkonsistenz!")
     } else {
-      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiReferenz$txt, "</ul></div></html"))
+      HTML(paste("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\"><ul>", valiReferenz$txt, "</ul></div></html>"))
     }
   } else {
     return()
@@ -93,7 +93,7 @@ output$ReferenzDBConsistencyOut <- renderUI({
     if (is.null(checkDBReferenz$txt) || input$owReferenz) {
       actionButton("storeDBReferenz", "Einfügen in DB!")
     } else {
-      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBReferenz$txt, "</li></ul></div></html"))
+      HTML(paste0("<html><div style=\"height:120px;width:100%;border:1px solid #ccc; overflow:auto\">", checkDBReferenz$txt, "</li></ul></div></html>"))
     }
   } else {
     return()

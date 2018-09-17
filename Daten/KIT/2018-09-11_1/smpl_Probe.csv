@@ -1,0 +1,16 @@
+ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisvolumen;Ereignisvolumeneinheit;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
+"P_161017_2017018468
+
+";KAM_NW_BHK_Ablauf;16.10.2017;16.10.2017;24.10.2017;7 Tage;90430;m3;TW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2017018468
+P_051117_2017019798;KAM_NW_BHK_Ablauf;05.11.2017;05.11.2017;21.11.2017;7 Tage;239616;m3;RW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2017019798
+P_071117_2017019797;KAM_NW_BHK_Ablauf;07.11.2017;07.11.2017;23.11.2017;7 Tage;92045;m3;TW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2017019797
+"P_031217_2018000137
+
+";KAM_NW_BHK_Ablauf;03.12.2017;03.12.2017;20.12.2017;6 Tage;234244;m3;RW;automatischer Probenehmer;7-Tage-Mischprobe;6;l;TZW;2018000137
+P_051217_2018000138;KAM_NW_BHK_Ablauf;05.12.2017;05.12.2017;29.12.2017;4 Tage;55328;m3;TW;automatischer Probenehmer;7-Tage-Mischprobe;4;l;TZW;2018000138
+"P_020118_2018000898
+
+";KAM_NW_BHK_Ablauf;02.01.2018;02.01.2018;18.01.2018;7 Tage;314982;m3;RW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2018000898
+P_080118_2018000899;KAM_NW_BHK_Ablauf;08.01.2018;08.01.2018;14.01.2018;7 Tage;95792;m3;TW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2018000899
+P_010218_2018002991;KAM_NW_BHK_Ablauf;01.02.2018;01.02.2018;15.02.2018;4 Tage;115887;m3;RW;automatischer Probenehmer;7-Tage-Mischprobe;4;l;TZW;2018002991
+P_040218_2018002990;KAM_NW_BHK_Ablauf;04.02.2018;04.02.2018;19.02.2018;7 Tage;94998;m3;TW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2018002990
