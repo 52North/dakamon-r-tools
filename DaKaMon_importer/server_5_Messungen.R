@@ -602,6 +602,15 @@ observeEvent(input$storeDBData, {
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
+        
+        # TODO set NO_DATA value in case value is NA
+        
+        if (!is.na(any(Messungen_data[,reqColData$value] == noDataValue))) {
+          column <- Messungen_data[,reqColData$value]
+          column[column == noDataValue] <- noDataEncode
+          Messungen_data[,reqColData$value] <- column
+        }
+        progress$inc(1)
 
         #
         # Convert "," decimal separator to system separator

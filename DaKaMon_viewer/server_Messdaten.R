@@ -366,7 +366,9 @@ data <- reactive({
                     resDfRow[valueRow] <- input$repBG
                   }
                 } else {
-                  resDfRow[valueRow] <- res[obs, "value"]
+                  value <- res[obs, "value"]
+                  # TODO show NA or empty cells?
+                  resDfRow[valueRow] <- ifelse(value == noDataEncode, NA_character_, value)
                 }
                 resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
                 if (input$showBG) {

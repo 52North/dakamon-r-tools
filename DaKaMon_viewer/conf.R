@@ -42,6 +42,7 @@ BGencode <- 0
 BGchar <- "BG"
 # label in DB
 BGlabel <- "Bestimmungsgrenze"
+
 #
 # LOWER DETECTION LIMIT
 #
@@ -49,6 +50,15 @@ NGencode <- -1
 NGchar <- "NG"
 # label in DB
 NGlabel <- "Nachweisgrenze"
+
+#
+# mapping of NO_DATA values
+#
+# missing data value in CSV
+noDataValue <- ""
+# encoded NO_DATA value in SOS
+noDataEncode <- -999
+noDataLabel <- "NO_DATA"
 
 local <- interactive()
 # SOSWebApp MUST end with "/"
