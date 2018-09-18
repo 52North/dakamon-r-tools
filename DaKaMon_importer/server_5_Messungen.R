@@ -588,17 +588,18 @@ observeEvent(input$storeDBData, {
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
         
-        # convert value column BG, NG values in numbers and the whole column in numeric values
-        if (any(Messungen_data[,reqColData$value] == BGchar)) {
+        # convert value column BG, NG values in numbers and the whole column to numeric values
+        #if (any(Messungen_data[,reqColData$value] == BGchar)) {
+        if (any(grep(BGchar, Messungen_data[,reqColData$value]))) {
           column <- Messungen_data[,reqColData$value]
-          column[column == BGchar] <- BGencode
+          column[grep(BGchar, column)] <- BGencode
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-
-        if (any(Messungen_data[,reqColData$value] == NGchar)) {
+        
+        if (any(grep(NGchar, Messungen_data[,reqColData$value]))) {
           column <- Messungen_data[,reqColData$value]
-          column[column == NGchar] <- NGencode
+          column[grep(NGchar, column)] <- NGencode
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
