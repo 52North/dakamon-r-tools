@@ -785,7 +785,7 @@ observeEvent(input$storeDBData, {
           cat(query)
           dbExecute(db, query)
           
-          newDataRow <- c(row[reqColData$obsProp], # Parameter
+          newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"], # Parameter ID
                           row[reqColData$value], # Wert
                           row[reqColData$uom], # Einheit
                           paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",
