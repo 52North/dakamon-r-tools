@@ -74,7 +74,7 @@ observeEvent(input$checkDBParameter, {
 
     # get all PARs from the DB that have any of the identifiers in the CSV
     if (length(inCSVPAR$df) > 0) {
-      PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier FROM observableproperty WHERE identifier IN ('",
+      PARInDB <- dbGetQuery(db, paste0("SELECT observablepropertyid, identifier, name FROM observableproperty WHERE identifier IN ('",
                                      paste(inCSVPAR$df[,reqColPAR$id], collapse="', '"), "') OR name IN ('",
                                      paste(inCSVPAR$df[,reqColPAR$name], collapse="', '"), "')"))
 
@@ -204,17 +204,20 @@ observeEvent(input$storeDBParameter, {
           dynamicDf <- rbind(dynamicDf, dynamicDfRow)
         }
         # if there are already PARe in the DB that are again in the CSV
-        if (PAR_data[param,"ID"] %in% checkDBPAR$PARInDB$identifier) {
+        if (PAR_data[param,reqColPAR$id] %in% checkDBPAR$PARInDB$identifier
+            || PAR_data[param,reqColPAR$name] %in% checkDBPAR$PARInDB$name) {
           ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
-          query <- paste0("with update_param as (
+          query <- paste("with update_param as (
             UPDATE observableproperty
             SET
-            name = '", PAR_data[param,reqColPAR$name],
-            "' WHERE identifier = '", PAR_data[param,reqColPAR$id],
-            "' RETURNING observablepropertyid
+            identifier = '", PAR_data[param, reqColPAR$id], "',",
+            "name = '", PAR_data[param,reqColPAR$name], "'",
+            "WHERE identifier = '", PAR_data[param,reqColPAR$id], "'",
+            "OR name = '",  PAR_data[param,reqColPAR$name], "'",
+            "RETURNING observablepropertyid
           )
           UPDATE parameter_data
-          SET ",
+          SET",
           paste0(paste0(dynamicDf[["columnid"]],
                         " = ",
                         gsub("EMPTY", "NULL", dynamicDf[["value"]])),
