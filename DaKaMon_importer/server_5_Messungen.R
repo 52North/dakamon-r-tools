@@ -708,11 +708,13 @@ observeEvent(input$storeDBData, {
         #
         # Create the global configuraton file
         #
+        print("create feeder configuration ...")
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
 
+        print("prepare import data  ...")
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
         for (i in 1:nrow(Messungen_data)) { # i <- 1
           row <- Messungen_data[i,]
@@ -781,6 +783,7 @@ observeEvent(input$storeDBData, {
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           cat(query)
           dbExecute(db, query)
+          
           newDataRow <- c(row[reqColData$obsProp], # Parameter
                           row[reqColData$value], # Wert
                           row[reqColData$uom], # Einheit
