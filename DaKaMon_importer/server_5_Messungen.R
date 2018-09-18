@@ -14,10 +14,12 @@ isLoadingCacheUpdate <- function(conf=adminConf) {
 sosCacheUpdate <- function(wait=0.5, conf=adminConf, verbose=FALSE) {
   reloadUrl <- paste0(SOSWebApp, "admin/cache/reload")
   POST(url = reloadUrl, config=conf, body="a")
+  cat(file=catFile, "Wait until SOS cache update finishes")
   while(isLoadingCacheUpdate(conf)) {
-    print("Wait until SOS cache update finishes ...")
+    cat(file=catFile, ".")
     Sys.sleep(wait)
   }
+  cat(file=catFile, "\n")
 }
 
 sosDeleteDeletedObservations <- function(wait=0.5, conf=adminConf, verbose=FALSE) {
@@ -248,7 +250,7 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.identifier IN ('",
                                   probenQuerySection,
                                   "')")
-    print(probenMetadataQuery)
+    cat(file=catFile, probenMetadataQuery, "\n")
     probenMetadata <- dbGetQuery(db, probenMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -343,7 +345,7 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                             param.name IN ('",
                                            parameterQuerySection,
                                            "')")
-    cat(probenParameterMetadataQuery)
+    cat(file=catFile, probenParameterMetadataQuery, "\n")
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -544,7 +546,7 @@ output$tableData <- renderDataTable({
     # if DB consistency has been checked, apply colors
     if (checkDBData$checked) {
       if (any(inCSVData$obsInDB > 0)) {
-        cat(inCSVData$obsInDB, "\n")
+        cat(file=catFile, inCSVData$obsInDB, "\n")
         for (colDf in 4:ncol(inCSVData$df)) {
           rowClrs <- c("white", "yellow", "red", "blue")[inCSVData$obsInDB[,colDf-3]+1]
 
@@ -709,13 +711,13 @@ observeEvent(input$storeDBData, {
         #
         # Create the global configuraton file
         #
-        print("create feeder configuration ...")
+        cat(file=catFile, "create feeder configuration ...\n")
         feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
 
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
 
-        print("prepare import data  ...")
+        cat(file=catFile, "prepare import data\n")
         feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
         for (i in 1:nrow(Messungen_data)) { # i <- 1
           row <- Messungen_data[i,]
@@ -782,7 +784,7 @@ observeEvent(input$storeDBData, {
                               ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
-          cat(query)
+          cat(file=catFile, query, "\n")
           dbExecute(db, query)
           
           newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"], # Parameter ID
@@ -807,31 +809,33 @@ observeEvent(input$storeDBData, {
         #
         # write global csv file
         #
-        print(paste("writing import data to: ", feedCSV))
+        cat(file=catFile, paste("writing import data to: ", feedCSV), "\n")
         write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
-        print("Done!")
+        cat(file=catFile, "Done!\n")
         progress$inc(1)
 
         if (!file.exists(feederPath)) {
-          print(paste("Feeder path does not exist:", feederPath))
+          cat(file=catFile, paste("Feeder path does not exist:", feederPath, "\n"))
           showModalMessage(title="Fehler", "Feeder nicht gefunden!")
         } else {
           tryCatch({
-            print("Start feeding data values")
-            print(paste("Config File: ", feedConf))
-            print(paste("Feeder Jar : ", feederPath))
-            print(paste("CSV File   : ", feedCSV))
+            cat(file=catFile, "Start feeding data values\n")
+            cat(file=catFile, paste("Config File: ", feedConf), "\n")
+            cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
+            cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
             logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
-            print(paste("Log File   : ", logFile))
+            cat(file=catFile, paste("Log File   : ", logFile), "\n")
             system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
             # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
             # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
+            cat(file=catFile, "\n")
+            cat(file=catFile, "Wait until import finishes")
             Sys.sleep(1)
             if (Sys.info()["sysname"] != "Windows") {
               check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
               while (check == 1) {
-                cat("Wait until import finishes ...")
                 Sys.sleep(2)
+                cat(file=catFile, ".")
                 check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
               }
             } else {
@@ -842,20 +846,23 @@ observeEvent(input$storeDBData, {
               }
               
               importInProgress <- isFeederRunning()
+              cat(file=catFile, "Import process running")
               while (importInProgress) {
                 Sys.sleep(2)
                 importInProgress <- isFeederRunning()
-                cat("Import process running ...")
+                cat(file=catFile, ".")
               }
               Sys.sleep(2)
             }
+            cat(file=catFile, "\n")
 
-            print("Done!")
+            cat(file=catFile, "Done!\n")
             progress$inc(1)
+            Sys.sleep(5) # wait for log to be written
             result <- read_lines(logFile, locale = locale())
 
             if (length(grep("failed: 0", result, value = TRUE)) == 0) {
-              print("Errors occured during import! Consult importer logs.")
+              cat(file=catFile, "Errors occured during import! Consult importer logs.\n")
               content <- div("Log-Ausgabe",
                 pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
               showModalMessage(title="Bericht", content, size = "l")

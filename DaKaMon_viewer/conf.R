@@ -64,6 +64,8 @@ local <- interactive()
 # SOSWebApp MUST end with "/"
 SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 
+catFile <- ifelse(local,stdout(),stderr())
+
 #
 # DATABASE
 #
