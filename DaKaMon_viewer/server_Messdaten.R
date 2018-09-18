@@ -330,15 +330,17 @@ data <- reactive({
                         WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")")
 
         if (!is.null(input$selObsPhen))
-          query <- paste0(query, " AND op.identifier IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
+          query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
 
-        minPhenTimeStart <- foiTimes$phenomenontimestart[which.min(as.POSIXct(foiTimes$phenomenontimestart))]
-        maxPhenTimeStart <- foiTimes$phenomenontimestart[which.max(as.POSIXct(foiTimes$phenomenontimestart))]
-        maxPhenTimeEnd <- foiTimes$phenomenontimeend[which.max(as.POSIXct(foiTimes$phenomenontimeend))]
+        cat(query)
         
-        query <- paste0(query, " AND (o.phenomenontimestart >= '", minPhenTimeStart , "')
-                        AND (o.phenomenontimestart <= '", maxPhenTimeStart, "')
-                        OR o.phenomenontimeend <= '", maxPhenTimeEnd, "'" )
+        # minPhenTimeStart <- foiTimes$phenomenontimestart[which.min(as.POSIXct(foiTimes$phenomenontimestart))]
+        # maxPhenTimeStart <- foiTimes$phenomenontimestart[which.max(as.POSIXct(foiTimes$phenomenontimestart))]
+        # maxPhenTimeEnd <- foiTimes$phenomenontimeend[which.max(as.POSIXct(foiTimes$phenomenontimeend))]
+        # 
+        # query <- paste0(query, " AND (o.phenomenontimestart >= '", minPhenTimeStart , "')
+        #                 AND (o.phenomenontimestart <= '", maxPhenTimeStart, "')
+        #                 OR o.phenomenontimeend <= '", maxPhenTimeEnd, "'" )
 
         res <- dbGetQuery(db, query)
 
