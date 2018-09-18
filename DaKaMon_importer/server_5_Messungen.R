@@ -856,9 +856,9 @@ observeEvent(input$storeDBData, {
 
             if (length(grep("Failed observations: 0", result, value = TRUE)) == 0) {
               print("Errors occured during import! Consult importer logs.")
-              content <- div("Some Text hier",
+              content <- div("Log-Ausgabe",
                 pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
-              showModalMessage(title="Fehler", content, size = "l")
+              showModalMessage(title="Bericht", content, size = "l")
             } else {
               content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
               showModalMessage(title="Vorgang abgeschlossen", content)
