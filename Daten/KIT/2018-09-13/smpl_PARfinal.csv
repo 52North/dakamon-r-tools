@@ -1,7 +1,7 @@
 ID;Name;Stoffgruppe;CAS_Nr.;Wasserlöslichkeit;Kow
 NH4;Ammonium;N-Verbindungen;14798-03-9;1;
 NO3;Nitrat;N-Verbindungen;14797-55-8;1;
-MYT;Methyltriclosan;Biozide/Transformationsprodukte;01.01.4640;0;
+MYT;Methyltriclosan;Biozide/Transformationsprodukte;4640-01-1;0;
 ACN;Acenaphthen;PAK 16;83-32-9;0;
 ACY;Acenaphthylen;PAK 16;208-96-8;0;
 ANT;Anthracen;PAK 16;120-12-7;0;
@@ -33,7 +33,7 @@ DIU;Diuron;Biozid;330-54-1;0;2,78
 IZL;Imazalil;Biozide/Transformationsprodukte;35554-44-0;1;
 IDD;Imidacloprid;Biozide/Transformationsprodukte;138261-41-3;1;
 ISO;Isoproturon;Biozid;34123-59-6;0;2,87
-MYD;Methyldiclosan;Biozide/Transformationsprodukte;07.07.4640;1;
+MYD;Methyldiclosan;Biozide/Transformationsprodukte;4640-07-7;1;
 PMS;Permethrinsäure;Biozide/Transformationsprodukte;55701-05-8;;
 PLN;Prallethrin;Biozide/Transformationsprodukte;103065-19-6;0;
 PCL;Propiconazol;Biozide/Transformationsprodukte;60207-90-1;0;
