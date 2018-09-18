@@ -465,37 +465,37 @@ observeEvent(input$checkDBData, {
     observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
 
     if (nrow(observationCharacteristics) > 0) {
-    # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
-
-    observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
-                                                                 format=RtimestampPattern,
-                                                                 tz=dbTimeZoneIdentifier))
-    observationCharacteristics$phentimestart <- as.numeric(strptime(observationCharacteristics$phentimestart,
+      # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
+  
+      observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
+                                                                   format=RtimestampPattern,
+                                                                   tz=dbTimeZoneIdentifier))
+      observationCharacteristics$phentimestart <- as.numeric(strptime(observationCharacteristics$phentimestart,
+                                                                      format=RtimestampPattern, 
+                                                                      tz=dbTimeZoneIdentifier))
+      observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend, 
                                                                     format=RtimestampPattern, 
                                                                     tz=dbTimeZoneIdentifier))
-    observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend, 
-                                                                  format=RtimestampPattern, 
-                                                                  tz=dbTimeZoneIdentifier))
-
-    inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart, 
-                                   observationCharacteristics$phentimestart, 
-                                   "/", 
-                                   observationCharacteristics$phentimeend, 
-                                   observationCharacteristics$foiid,
-                                   observationCharacteristics$lab,
-                                   "_",
-                                   observationCharacteristics$paramid)
-    
-    inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
-               paste(inCSVData$obsIdsInCSV, collapse="', '"),
-               "')"))
-    
-    if (nrow(inCSVData$obsIdsInDB) > 0) {
-      checkDBData$txt <- paste(checkDBData$txt,
-                               paste("Folgende Messungen sind bereits in der DB: <ul><li>",
-                                     paste0(inCSVData$obsIdsInDB, collapse="</li><li>"),
-                                     "</li></ul>"))
-    }
+  
+      inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart, 
+                                     observationCharacteristics$phentimestart, 
+                                     "/", 
+                                     observationCharacteristics$phentimeend, 
+                                     observationCharacteristics$foiid,
+                                     observationCharacteristics$lab,
+                                     "_",
+                                     observationCharacteristics$paramid)
+      
+      inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
+                 paste(inCSVData$obsIdsInCSV, collapse="', '"),
+                 "')"))
+      
+      if (nrow(inCSVData$obsIdsInDB) > 0) {
+        checkDBData$txt <- paste(checkDBData$txt,
+                                 paste("Folgende Messungen sind bereits in der DB: <ul><li>",
+                                       paste0(inCSVData$obsIdsInDB, collapse="</li><li>"),
+                                       "</li></ul>"))
+      }
     }
     checkDBData$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
@@ -587,7 +587,7 @@ observeEvent(input$storeDBData, {
 
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
-
+        
         # convert value column BG, NG values in numbers and the whole column in numeric values
         if (any(Messungen_data[,reqColData$value] == BGchar)) {
           column <- Messungen_data[,reqColData$value]
@@ -611,7 +611,7 @@ observeEvent(input$storeDBData, {
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-
+        
         #
         # Convert "," decimal separator to system separator
         #
