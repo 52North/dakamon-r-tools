@@ -150,6 +150,7 @@ output$tablePNS <- renderDataTable({
 #############################
 
 observeEvent(input$storeDBPNS, {
+  checkDBPNS$checked <- FALSE
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {

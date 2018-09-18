@@ -569,6 +569,7 @@ output$tableData <- renderDataTable({
 
 observeEvent(input$storeDBData, {
   if (!is.null(inCSVData$df)) {
+    checkDBData$checked <- FALSE
     db <- connectToDB()
     tryCatch({
       dbWithTransaction(db, {

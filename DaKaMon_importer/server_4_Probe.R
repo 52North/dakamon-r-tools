@@ -148,6 +148,7 @@ output$tableProbe <- renderDataTable({
 #####################
 
 observeEvent(input$storeDBProbe, {
+  checkDBProbe$checked <- FALSE
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {

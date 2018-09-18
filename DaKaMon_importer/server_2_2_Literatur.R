@@ -244,6 +244,7 @@ output$tableLiteratur <- renderDataTable({
 ############################
 
 observeEvent(input$storeDBLiteratur, {
+  checkDBLiteratur$checked <- FALSE
   db <- connectToDB()
   tryCatch({
     

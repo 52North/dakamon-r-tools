@@ -136,6 +136,7 @@ output$tableOrt <- renderDataTable({
 ############################
 
 observeEvent(input$storeDBOrt, {
+  checkDBOrt$checked <- FALSE
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {

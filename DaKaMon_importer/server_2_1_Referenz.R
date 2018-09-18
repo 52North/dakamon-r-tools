@@ -135,6 +135,7 @@ output$tableReferenz <- renderDataTable({
 ############################
 
 observeEvent(input$storeDBReferenz, {
+  checkDBReferenz$checked <- FALSE
   db <- connectToDB()
   tryCatch({
 

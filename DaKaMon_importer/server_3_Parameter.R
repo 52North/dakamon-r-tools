@@ -142,6 +142,7 @@ output$tablePAR <- renderDataTable({
 ###########################################
 
 observeEvent(input$storeDBParameter, {
+  checkDBPAR$checked <- FALSE
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {
