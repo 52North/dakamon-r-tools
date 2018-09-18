@@ -830,20 +830,24 @@ observeEvent(input$storeDBData, {
             if (Sys.info()["sysname"] != "Windows") {
               check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
               while (check == 1) {
+                cat("Wait until import finishes ...")
+                Sys.sleep(2)
                 check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
               }
             } else {
               isFeederRunning <- function() {
                 processListCmd <- paste0("WMIC PROCESS GET Caption,Processid,Commandline")
-                tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE)
-                length(grep(logFile, tasks)) > 0
+                tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE, wait=TRUE)
+                length(grep(basename(logFile), tasks)) > 0
               }
-
+              
               importInProgress <- isFeederRunning()
               while (importInProgress) {
                 Sys.sleep(2)
                 importInProgress <- isFeederRunning()
+                cat("Import process running ...")
               }
+              Sys.sleep(2)
             }
 
             print("Done!")
