@@ -435,7 +435,7 @@ output$tableDaten <- renderDT({
     
     numCol <- colnames(showTab)
     numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
-    numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+    numCol <- numCol[apply(matrix(showTab[,numCol] > floor(showTab[,numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
     if (length(numCol) > 0)
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
