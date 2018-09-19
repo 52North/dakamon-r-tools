@@ -73,7 +73,8 @@ output$exportParCSV <- downloadHandler(
     paste("Parameter-", Sys.Date(), ".csv", sep="")
   },
   content = function(file) {
-    write.table(isolate(allParameter()), file, sep = ";", dec=",",
+    df <- isolate(allParameter())
+    write.table(df, file, sep = ";", dec=",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
 )

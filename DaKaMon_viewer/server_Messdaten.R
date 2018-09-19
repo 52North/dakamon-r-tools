@@ -498,7 +498,7 @@ output$exportDataCSV <- downloadHandler(
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
 
-    write.table(df, file, sep = ";", dec = ",",
+    write.table(df, file, sep = ";", dec = ",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
 )

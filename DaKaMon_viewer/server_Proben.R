@@ -90,7 +90,8 @@ if(!is.null(allProben)) {
       paste("Probe-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(allProben()), file, sep = ";", dec=",",
+      df <- isolate(allProben())
+      write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
