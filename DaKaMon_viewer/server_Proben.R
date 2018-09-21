@@ -85,23 +85,28 @@ output$tableProben  <- renderDT({
 })
 
 if(!is.null(allProben)) {
-  output$exportProbeCSV <- downloadHandler(
-    filename = function() {
-      paste("Probe-", Sys.Date(), ".csv", sep="")
-    },
+  output$exportProbeCSVLatin1 <- downloadHandler(
+    filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      df <- isolate(allProben())
+      df <- isolate(allProben()$resDf[selData(),])
+      write.table(df, file, sep = ";", dec=",", na = "",
+                  fileEncoding = "Latin1", row.names = FALSE)
+    }
+  )
+  
+  output$exportProbeCSVUtf8 <- downloadHandler(
+    filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(allProben()$resDf[selData(),])
       write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
   
   output$exportProbeRData <- downloadHandler(
-    filename = function() {
-      paste("Probe-", Sys.Date(), ".RData", sep="")
-    },
+    filename = function() paste("Probe-", Sys.Date(), ".RData", sep=""),
     content = function(file) {
-      df <- isolate(allProben())
+      df <- isolate(allProben()$resDf[selData(),])
       save(df, file = file)
     }
   )

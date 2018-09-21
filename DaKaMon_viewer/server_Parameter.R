@@ -68,23 +68,28 @@ output$tableParameter  <- renderDT({
   dt
 })
 
-output$exportParCSV <- downloadHandler(
-  filename = function() {
-    paste("Parameter-", Sys.Date(), ".csv", sep="")
-  },
+output$exportParCSVLatin1 <- downloadHandler(
+  filename = function() paste("Parameter-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
-    df <- isolate(allParameter())
+    df <- isolate(allParameter()$resDf[selData(),])
+    write.table(df, file, sep = ";", dec=",", na = "",
+                fileEncoding = "Latin1", row.names = FALSE)
+  }
+)
+
+output$exportParCSVUtf8 <- downloadHandler(
+  filename = function() paste("Parameter-", Sys.Date(), ".csv", sep=""),
+  content = function(file) {
+    df <- isolate(allParameter()$resDf[selData(),])
     write.table(df, file, sep = ";", dec=",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
 )
 
 output$exportParRData <- downloadHandler(
-  filename = function() {
-    paste("Parameter-", Sys.Date(), ".RData", sep="")
-  },
+  filename = function() paste("Parameter-", Sys.Date(), ".RData", sep=""),
   content = function(file) {
-    df <- isolate(allParameter())
+    df <- isolate(allParameter()$resDf[selData(),])
     save(df, file = file)
   }
 )

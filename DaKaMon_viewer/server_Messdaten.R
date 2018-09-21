@@ -87,17 +87,26 @@ if (nrow(ort) > 0) {
       paste("Zeilen", paste(sOrt(), collapse=", "), "sind ausgewählt.")
     }
   })
-
-  output$exportOrtCSV <- downloadHandler(
-    filename = function() {
-      paste("Ort-", Sys.Date(), ".csv", sep="")
-    },
+  
+  output$exportOrtCSVLatin1 <- downloadHandler(
+    filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      write.table(isolate(ortData()[sOrt(),-1]), file, sep = ";", dec=",",
+      df <- isolate(ortData()[sOrt(), -1])
+      write.table(df, file, sep = ";", dec = ",", na = "",
+                  fileEncoding = "Latin1", row.names = FALSE)
+    }
+  )
+  
+  output$exportOrtCSVUtf8 <- downloadHandler(
+    filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(ortData()[sOrt(), -1])
+      
+      write.table(df, file, sep = ";", dec = ",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-
+  
   output$exportOrtRData <- downloadHandler(
     filename = function() {
       paste("Ort-", Sys.Date(), ".RData", sep="")
@@ -190,8 +199,18 @@ if(!is.null(ortData)) {
       }
     }
   })
-
-  output$exportPNSCSV <- downloadHandler(
+  
+  output$exportPNSCSVLatin1 <- downloadHandler(
+    filename = function() {
+      paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
+                  fileEncoding = "Latin1", row.names = FALSE)
+    }
+  )
+  
+  output$exportPNSCSVUtf8 <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
@@ -200,7 +219,7 @@ if(!is.null(ortData)) {
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-
+  
   output$exportPNSRData <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
@@ -493,11 +512,21 @@ output$selTextDaten <- renderText({
   }
 })
 
-output$exportDataCSV <- downloadHandler(
+output$exportDataCSVLatin1 <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
 
+    write.table(df, file, sep = ";", dec = ",", na = "",
+                fileEncoding = "Latin1", row.names = FALSE)
+  }
+)
+
+output$exportDataCSVUtf8 <- downloadHandler(
+  filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
+  content = function(file) {
+    df <- isolate(data()$resDf[selData(),])
+    
     write.table(df, file, sep = ";", dec = ",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
