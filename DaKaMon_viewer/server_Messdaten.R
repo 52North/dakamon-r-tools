@@ -496,9 +496,18 @@ output$tableStatistik <- renderDataTable({
 
     rownames(stat) <- c("Min.","1. Qu.","Median","Mittelw.", "3. Qu.","Max.", "NA", "Anz. Fakt.")
 
-    datatable(stat,
-              options=list(paging=FALSE, dom = 'Brt',
-                           language=list(url = lngJSON)))
+    dt <- datatable(stat,
+                    options=list(paging=FALSE, dom = 'Brt',
+                                 language=list(url = lngJSON)))
+    
+    numCol <- colnames(stat)
+    numCol <- numCol[which(as.logical(sapply(stat[,numCol],is.numeric)))]
+    numCol <- numCol[apply(matrix(stat[,numCol] > floor(stat[,numCol])), 2, any)]
+    numCol <- numCol[!is.na(numCol)]
+    if (length(numCol) > 0)
+      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+    
+    dt
   }
 })
 
