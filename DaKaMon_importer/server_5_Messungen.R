@@ -806,78 +806,79 @@ observeEvent(input$storeDBData, {
 
         sosCacheUpdate(wait=1)
         progress$inc(1)
-
-        #
-        # write global csv file
-        #
-        cat(file=catFile, paste("writing import data to: ", feedCSV), "\n")
-        write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
-        cat(file=catFile, "Done!\n")
-        progress$inc(1)
-
-        if (!file.exists(feederPath)) {
-          cat(file=catFile, paste("Feeder path does not exist:", feederPath, "\n"))
-          showModalMessage(title="Fehler", "Feeder nicht gefunden!")
-        } else {
-          tryCatch({
-            cat(file=catFile, "Start feeding data values\n")
-            cat(file=catFile, paste("Config File: ", feedConf), "\n")
-            cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
-            cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
-            logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
-            cat(file=catFile, paste("Log File   : ", logFile), "\n")
-            system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
-            # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
-            # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
-            cat(file=catFile, "\n")
-            cat(file=catFile, "Wait until import finishes")
-            Sys.sleep(1)
-            if (Sys.info()["sysname"] != "Windows") {
-              check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
-              while (check == 1) {
-                Sys.sleep(2)
-                cat(file=catFile, ".")
-                check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
-              }
-            } else {
-              isFeederRunning <- function() {
-                processListCmd <- paste0("WMIC PROCESS GET Caption,Processid,Commandline")
-                tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE, wait=TRUE)
-                length(grep(basename(logFile), tasks)) > 0
-              }
-              
-              importInProgress <- isFeederRunning()
-              cat(file=catFile, "Import process running")
-              while (importInProgress) {
-                Sys.sleep(2)
-                importInProgress <- isFeederRunning()
-                cat(file=catFile, ".")
-              }
-              Sys.sleep(2)
-            }
-            cat(file=catFile, "\n")
-
-            cat(file=catFile, "Done!\n")
-            progress$inc(1)
-            Sys.sleep(5) # wait for log to be written
-            result <- read_lines(logFile, locale = locale())
-
-            if (length(grep("failed: 0", result, value = TRUE)) == 0) {
-              cat(file=catFile, "Errors occured during import! Consult importer logs.\n")
-              content <- div("Log-Ausgabe",
-                pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
-              showModalMessage(title="Bericht", content, size = "l")
-            } else {
-              content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
-              showModalMessage(title="Vorgang abgeschlossen", content)
-              ## TODO delete files after successful run!
-              # file.remove(logFile)
-              # file.remove(feedConf)
-              # file.remove(feedCSV)
-            }
-          }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
-        }
+        
       })
+
+      #
+      # write global csv file
+      #
+      cat(file=catFile, paste("writing import data to: ", feedCSV), "\n")
+      write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
+      cat(file=catFile, "Done!\n")
+      progress$inc(1)
+
+      if (!file.exists(feederPath)) {
+        cat(file=catFile, paste("Feeder path does not exist:", feederPath, "\n"))
+        showModalMessage(title="Fehler", "Feeder nicht gefunden!")
+      } else {
+        tryCatch({
+          cat(file=catFile, "Start feeding data values\n")
+          cat(file=catFile, paste("Config File: ", feedConf), "\n")
+          cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
+          cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
+          logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
+          cat(file=catFile, paste("Log File   : ", logFile), "\n")
+          system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
+          # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
+          # system(cmd, ignore.stdout = TRUE, ignore.stderr = TRUE, wait = FALSE, intern = FALSE)
+          cat(file=catFile, "\n")
+          cat(file=catFile, "Wait until import finishes")
+          Sys.sleep(1)
+          if (Sys.info()["sysname"] != "Windows") {
+            check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+            while (check == 1) {
+              Sys.sleep(2)
+              cat(file=catFile, ".")
+              check <- system(paste0("ps aux | grep -v grep | grep ", logFile, " | wc -l"), intern = TRUE)
+            }
+          } else {
+            isFeederRunning <- function() {
+              processListCmd <- paste0("WMIC PROCESS GET Caption,Processid,Commandline")
+              tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE, wait=TRUE)
+              length(grep(basename(logFile), tasks)) > 0
+            }
+            
+            importInProgress <- isFeederRunning()
+            cat(file=catFile, "Import process running")
+            while (importInProgress) {
+              Sys.sleep(2)
+              importInProgress <- isFeederRunning()
+              cat(file=catFile, ".")
+            }
+            Sys.sleep(2)
+          }
+          cat(file=catFile, "\n")
+
+          cat(file=catFile, "Done!\n")
+          progress$inc(1)
+          Sys.sleep(5) # wait for log to be written
+          result <- read_lines(logFile, locale = locale())
+
+          if (length(grep("failed: 0", result, value = TRUE)) == 0) {
+            cat(file=catFile, "Errors occured during import! Consult importer logs.\n")
+            content <- div("Log-Ausgabe",
+              pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
+            showModalMessage(title="Bericht", content, size = "l")
+          } else {
+            content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
+            showModalMessage(title="Vorgang abgeschlossen", content)
+            ## TODO delete files after successful run!
+            # file.remove(logFile)
+            # file.remove(feedConf)
+            # file.remove(feedCSV)
+          }
+        }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
+      }
     }, error = modalErrorHandler, finally = poolReturn(db))
   }
 }, ignoreInit=TRUE)
