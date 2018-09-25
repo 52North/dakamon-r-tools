@@ -501,8 +501,8 @@ output$tableStatistik <- renderDataTable({
                                  language=list(url = lngJSON)))
     
     numCol <- colnames(stat)
-    numCol <- numCol[which(as.logical(sapply(stat[,numCol],is.numeric)))]
-    numCol <- numCol[apply(matrix(stat[,numCol] > floor(stat[,numCol])), 2, any)]
+    numCol <- numCol[which(as.logical(sapply(stat[1:6,numCol],is.numeric)))]
+    numCol <- numCol[apply(matrix(stat[1:6, numCol] > floor(stat[1:6, numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
     if (length(numCol) > 0)
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
