@@ -205,7 +205,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
+      write.table(isolate(pnsData()[sPNS(), -1]), file, sep = ";", dec=",",
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
@@ -215,7 +215,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
+      write.table(isolate(pnsData()[sPNS(), -1]), file, sep = ";", dec=",",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
@@ -225,7 +225,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(pnsData()[sPNS(),])
+      df <- isolate(pnsData()[sPNS(), -1])
       save(df, file = file)
     }
   )

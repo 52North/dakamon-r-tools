@@ -98,7 +98,7 @@ if(!is.null(allProben)) {
   output$exportProbeCSVLatin1 <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "Latin1", row.names = FALSE)
     }
@@ -107,7 +107,7 @@ if(!is.null(allProben)) {
   output$exportProbeCSVUtf8 <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
@@ -116,7 +116,7 @@ if(!is.null(allProben)) {
   output$exportProbeRData <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".RData", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       save(df, file = file)
     }
   )
@@ -188,6 +188,44 @@ output$tableTeilproben  <- renderDT({
   dt
 })
 
+
+sTeilproben <- reactive({
+  sr <- input$tableTeilproben_rows_selected
+  if(is.null(sr)) {
+    input$tableTeilproben_rows_all
+  } else {
+    sort(sr)
+  }
+})
+
 observeEvent(input$fromTeilprobenToMischproben, {
   updateTabsetPanel(session, "inNavbarpage", selected = "Mischproben")
 })
+
+if(!is.null(allProben)) {
+  output$exportTeilprobeCSVLatin1 <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      write.table(df, file, sep = ";", dec=",", na = "",
+                  fileEncoding = "Latin1", row.names = FALSE)
+    }
+  )
+  
+  output$exportTeilprobeCSVUtf8 <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      write.table(df, file, sep = ";", dec=",", na = "",
+                  fileEncoding = "UTF-8", row.names = FALSE)
+    }
+  )
+  
+  output$exportTeilprobeRData <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".RData", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      save(df, file = file)
+    }
+  )
+}

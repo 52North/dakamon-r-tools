@@ -68,10 +68,19 @@ output$tableParameter  <- renderDT({
   dt
 })
 
+sParam <- reactive({
+  sr <- input$tableParameter_rows_selected
+  if(is.null(sr)) {
+    input$tableParameter_rows_all
+  } else {
+    sort(sr)
+  }
+})
+
 output$exportParCSVLatin1 <- downloadHandler(
   filename = function() paste("Parameter-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
-    df <- isolate(allParameter()$resDf[selData(),])
+    df <- isolate(allParameter()[sParam(), -1])
     write.table(df, file, sep = ";", dec=",", na = "",
                 fileEncoding = "Latin1", row.names = FALSE)
   }
@@ -80,7 +89,7 @@ output$exportParCSVLatin1 <- downloadHandler(
 output$exportParCSVUtf8 <- downloadHandler(
   filename = function() paste("Parameter-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
-    df <- isolate(allParameter()$resDf[selData(),])
+    df <- isolate(allParameter()[sParam(), -1])
     write.table(df, file, sep = ";", dec=",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
@@ -89,7 +98,7 @@ output$exportParCSVUtf8 <- downloadHandler(
 output$exportParRData <- downloadHandler(
   filename = function() paste("Parameter-", Sys.Date(), ".RData", sep=""),
   content = function(file) {
-    df <- isolate(allParameter()$resDf[selData(),])
+    df <- isolate(allParameter()[sParam(), -1])
     save(df, file = file)
   }
 )
