@@ -55,7 +55,7 @@ if (nrow(ort) > 0) {
       showHead <- paste0(showHead, "</span>")
       
       if ("PLZ" %in% colnames(showTab)) {
-        showTab$PLZ <- sprintf("%05i.", showTab$PLZ)
+        showTab$PLZ <- sprintf("%05i", showTab$PLZ)
       }
       
       dt <- datatable(showTab, colnames = showHead,
@@ -97,7 +97,7 @@ if (nrow(ort) > 0) {
     content = function(file) {
       df <- isolate(ortData()[sOrt(), -1])
       if ("PLZ" %in% colnames(df)) {
-        df$PLZ <- sprintf("%05i.", df$PLZ)
+        df$PLZ <- sprintf("%05i", df$PLZ)
       }
       write.table(df, file, sep = ";", dec = ",", na = "",
                   fileEncoding = "Latin1", row.names = FALSE)
@@ -109,7 +109,7 @@ if (nrow(ort) > 0) {
     content = function(file) {
       df <- isolate(ortData()[sOrt(), -1])
       if ("PLZ" %in% colnames(df)) {
-        df$PLZ <- sprintf("%05i.", df$PLZ)
+        df$PLZ <- sprintf("%05i", df$PLZ)
       }
       write.table(df, file, sep = ";", dec = ",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
@@ -123,7 +123,7 @@ if (nrow(ort) > 0) {
     content = function(file) {
       df <- isolate(ortData()[sOrt(),-1])
       if ("PLZ" %in% colnames(df)) {
-        df$PLZ <- sprintf("%05i.", df$PLZ)
+        df$PLZ <- sprintf("%05i", df$PLZ)
       }
       save(df, file = file)
     }
