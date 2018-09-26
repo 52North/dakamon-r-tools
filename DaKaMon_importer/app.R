@@ -168,20 +168,26 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(dataTableOutput('tableLiteratur'),
                                                  width = mainPanelWidth)
                                      ))),
-                 
+
                  ## Dateien
                  tabPanel(filesTab$title,
                           useShinyjs(),
                           h3(style=tabTitleStyle,class="tab-title", filesTab$title),
-                          selectInput("DateiSelType", "Wähle eine Kategorie", 
-                                      choices = list(Messdaten=list("Ort", "Probenahmestelle", "Parameter", "Probe"), 
-                                                     Literaturdaten=list("Literatur"))),
-                          uiOutput("DateiKategorieElementeOut"),
-                          fileInput("DateiFile", "Hochzuladende Datei", 
-                                    buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt"),
-                          checkboxInput("owDatei", "Datei überschreiben?", FALSE), 
-                          uiOutput("DateiValidationOut"),
-                          uiOutput("DateiDBConsistencyOut"))
+                          sidebarLayout(
+                            sidebarPanel(
+                              selectInput("FileUploadCategory", "Wähle eine Referenz-Kategorie",
+                                          choices = list(Messdaten=list("Ort", "Parameter", "Probe"),
+                                                         Literaturdaten=list("Literatur"))),
+                              fileInput("FileUpload", "Hochzuladende Datei",
+                                        buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt"),
+                              checkboxInput("overrideFile", "Datei überschreiben?", FALSE),
+                              uiOutput("FileUploadValidationOut"),
+                              uiOutput("FileUploadDBConsistencyOut"),
+                              width = sideBarWidth),
+                            mainPanel(DTOutput('tableFileUploadReferenz'),
+                                      width = mainPanelWidth)
+                          ))
+
 )
 
 
