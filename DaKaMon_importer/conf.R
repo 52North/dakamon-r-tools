@@ -1,6 +1,9 @@
 ## DaKaMon conf
 # common constants
 
+# max upload size
+options(shiny.maxRequestSize=10*1024^2)
+
 #
 # CSV encoding
 #
@@ -119,6 +122,10 @@ feederTimeoutBuffer <- 120000
 stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
+
+## File Upload
+fileUploadDir <- "ADJUST_ME"
+#fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
 
 ## DB="GUI/CSV"
 reqColOrt <- list(id="ID", # KAM-EPP

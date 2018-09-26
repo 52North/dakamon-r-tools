@@ -176,7 +176,7 @@ ui <- navbarPage("Datenimport",
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("FileUploadCategory", "Wähle eine Referenz-Kategorie",
-                                          choices = list(Messdaten=list("Ort", "Parameter", "Probe"),
+                                          choices = list(Messdaten=list("Ort"),
                                                          Literaturdaten=list("Literatur"))),
                               fileInput("FileUpload", "Hochzuladende Datei",
                                         buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt"),
@@ -206,8 +206,8 @@ server <- function(input, output) {
   source("server_Referenz.R", local = TRUE, encoding = "UTF-8")$value
   
   source("server_Literatur.R", local = TRUE, encoding = "UTF-8")$value
-  
-  # Datei upload
+
+  source("server_Upload.R", local = TRUE, encoding = "UTF-8")$value
 }
 
 pool <- dbPool(
