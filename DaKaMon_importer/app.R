@@ -20,13 +20,13 @@ ui <- navbarPage("Datenimport",
                                      div(class="row",div(class="col-sm-12",h3(style=tabTitleStyle,class="tab-title", dataStep1$title))),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("ortFileEnc", "Encoding der Datei", 
+                                         selectInput("ortFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFileOrt", "CSV-Datei mit Orten", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFileOrt", "CSV-Datei mit Orten",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owOrt", "Alle Daten überschreiben?", FALSE), 
+                                         checkboxInput("owOrt", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("OrtValidationOut"),
                                          uiOutput("OrtDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -34,20 +34,20 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableOrt'),
                                          width = mainPanelWidth)
                                      )),
-                            
+
                             ## Probenahmestelle (PNS)
                             tabPanel(dataStep2$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("pnsFileEnc", "Encoding der Datei", 
+                                         selectInput("pnsFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFilePNS", "CSV-Datei mit Probenahmestellen", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFilePNS", "CSV-Datei mit Probenahmestellen",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-                                         csvInfo,                                           
-                                         checkboxInput("owPNS", "Alle Daten überschreiben?", FALSE), 
+                                         csvInfo,
+                                         checkboxInput("owPNS", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("PNSValidationOut"),
                                          uiOutput("PNSDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -55,7 +55,7 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tablePNS'),
                                          width = mainPanelWidth)
                                      )),
-                            
+
                             ## Parameter (PAR)
                             tabPanel(dataStep3$title,
                                      useShinyjs(),
@@ -64,11 +64,11 @@ ui <- navbarPage("Datenimport",
                                        sidebarPanel(
                                          selectInput("parFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFilePAR", "CSV-Datei mit Parametern", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFilePAR", "CSV-Datei mit Parametern",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-                                         csvInfo,                     
-                                         checkboxInput("owPAR", "Alle Daten überschreiben?", FALSE), 
+                                         csvInfo,
+                                         checkboxInput("owPAR", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("PARValidationOut"),
                                          uiOutput("PARDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -76,20 +76,20 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tablePAR'),
                                          width = mainPanelWidth)
                                      )),
-                            
+
                             ## Probe
                             tabPanel(dataStep4$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep4$title),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("probeFileEnc", "Encoding der Datei", 
+                                         selectInput("probeFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFileProbe", "CSV-Datei mit Proben", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFileProbe", "CSV-Datei mit Proben",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
-                                         csvInfo,  
-                                         checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE), 
+                                         csvInfo,
+                                         checkboxInput("owProbe", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("ProbeValidationOut"),
                                          uiOutput("ProbeDBConsistencyOut"), # DBConsistencyActionOut
                                          width = sideBarWidth),
@@ -97,17 +97,17 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableProbe'),
                                          width = mainPanelWidth)
                                      )),
-                            
+
                             ##  Messungen hochladen
                             tabPanel(dataStep5$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep5$title),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("dataFileEnc", "Encoding der Datei", 
+                                         selectInput("dataFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("dataCsvFile", "CSV-Datei mit Messungen", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("dataCsvFile", "CSV-Datei mit Messungen",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          #   selectInput("dataBG", "Zeile mit Bestimmungsgrenze:", choices = c(1:20), selected = "1"),
                                          #   selectInput("dataUoM", "Zeile mit Maßeinheit:", choices = c(1:20), selected = "2"),
@@ -115,7 +115,7 @@ ui <- navbarPage("Datenimport",
                                          # textInput("dataBGchar", "Unter Bestimmungsgrenze:", value = BGchar),
                                          csvInfo, br(),
                                          paste0("Werte unterhalb der Bestimmungsgrenze müssen als \"", BGchar, "\" und unterhalb der Nachweisgrenze als \"", NGchar, "\" in der CSV-Datei abgelegt sein."),
-                                         checkboxInput("dataOW", "Alle Daten überschreiben?", FALSE), 
+                                         checkboxInput("dataOW", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("dataValidationOut"),
                                          uiOutput("dataDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -123,11 +123,11 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableData'),
                                          width = mainPanelWidth)
                                      ))),
-                 
+
                  ######################
                  ### Literaturdaten ###
                  ######################
-                 
+
                  navbarMenu("Literaturdaten",
                             ## Referenz (Ref)
                             tabPanel(litStep1$title,
@@ -135,13 +135,13 @@ ui <- navbarPage("Datenimport",
                                      h3(style=tabTitleStyle,class="tab-title", litStep1$title),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("refFileEnc", "Encoding der Datei", 
+                                         selectInput("refFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFileReferenz", "CSV-Datei mit Referenzen", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFileReferenz", "CSV-Datei mit Referenzen",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owReferenz", "Alle Daten überschreiben?", FALSE), 
+                                         checkboxInput("owReferenz", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("ReferenzValidationOut"),
                                          uiOutput("ReferenzDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -149,19 +149,19 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableReferenz'),
                                          width = mainPanelWidth)
                                      )),
-                            
+
                             tabPanel(litStep2$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", litStep2$title),
                                      sidebarLayout(
                                        sidebarPanel(
-                                         selectInput("litFileEnc", "Encoding der Datei", 
+                                         selectInput("litFileEnc", "Encoding der Datei",
                                                      list('UTF-8'="UTF-8", 'ISO-8859-1'="ISO-8859-1", 'Windows-1252'="windows-1252")),
-                                         fileInput("csvFileLiteratur", "CSV-Datei mit Literaturwerten", 
-                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt", 
+                                         fileInput("csvFileLiteratur", "CSV-Datei mit Literaturwerten",
+                                                   buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt",
                                                    accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                                          csvInfo,
-                                         checkboxInput("owLiteratur", "Alle Daten überschreiben?", FALSE), 
+                                         checkboxInput("owLiteratur", "Alle Daten überschreiben?", FALSE),
                                          uiOutput("LiteraturValidationOut"),
                                          uiOutput("LiteraturDBConsistencyOut"),
                                          width = sideBarWidth),
@@ -192,19 +192,19 @@ ui <- navbarPage("Datenimport",
 
 
 server <- function(input, output) {
-  
+
   source("server_1_Ort.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_2_Probenahmestelle.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_3_Parameter.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_4_Probe.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_5_Messungen.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_Referenz.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_Literatur.R", local = TRUE, encoding = "UTF-8")$value
 
   source("server_Upload.R", local = TRUE, encoding = "UTF-8")$value
