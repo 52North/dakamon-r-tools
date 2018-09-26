@@ -54,6 +54,10 @@ if (nrow(ort) > 0) {
       
       showHead <- paste0(showHead, "</span>")
       
+      if ("PLZ" %in% colnames(showTab)) {
+        showTab$PLZ <- sprintf("%05i", showTab$PLZ)
+      }
+      
       dt <- datatable(showTab, colnames = showHead,
                       filter="top",
                       options = list(paging=FALSE, dom = 'Brt',
@@ -92,6 +96,9 @@ if (nrow(ort) > 0) {
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
       df <- isolate(ortData()[sOrt(), -1])
+      if ("PLZ" %in% colnames(df)) {
+        df$PLZ <- sprintf("%05i", df$PLZ)
+      }
       write.table(df, file, sep = ";", dec = ",", na = "",
                   fileEncoding = "Latin1", row.names = FALSE)
     }
@@ -101,7 +108,9 @@ if (nrow(ort) > 0) {
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
       df <- isolate(ortData()[sOrt(), -1])
-      
+      if ("PLZ" %in% colnames(df)) {
+        df$PLZ <- sprintf("%05i", df$PLZ)
+      }
       write.table(df, file, sep = ";", dec = ",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
@@ -113,6 +122,9 @@ if (nrow(ort) > 0) {
     },
     content = function(file) {
       df <- isolate(ortData()[sOrt(),-1])
+      if ("PLZ" %in% colnames(df)) {
+        df$PLZ <- sprintf("%05i", df$PLZ)
+      }
       save(df, file = file)
     }
   )
@@ -205,7 +217,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
+      write.table(isolate(pnsData()[sPNS(), -1]), file, sep = ";", dec=",",
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
@@ -215,7 +227,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      write.table(isolate(pnsData()[sPNS(),]), file, sep = ";", dec=",",
+      write.table(isolate(pnsData()[sPNS(), -1]), file, sep = ";", dec=",",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
@@ -225,7 +237,7 @@ if(!is.null(ortData)) {
       paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
     },
     content = function(file) {
-      df <- isolate(pnsData()[sPNS(),])
+      df <- isolate(pnsData()[sPNS(), -1])
       save(df, file = file)
     }
   )
@@ -453,6 +465,7 @@ output$tableDaten <- renderDT({
               escape=FALSE)
     
     numCol <- colnames(showTab)
+    numCol <- numCol[!(numCol %in% c('PNS_ID'))]
     numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
     numCol <- numCol[apply(matrix(showTab[,numCol] > floor(showTab[,numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
@@ -496,9 +509,18 @@ output$tableStatistik <- renderDataTable({
 
     rownames(stat) <- c("Min.","1. Qu.","Median","Mittelw.", "3. Qu.","Max.", "NA", "Anz. Fakt.")
 
-    datatable(stat,
-              options=list(paging=FALSE, dom = 'Brt',
-                           language=list(url = lngJSON)))
+    dt <- datatable(stat,
+                    options=list(paging=FALSE, dom = 'Brt',
+                                 language=list(url = lngJSON)))
+    
+    numCol <- colnames(stat)
+    numCol <- numCol[which(apply(stat[1:6,numCol], 2, function(x) all(is.numeric(x)) ))]
+    numCol <- numCol[apply(matrix(stat[1:6, numCol] > floor(stat[1:6, numCol])), 2, any)]
+    numCol <- numCol[!is.na(numCol)]
+    if (length(numCol) > 0)
+      dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+    
+    dt
   }
 })
 

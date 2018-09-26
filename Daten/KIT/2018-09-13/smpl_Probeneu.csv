@@ -1,4 +1,4 @@
-ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisdauereinheit;Ereignisvolumen;Ereignisvolumeneinheit;Teilprobe von;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
+ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisdauereinheit;Ereignisvolumen;Ereignisvolumeneinheit;Teilprobe_von;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr
 "P_161017_2017018468";KAM_NW_BHK_Ablauf;16.10.2017;16.10.2017;24.10.2017;7;Tage;12919;m³;;TW;automatischer Probenehmer;7-Tage-Mischprobe;7;l;TZW;2017018468
 "P_161017_2017018468_01";KAM_NW_BHK_Ablauf;16.10.2017;16.10.2017;17.10.2017;1;Tage;13869;m³;"P_161017_2017018468";TW;automatischer Probenehmer;7-Tage-Mischprobe;1;l;TZW;2017018468
 "P_161017_2017018468_02";KAM_NW_BHK_Ablauf;16.10.2017;17.10.2017;18.10.2017;1;Tage;12854;m³;"P_161017_2017018468";TW;automatischer Probenehmer;7-Tage-Mischprobe;1;l;TZW;2017018468
@@ -76,4 +76,3 @@ P_01032018_2018005505_04;KAM_NW_BHK_Ablauf;01.03.2018;14.03.2018;21.03.2018;1;Ta
 P_01032018_2018005505_05;KAM_NW_BHK_Ablauf;01.03.2018;21.03.2018;23.03.2018;1;Tage;13200;m³;P_01032018_2018005505;TW;automatischer Probenehmer;7-Tage-Mischprobe;1;l;TZW;2018005505
 P_01032018_2018005505_06;KAM_NW_BHK_Ablauf;01.03.2018;23.03.2018;24.03.2018;1;Tage;14116;m³;P_01032018_2018005505;TW;automatischer Probenehmer;7-Tage-Mischprobe;1;l;TZW;2018005505
 P_01032018_2018005505_07;KAM_NW_BHK_Ablauf;01.03.2018;24.03.2018;24.03.2018;1;Tage;14235;m³;P_01032018_2018005505;TW;automatischer Probenehmer;7-Tage-Mischprobe;1;l;TZW;2018005505
-

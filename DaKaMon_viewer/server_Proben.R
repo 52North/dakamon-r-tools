@@ -27,7 +27,7 @@ output$probenPNSInput <- renderUI(selectInput("probenPNS", "Probenahmestelle:",
                                               selected = probenPNS$name[1]))
 
 
-# Alle Proben/Global Spaltennamen
+# Alle (Misch-)Proben/Global Spaltennamen
 allProben <- reactive({
   
   db <- connectToDB()
@@ -47,14 +47,15 @@ allProben <- reactive({
     query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ",
                    paste0(probeDataProbeMetaData$columnid, collapse=", "),
                    " FROM probe pro
-                     LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id")
+                     LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
+                     WHERE pro.subprobe IS NULL")
     
     if (!is.null(input$probenPNS)) {
       slectedPNS <- input$probenPNS
       if (Sys.info()["sysname"] == "Windows") {
         slectedPNS <- stri_enc_tonative(input$probenPNS)
       }
-      query <- paste0(query, " WHERE pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
+      query <- paste0(query, " AND pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
     }
     
     allPro <- dbGetQuery(db, query)
@@ -84,11 +85,20 @@ output$tableProben  <- renderDT({
   dt
 })
 
+sProben <- reactive({
+  sr <- input$tableProben_rows_selected
+  if(is.null(sr)) {
+    input$tableProben_rows_all
+  } else {
+    sort(sr)
+  }
+})
+
 if(!is.null(allProben)) {
   output$exportProbeCSVLatin1 <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "Latin1", row.names = FALSE)
     }
@@ -97,7 +107,7 @@ if(!is.null(allProben)) {
   output$exportProbeCSVUtf8 <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       write.table(df, file, sep = ";", dec=",", na = "",
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
@@ -106,9 +116,116 @@ if(!is.null(allProben)) {
   output$exportProbeRData <- downloadHandler(
     filename = function() paste("Probe-", Sys.Date(), ".RData", sep=""),
     content = function(file) {
-      df <- isolate(allProben()$resDf[selData(),])
+      df <- isolate(allProben()[sProben(), -1])
       save(df, file = file)
     }
   )
 }
 
+observeEvent(input$fromMischprobenToTeilproben, {
+  updateTabsetPanel(session, "inNavbarpage", selected = "Teilproben")
+})
+
+# Details zu Teilproben
+allTeilproben <- reactive({
+  
+  db <- connectToDB()
+  tryCatch({
+    # Alle Probe/Global Spaltennamen
+    probeDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe', 'global')"))
+    
+    # Nur Probe Spaltename
+    probeDataProbeMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe')"))
+    
+    # Add Prefix zu Spaltennamen
+    colNumId <- grep("col*", probeDataProbeMetaData$columnid, value = F)
+    probeDataProbeMetaData$columnid[colNumId] <- paste0("pro.", probeDataProbeMetaData$columnid[colNumId])
+    
+    
+    # Query alle Teilproben mit PNS-Identifier und zugehöroger Mischprobe
+    query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, pro.subprobe, ",
+                   paste0(probeDataProbeMetaData$columnid, collapse=", "),
+                   " FROM probe pro
+                   LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
+                   WHERE pro.subprobe in ('", 
+                   paste0(allProben()[sProben(),"ID"], collapse="', '"),
+                   "')")
+    
+    if (!is.null(input$probenPNS)) {
+      slectedPNS <- input$probenPNS
+      if (Sys.info()["sysname"] == "Windows") {
+        slectedPNS <- stri_enc_tonative(input$probenPNS)
+      }
+      query <- paste0(query, " AND pns.name IN (", paste0("'", slectedPNS, "'" ,collapse=", ") ,")")
+    }
+    
+    cat(query)
+    
+    allPro <- dbGetQuery(db, query)
+    
+    if (nrow(allPro) > 0)
+      colnames(allPro) <- probeDataMetaData$dede[match(colnames(allPro), probeDataMetaData$columnid)]
+    
+    allPro
+  }, error = modalErrorHandler, finally = poolReturn(db))
+})
+
+output$tableTeilproben  <- renderDT({
+  showTab <- allTeilproben()[,-1]
+  
+  dt <- datatable(showTab,
+                  filter="top",
+                  options = list(paging=FALSE, dom = 'Brt',
+                                 language=list(url = lngJSON)),
+                  escape=FALSE)
+  
+  numCol <- colnames(showTab)
+  numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
+  numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+  numCol <- numCol[!is.na(numCol)]
+  if (length(numCol) > 0)
+    dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+  dt
+})
+
+
+sTeilproben <- reactive({
+  sr <- input$tableTeilproben_rows_selected
+  if(is.null(sr)) {
+    input$tableTeilproben_rows_all
+  } else {
+    sort(sr)
+  }
+})
+
+observeEvent(input$fromTeilprobenToMischproben, {
+  updateTabsetPanel(session, "inNavbarpage", selected = "Mischproben")
+})
+
+if(!is.null(allProben)) {
+  output$exportTeilprobeCSVLatin1 <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      write.table(df, file, sep = ";", dec=",", na = "",
+                  fileEncoding = "Latin1", row.names = FALSE)
+    }
+  )
+  
+  output$exportTeilprobeCSVUtf8 <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".csv", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      write.table(df, file, sep = ";", dec=",", na = "",
+                  fileEncoding = "UTF-8", row.names = FALSE)
+    }
+  )
+  
+  output$exportTeilprobeRData <- downloadHandler(
+    filename = function() paste("Teilprobe-", Sys.Date(), ".RData", sep=""),
+    content = function(file) {
+      df <- isolate(allTeilproben()[sTeilproben(), -1])
+      save(df, file = file)
+    }
+  )
+}
