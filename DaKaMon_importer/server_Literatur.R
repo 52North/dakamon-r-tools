@@ -145,19 +145,25 @@ observeEvent(input$checkDBLiteratur, {
     }
     
     # check whether referenced combination of Thematik, PNS and Parameter exist; if not -> error state: no upload
-    CombinationInDB <- dbGetQuery(db, paste0("SELECT DISTINCT od.thematik, pns.identifier as pnsId, op.identifier as paramId
-                                      FROM probe_parameter pp
-                                      LEFT OUTER JOIN probe pro ON (pro.id = pp.probe_id)
-                                      LEFT OUTER JOIN observableproperty op ON (pp.parameter_id = op.observablepropertyid)
-                                      LEFT OUTER JOIN pns_data pd ON (pro.pns_id = pd.featureofinterestid)
-                                      LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = pd.featureofinterestid)
-                                      LEFT OUTER JOIN featurerelation fr ON (fr.childfeatureid = pd.featureofinterestid)
-                                      LEFT OUTER JOIN featureofinterest parent ON (parent.featureofinterestid = fr.parentfeatureid)
-                                      LEFT OUTER JOIN ort_data od ON (parent.featureofinterestid = od.featureofinterestid) WHERE ",
-                                      "od.thematik IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"')
-                                      AND pns.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"')
-                                      AND op.identifier IN ('", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"')"))
-    
+    checkCombinationQuery <- paste("SELECT DISTINCT od.thematik, pns.identifier as pnsId, op.identifier as paramId FROM probe_parameter pp",
+                                   "LEFT OUTER JOIN probe pro ON (pro.id = pp.probe_id)",
+                                   "LEFT OUTER JOIN observableproperty op ON (pp.parameter_id = op.observablepropertyid)",
+                                   "LEFT OUTER JOIN pns_data pd ON (pro.pns_id = pd.featureofinterestid)",
+                                   "LEFT OUTER JOIN featureofinterest pns ON (pns.featureofinterestid = pd.featureofinterestid)",
+                                   "LEFT OUTER JOIN featurerelation fr ON (fr.childfeatureid = pd.featureofinterestid)",
+                                   "LEFT OUTER JOIN featureofinterest parent ON (parent.featureofinterestid = fr.parentfeatureid)",
+                                   "LEFT OUTER JOIN ort_data od ON (parent.featureofinterestid = od.featureofinterestid)",
+                                   "WHERE",
+                                   "od.thematik IN (",
+                                     paste0("'", paste(inCSVLiteratur$df[,reqColLiteratur$thematik], collapse="', '"),"'"),
+                                   ") AND",
+                                   "pns.identifier IN (",
+                                     paste0("'", paste(inCSVLiteratur$df[,reqColLiteratur$pnsId], collapse="', '"),"'"),
+                                   ") AND",
+                                    "op.identifier IN (",
+                                     paste0("'", paste(inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="', '"),"'"),
+                                   ")")
+    CombinationInDB <- dbGetQuery(db, checkCombinationQuery)
     if (nrow(CombinationInDB) == 0) {
       checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
                                                           paste0(inCSVLiteratur$df[,reqColLiteratur$thematik], ", ", inCSVLiteratur$df[,reqColLiteratur$pnsId], ", ", inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="</li><li>")))
