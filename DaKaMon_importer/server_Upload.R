@@ -54,15 +54,14 @@ getReferences <- reactive({
       columnsLit <- paste0("lit.", colNamesResultLit$columnid, " as ", aliasesLit)
       dynamicColumnsLit <- ifelse(length(colNamesResultLit$columnid) > 0 , paste(", ", paste(columnsLit, collapse = ",")), "")
 
-      # literatur columns fehlen
-
       dynamicColumns <- c(dynamicColumnsRef, dynamicColumnsLit)
       litRefQuery <- paste("SELECT ref.id, ref.identifier, ",
-                           #lit.pns_id JOIN?
-                           #lit.paramId JOIN?
                            "lit.thematik, lit.untersuchungsbeginn, lit.untersuchungsende",
                            dynamicColumns, "FROM referenz ref",
-                           "LEFT JOIN literatur lit on lit.referenz_id = ref.id")
+                           "LEFT JOIN literatur lit on lit.referenz_id = ref.id"
+                           # TODO LEFT JOIN parameter_data
+                           # TODO LEFT JOIN pns_data
+                           )
       litRefResult <- dbGetQuery(db, litRefQuery)
 
       if (length(litRefResult) == 0) {
