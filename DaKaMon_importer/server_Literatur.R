@@ -165,7 +165,8 @@ observeEvent(input$checkDBLiteratur, {
                                    ")")
     CombinationInDB <- dbGetQuery(db, checkCombinationQuery)
     if (nrow(CombinationInDB) == 0) {
-      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+      message(checkCombinationQuery)
+      checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden (eine Kombination wird während des Messdatenimport angelegt): <ul><li>",
                                                           paste0(inCSVLiteratur$df[,reqColLiteratur$thematik], ", ", inCSVLiteratur$df[,reqColLiteratur$pnsId], ", ", inCSVLiteratur$df[,reqColLiteratur$paramId], collapse="</li><li>")))
     } else {
       misingCombination <- NULL
@@ -184,7 +185,7 @@ observeEvent(input$checkDBLiteratur, {
       }
       
       if (length(misingCombination > 0)) {
-        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden: <ul><li>",
+        checkDBLiteratur$txt <- paste(checkDBLiteratur$txt, paste("Folgende Kombination von Thematik, PNS and Parameter sind nicht in der DB vorhanden und müssen zuvor eingefügt werden (eine Kombination wird während des Messdatenimport angelegt): <ul><li>",
                                                             paste0(inCSVLiteratur$df[,reqColLiteratur$pnsId][misingCombination], collapse="</li><li>")))
       }
     }
