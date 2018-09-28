@@ -31,8 +31,13 @@ getReferences <- reactive({
                         "LEFT JOIN ort_data ort on foi.featureofinterestid = ort.featureofinterestid")
       ortResult <- dbGetQuery(db, ortQuery)
 
-      columnNames <- colNamesResult$dede[match(colnames(ortResult), colNamesResult$columnid)]
-      colnames(ortResult) <- c("RefId", "ID", names(which(sapply(columnNames, function(x) !is.na(x)))))
+      if (length(ortResult) == 0) {
+        ortResult <- data.frame(RefId=character(), ID=character())
+      } else {
+        # order of column names must match SELECT
+        columnNames <- colNamesResult$dede[match(colnames(ortResult), colNamesResult$columnid)]
+        colnames(ortResult) <- c("RefId", "ID", names(which(sapply(columnNames, function(x) !is.na(x)))))
+      }
 
       return(ortResult)
     } else if (input$FileUploadCategory == "Literatur") {
@@ -60,15 +65,16 @@ getReferences <- reactive({
                            "LEFT JOIN literatur lit on lit.referenz_id = ref.id")
       litRefResult <- dbGetQuery(db, litRefQuery)
 
-      columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
-      columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
-      litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
-                       names(which(sapply(columnNamesLit, function(x) !is.na(x)))))
-      if (is.null(litRefResult)) {
+      if (length(litRefResult) == 0) {
         litRefResult <- data.frame(RefId=character(), ID=character(),
                                    Thematik=character(), Untersuchungsbeginn=character(), Untersuchungsende=character())
       } else {
-        # order of non dynamic column names must match SELECT
+        columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
+        columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
+        litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
+                         names(which(sapply(columnNamesLit, function(x) !is.na(x)))))
+
+        # order of column names must match SELECT
         colnames(litRefResult) <- c("RefId", "ID", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames)
       }
       return(litRefResult)
