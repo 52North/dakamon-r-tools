@@ -34,7 +34,7 @@ connectToDB <- function() {
 ## /tools
 
 ui <-  navbarPage("Datenansicht", id="inNavbarpage",
-                  navbarMenu("Messdaten", 
+                  navbarMenu("Messdaten",
                              ## Ort
                              tabPanel("Ort(e) auswählen",
                                       uiOutput("ewsSelInput"),
@@ -80,7 +80,7 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                                         value = FALSE),
                                           radioButtons("repBG",
                                                        label = "Ersetze Werte unterhalb der Bestimmungsgrenze durch:",
-                                                       choices = c("'BG'", "0", "BG/2", "BG"), 
+                                                       choices = c("'BG'", "0", "BG/2", "BG"),
                                                        selected = "'BG'", inline=TRUE),
                                           checkboxInput("randomId",
                                                         label = "Anonymisiere IDs",
@@ -107,7 +107,7 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                             "$('#tableStat').hasClass('recalculating')",
                                             tags$div('Berechne ... ')
                                           ))
-                                        
+
                                       ))),
                   tabPanel("Parameter anzeigen",
                            uiOutput("paramElemGroupInput"),
@@ -162,14 +162,15 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
 )
 
 server <- function(input, output, session) {
-  
+
   source("server_Messdaten.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_Parameter.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_Proben.R", local = TRUE, encoding = "UTF-8")$value
-  
+
   source("server_Literaturdaten.R", local = TRUE, encoding = "UTF-8")$value
+
   source("server_Dokumente.R", local = TRUE, encoding = "UTF-8")$value
 }
 
@@ -185,7 +186,7 @@ showModalMessage <- function(..., title="Title") {
   showModal(modalDialog(..., title = title, footer = modalButton("Ok")))
 }
 
-shinyApp(ui, server, 
+shinyApp(ui, server,
          onStart = function() {
            cat("Starting Application ...")
            # Ensure the DB pool closes all connections
