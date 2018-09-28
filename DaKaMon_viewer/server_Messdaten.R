@@ -45,19 +45,19 @@ if (nrow(ort) > 0) {
       ortData
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
-  
+
   output$tableOrt  <- renderDT({
     if (nrow(ortData()) > 0) {
       showTab <- ortData()[,-1]
-      
+
       showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-      
+
       showHead <- paste0(showHead, "</span>")
-      
+
       if ("PLZ" %in% colnames(showTab)) {
         showTab$PLZ <- sprintf("%05i", showTab$PLZ)
       }
-      
+
       dt <- datatable(showTab, colnames = showHead,
                       filter="top",
                       options = list(paging=FALSE, dom = 'Brt',
@@ -66,7 +66,7 @@ if (nrow(ort) > 0) {
                       escape=FALSE)
       colNoneLatLon <- colnames(showTab)[!colnames(showTab)  %in% c("lat", "lon")]
       numCol <- colNoneLatLon[which(as.logical(sapply(showTab[,colNoneLatLon],is.numeric)))]
-      numCol <- numCol[apply(showTab[,numCol] > floor(showTab[,numCol]), 2, any)]
+      numCol <- numCol[apply(matrix(showTab[,numCol] > floor(showTab[,numCol])), 2, any)]
       numCol <- numCol[!is.na(numCol)]
       dt <- formatRound(dt, c("lat", "lon"), digits=6, dec.mark=",", mark=".")
       if (length(numCol) > 0)
@@ -74,7 +74,7 @@ if (nrow(ort) > 0) {
       dt
     }
   })
-  
+
   sOrt <- reactive({
     sr <- input$tableOrt_rows_selected
     if(is.null(sr)) {
@@ -83,7 +83,7 @@ if (nrow(ort) > 0) {
       sort(sr)
     }
   })
-  
+
   output$selTextOrt <- renderText({
     if (length(sOrt()) == 1) {
       paste("Zeile", sOrt(), "ist ausgewählt.")
@@ -91,7 +91,7 @@ if (nrow(ort) > 0) {
       paste("Zeilen", paste(sOrt(), collapse=", "), "sind ausgewählt.")
     }
   })
-  
+
   output$exportOrtCSVLatin1 <- downloadHandler(
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
@@ -103,7 +103,7 @@ if (nrow(ort) > 0) {
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
-  
+
   output$exportOrtCSVUtf8 <- downloadHandler(
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
@@ -115,7 +115,7 @@ if (nrow(ort) > 0) {
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-  
+
   output$exportOrtRData <- downloadHandler(
     filename = function() {
       paste("Ort-", Sys.Date(), ".RData", sep="")
@@ -170,13 +170,13 @@ if(!is.null(ortData)) {
 
 
   output$tablePNS <- renderDT({
-    
+
     showTab <- pnsData()[,-1]
-    
+
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-    
+
     showHead <- paste0(showHead, "</span>")
-    
+
     dt <- datatable(showTab, colnames = showHead, filter="top",
                     options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
                                    language=list(url = lngJSON)),
@@ -211,7 +211,7 @@ if(!is.null(ortData)) {
       }
     }
   })
-  
+
   output$exportPNSCSVLatin1 <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
@@ -221,7 +221,7 @@ if(!is.null(ortData)) {
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
-  
+
   output$exportPNSCSVUtf8 <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
@@ -231,7 +231,7 @@ if(!is.null(ortData)) {
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-  
+
   output$exportPNSRData <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
@@ -364,11 +364,11 @@ data <- reactive({
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
 
         cat(query)
-        
+
         # minPhenTimeStart <- foiTimes$phenomenontimestart[which.min(as.POSIXct(foiTimes$phenomenontimestart))]
         # maxPhenTimeStart <- foiTimes$phenomenontimestart[which.max(as.POSIXct(foiTimes$phenomenontimestart))]
         # maxPhenTimeEnd <- foiTimes$phenomenontimeend[which.max(as.POSIXct(foiTimes$phenomenontimeend))]
-        # 
+        #
         # query <- paste0(query, " AND (o.phenomenontimestart >= '", minPhenTimeStart , "')
         #                 AND (o.phenomenontimestart <= '", maxPhenTimeStart, "')
         #                 OR o.phenomenontimeend <= '", maxPhenTimeEnd, "'" )
@@ -458,12 +458,12 @@ output$tableDaten <- renderDT({
   showTab <- isolate(data()[["resDf"]])
 
   if (!is.null(showTab)) {
-    dt <- datatable(showTab, 
+    dt <- datatable(showTab,
               filter="top",
               options=list(paging=FALSE,dom = 'Brt',
                            language=list(url = lngJSON)),
               escape=FALSE)
-    
+
     numCol <- colnames(showTab)
     numCol <- numCol[!(numCol %in% c('PNS_ID'))]
     numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
@@ -512,14 +512,14 @@ output$tableStatistik <- renderDataTable({
     dt <- datatable(stat,
                     options=list(paging=FALSE, dom = 'Brt',
                                  language=list(url = lngJSON)))
-    
+
     numCol <- colnames(stat)
     numCol <- numCol[which(apply(stat[1:6,numCol], 2, function(x) all(is.numeric(x)) ))]
     numCol <- numCol[apply(matrix(stat[1:6, numCol] > floor(stat[1:6, numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
     if (length(numCol) > 0)
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
-    
+
     dt
   }
 })
@@ -548,7 +548,7 @@ output$exportDataCSVUtf8 <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
-    
+
     write.table(df, file, sep = ";", dec = ",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
@@ -558,7 +558,7 @@ output$exportDataRData <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".RData", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
-    
+
     save(df, file = file)
   }
 )
