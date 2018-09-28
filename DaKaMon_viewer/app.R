@@ -151,7 +151,14 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       DTOutput("tableLit"),
                                       downloadButton("exportLitCSVLatin1", "Export als csv-Datei (Latin1)."),
                                       downloadButton("exportLitCSVUtf8", "Export als csv-Datei (UTF-8)."),
-                                      downloadButton("exportLitRData", "Export als RData-Datei.")))
+                                      downloadButton("exportLitRData", "Export als RData-Datei."))),
+                  navbarMenu("Dokumente",
+                             tabPanel("Ort",
+                                      DTOutput("documentTableOrt"),
+                                      br()),
+                             tabPanel("Literatur",
+                                      DTOutput("documentTableLiteratur"),
+                                      br()))
 )
 
 server <- function(input, output, session) {
@@ -163,6 +170,7 @@ server <- function(input, output, session) {
   source("server_Proben.R", local = TRUE, encoding = "UTF-8")$value
   
   source("server_Literaturdaten.R", local = TRUE, encoding = "UTF-8")$value
+  source("server_Dokumente.R", local = TRUE, encoding = "UTF-8")$value
 }
 
 

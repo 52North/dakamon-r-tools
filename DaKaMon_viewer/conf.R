@@ -70,7 +70,7 @@ catFile <- ifelse(local,stdout(),stderr())
 # DATABASE
 #
 dbHost <- ifelse(local, "localhost", "db")
-dbPort <- "5432"
+dbPort <- "5433"
 dbUser <- "postgres"
 dbPassword <- "postgres"
 dbName <- "sos"
@@ -120,6 +120,13 @@ stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
 
+## File Upload
+#fileUploadDir <- "ADJUST_ME"
+fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
+fileDownloadBaseUrl <- "ADJUST_ME"
+#fileDownloadBaseUrl <- "http://localhost"
+#fileDownloadBaseUrl <- "file:///C:/data/coding/dakamon/file_uploads/"
+
 ## DB="GUI/CSV"
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
@@ -136,7 +143,6 @@ reqColPNS <- list(id="ID",
 reqColPAR <- list(id="ID",
                   name="Name",
                   stfgr="Stoffgruppe")
-
 
 reqColProbe <- list(id="ID",
                     geoSub="PNS_ID",
