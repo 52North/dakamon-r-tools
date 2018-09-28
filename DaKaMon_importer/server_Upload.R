@@ -2,15 +2,19 @@
 #############################   File Upload    #############################
 ############################################################################
 
+# Constants
+
+codeLiteratur <- "Lt"
+
 # Tools
 
 moveFileToProbablyNotExistingTarget <- function(from, to) {
   todir <- dirname(to)
   if (!isTRUE(file.info(todir)$isdir)) {
-    cat("Create missing directories: ", to)
+    message("Create missing directories: ", to)
     dir.create(todir, recursive=TRUE)
   }
-  file.rename(from = from,  to = to)
+  file.copy(from = from,to = to)
 }
 
 getReferences <- reactive({
@@ -33,12 +37,41 @@ getReferences <- reactive({
       return(ortResult)
     } else if (input$FileUploadCategory == "Literatur") {
 
-      # TODO
+      colNamesResultRef <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
+                                                "WHERE prefixid = 'ref' AND columnid like 'col%'"))
+      aliasesRef <- paste0("ref_", colNamesResultRef$columnid)
+      columnsRef <- paste0("ref.", colNamesResultRef$columnid, " as ", aliasesRef)
+      dynamicColumnsRef <- ifelse(length(colNamesResultRef$columnid) > 0 , paste(", ", paste(columnsRef, collapse = ",")), "")
 
-      #result <- dbGetQuery(db, "SELECT identifier, name FROM literatur")
-      #namedValues = setNames(as.character(result$identifier), paste0(result$name, " (", result$identifier, ")"))
-      #updateSelectInput(session, "FileUploadReference", choices = namedValues)
+      colNamesResultLit <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
+                                                "WHERE prefixid = 'lit' AND columnid like 'col%'"))
+      aliasesLit <- paste0("lit_", colNamesResultLit$columnid)
+      columnsLit <- paste0("lit.", colNamesResultLit$columnid, " as ", aliasesLit)
+      dynamicColumnsLit <- ifelse(length(colNamesResultLit$columnid) > 0 , paste(", ", paste(columnsLit, collapse = ",")), "")
 
+      # literatur columns fehlen
+
+      dynamicColumns <- c(dynamicColumnsRef, dynamicColumnsLit)
+      litRefQuery <- paste("SELECT ref.id, ref.identifier, ",
+                           #lit.pns_id JOIN?
+                           #lit.paramId JOIN?
+                           "lit.thematik, lit.untersuchungsbeginn, lit.untersuchungsende",
+                           dynamicColumns, "FROM referenz ref",
+                           "LEFT JOIN literatur lit on lit.referenz_id = ref.id")
+      litRefResult <- dbGetQuery(db, litRefQuery)
+
+      columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
+      columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
+      litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
+                       names(which(sapply(columnNamesLit, function(x) !is.na(x)))))
+      if (is.null(litRefResult)) {
+        litRefResult <- data.frame(RefId=character(), ID=character(),
+                                   Thematik=character(), Untersuchungsbeginn=character(), Untersuchungsende=character())
+      } else {
+        # order of non dynamic column names must match SELECT
+        colnames(litRefResult) <- c("RefId", "ID", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames)
+      }
+      return(litRefResult)
     } else {
       warning("Unknown category selection: ", input$FileUploadCategory, "\n")
       return(c())
@@ -52,9 +85,26 @@ getSelectedRow <- reactive({
   if (!is.null(selectedRow)) getReferences()[selectedRow, 2]
 })
 
-getCountryCode <- reactive({
-  # TODO get country code from user, once available
-  sub(".*_(.*)_.*", "\\1", getSelectedRow())
+getSubDir <- reactive({
+  if (input$FileUploadCategory == "Literatur") {
+    codeLiteratur # "Lt" constant
+  } else {
+    # get sub dir (country code)
+    sub(".*_(.*)_.*", "\\1", getSelectedRow())
+  }
+})
+
+getTargetFilePath <- reactive({
+  fileName <- input$FileUpload$name
+  targetDir = ifelse(endsWith(fileUploadDir, "/"), fileUploadDir, paste0(fileUploadDir, "/"))
+
+  subDir <- getSubDir()
+  selectedCategory <- input$FileUploadCategory
+  if (selectedCategory == "Literatur") {
+    paste0(targetDir, subDir, "/", fileName)
+  } else {
+    paste0(targetDir, subDir, "/", selectedCategory, "/", fileName)
+  }
 })
 
 # /tools
@@ -63,6 +113,14 @@ getCountryCode <- reactive({
 fileUploadValidation <- reactiveValues(validated = FALSE)
 fileUploadDBCheck <- reactiveValues(checked = FALSE)
 
+observeEvent(input$overrideFile, {
+  if (input$overrideFile) {
+    fileUploadDBCheck$txt <- NULL
+  } else {
+    fileUploadDBCheck$checked <- FALSE
+  }
+})
+
 #################
 ## File Upload ##
 #################
@@ -70,13 +128,12 @@ observeEvent(input$FileUpload, {
 
   fileUploadValidation$validated <- FALSE
   fileUploadDBCheck$checked <- FALSE
-  fileUploadDBCheck$txt <- NULL
 
   readBin(input$FileUpload$datapath, what="raw")
   uploadedFilePath <- input$FileUpload$datapath
   fileName <- input$FileUpload$name
 
-  cat("Uploaded File (", fileName, "): ", uploadedFilePath, "\n")
+  message("Uploaded File (", fileName, "): ", uploadedFilePath, "\n")
   fileUploadValidation$validated <- TRUE
 })
 
@@ -113,7 +170,6 @@ output$tableFileUploadReferenz <- renderDT({
 })
 
 observeEvent(input$tableFileUploadReferenz_rows_selected, {
-  cat("selection changed")
   if (!input$tableFileUploadReferenz_row_last_clicked %in% input$tableFileUploadReferenz_rows_selected) {
     # force a recheck when user changed selection
     fileUploadDBCheck$checked <- FALSE
@@ -135,40 +191,37 @@ output$FileUploadValidationOut <- renderUI({
 
 # check if file upload already exists
 observeEvent(input$fileUploadDBCheck, {
+  fileUploadDBCheck$checked <- FALSE
+  fileUploadDBCheck$txt <- NULL
+
   db <- connectToDB()
   tryCatch({
-
     selectedRow <- input$tableFileUploadReferenz_rows_selected
     if (is.null(selectedRow)) {
       fileUploadDBCheck$txt <- "Selektiere Referenz in Tabelle"
-      fileUploadDBCheck$checked <- TRUE
     } else {
-      selectedCategory <- input$FileUploadCategory
-      selectedReference <- getReferences()[selectedRow - 1,]
-      countryCode <- getCountryCode()
-
       fileName <- input$FileUpload$name
-      targetDir = ifelse(endsWith(fileUploadDir, "/"), fileUploadDir, paste0(fileUploadDir, "/"))
-      targetFile = paste0(targetDir, countryCode, "/", selectedCategory, "/", fileName)
+      targetFile = getTargetFilePath()
+      selectedCategory <- input$FileUploadCategory
+      subDir <- getSubDir()
 
       if (file.exists(targetFile) && !input$overrideFile) {
         fileUploadDBCheck$txt <- paste0("Datei '", fileName, "' ",
                                         "existiert bereits für Kategorie '", selectedCategory, "'!")
-        fileUploadDBCheck$validated <- TRUE
       } else {
-
         query <- paste0("SELECT id FROM file_upload ",
                         "WHERE file_name = '", fileName, "' ",
-                        "AND country_code = '", countryCode, "'")
+                        "AND directory = '", subDir, "'")
         result <- dbGetQuery(db, query)
 
         if (length(result) > 0 && !input$overrideFile) {
-          fileUploadDBCheck$txt <- paste0("Es existiert bereits eine Referenz zur Datei '", fileName, "'")
+          fileUploadDBCheck$txt <- paste0("Es existiert eine (verwaiste) Referenz zur Datei '", fileName, "'. ",
+                                          "Wähle 'Überschreiben', um diese mit aktuellem Dokument zu aktualisieren.")
         }
-
-        fileUploadDBCheck$checked <- TRUE
       }
     }
+
+    fileUploadDBCheck$checked <- TRUE
   }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
@@ -193,54 +246,82 @@ observeEvent(input$fileUploadDBStore, {
   db <- connectToDB()
   tryCatch({
     dbWithTransaction(db, {
+      selectedCategory <- input$FileUploadCategory
       selectedRow <- input$tableFileUploadReferenz_rows_selected
       selectedReference <- getReferences()[selectedRow - 1,]
-      selectedCategory <- input$FileUploadCategory
-      countryCode <- getCountryCode()
+      referenceId = selectedReference$RefId
 
       fileName <- input$FileUpload$name
-      targetDir = ifelse(endsWith(fileUploadDir, "/"), fileUploadDir, paste0(fileUploadDir, "/"))
-      targetFile = paste0(targetDir, countryCode, "/", selectedCategory, "/", fileName)
+      targetFile <- getTargetFilePath()
+      subDir <- getSubDir()
 
-      if (file.exists(targetFile)) {
+      message("Handle Document (",
+              "cat='", selectedCategory, "',",
+              "ref='", referenceId, "',",
+              "dir='", subDir, "'",
+              "): '", targetFile, "'", sep="")
 
-        # TODO update document and reference
+      updateFileUpload <- function() {
 
-      } else {
+        message("Updating existing document: ", targetFile)
+        if (selectedCategory == "Ort") {
+          updateOrtRefQuery <- paste("UPDATE file_upload_ort SET", paste0("ort_id='", referenceId , "'"),
+                                     "WHERE", paste0("file_upload_id=", fileUploadId))
+          dbGetQuery(db, updateOrtRefQuery)
+        } else if (selectedCategory == "Literatur") {
+          updateLiteraturRefQuery <- paste("UPDATE file_upload_literatur SET", paste0("literatur_id='", referenceId , "'"),
+                                           "WHERE", paste0("file_upload_id=", fileUploadId))
+          dbGetQuery(db, updateLiteraturRefQuery)
+        } else {
+          warning("Try to update file_upload for an unknown category: ", selectedCategory, "\n")
+          showModalMessage(title="Vorgang konnte nicht abgeschlossen werden", paste("Unbekannte Kategorie:", selectedCategory))
+          return()
+        }
+      }
+
+      insertFileUpload <- function() {
         # insert new document
-        insertFileUploadQuery = paste("INSERT INTO file_upload (id, file_name, country_code)",
-                                      "VALUES (nextval('file_upload_seq'),",
-                                      paste0("'", fileName, "',"),
-                                      paste0("'", countryCode, "'"),
-                                      ") RETURNING id as file_upload_id;")
-        fileUploadId = dbGetQuery(db, insertFileUploadQuery)
+        message("Inserting new document: ", targetFile)
 
-        # TODO insert into corresponding reference table
+        insertFileUploadQuery <- paste("INSERT INTO file_upload (id, file_name, directory)",
+                                       "VALUES (nextval('file_upload_seq'),",
+                                       paste0("'", fileName, "',"),
+                                       paste0("'", subDir, "'"),
+                                       ") RETURNING id as file_upload_id;")
+        fileUploadId <- dbGetQuery(db, insertFileUploadQuery)$file_upload_id
 
         if (selectedCategory == "Ort") {
-          insertOrtRefQuery = paste0("INSERT INTO file_upload_ort (file_upload_id, ort_id) ",
-                                     "VALUES ('", fileUploadId$file_upload_id, "', '", selectedReference$RefId, "')")
+          insertOrtRefQuery <- paste0("INSERT INTO file_upload_ort (file_upload_id, ort_id) ",
+                                      "VALUES ('", fileUploadId, "', '", referenceId, "')")
           dbGetQuery(db, insertOrtRefQuery)
         } else if(selectedCategory == "Literatur") {
-          insertLiteraturRefQuery = paste0("INSERT INTO file_upload_literatur (file_upload_id, literatur_id) ",
-                                           "VALUES ('", fileUploadId$file_upload_id, "', '", selectedReference$RefId, "')")
+          insertLiteraturRefQuery <- paste0("INSERT INTO file_upload_literatur (file_upload_id, literatur_id) ",
+                                            "VALUES ('", fileUploadId, "', '", referenceId, "')")
           dbGetQuery(db, insertLiteraturRefQuery)
         } else {
           warning("Try to store file_upload for an unknown category: ", selectedCategory, "\n")
+          showModalMessage(title="Vorgang konnte nicht abgeschlossen werden", paste("Unbekannte Kategorie:", selectedCategory))
+          return()
         }
-
-        cat("Saving file (",
-            "cat='", selectedCategory, "',",
-            "ref='", selectedReference$RefId, "',",
-            "code='", countryCode, "'",
-            ") to '", targetFile, "'", sep="")
-
-        uploadedFilePath <- input$FileUpload$datapath
-        moveFileToProbablyNotExistingTarget(to = targetFile, from = uploadedFilePath)
-
-
-        showModalMessage(title="Vorgang abgeschlossen", "Dokument wurde erfolgreich hochgeladen.")
       }
+
+      if (file.exists(targetFile) || input$overrideFile) {
+
+        fileUploadIdQUery <- paste("SELECT id FROM file_upload",
+                                   "WHERE", paste0("directory='", subDir, "'"),
+                                   "AND", paste0("file_name='", fileName, "'"))
+        fileUploadId <- dbGetQuery(db, fileUploadIdQUery)$id
+
+        if (is.null(fileUploadId)) {
+          insertFileUpload()
+        }
+      } else {
+        insertFileUpload()
+      }
+
+      uploadedFilePath <- input$FileUpload$datapath
+      moveFileToProbablyNotExistingTarget(from = uploadedFilePath, to = targetFile)
+      showModalMessage(title="Vorgang abgeschlossen", "Dokument wurde erfolgreich hochgeladen.")
     })
   }, error = modalErrorHandler, finally = poolReturn(db))
 })

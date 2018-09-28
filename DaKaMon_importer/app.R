@@ -176,8 +176,7 @@ ui <- navbarPage("Datenimport",
                           sidebarLayout(
                             sidebarPanel(
                               selectInput("FileUploadCategory", "Wähle eine Referenz-Kategorie",
-                                          choices = list(Messdaten=list("Ort"),
-                                                         Literaturdaten=list("Literatur"))),
+                                          choices = list("Ort", "Literatur")),
                               fileInput("FileUpload", "Hochzuladende Datei",
                                         buttonLabel = "Durchsuchen", placeholder = "Keine Datei ausgewählt"),
                               checkboxInput("overrideFile", "Datei überschreiben?", FALSE),
