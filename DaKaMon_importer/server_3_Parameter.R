@@ -207,17 +207,17 @@ observeEvent(input$storeDBParameter, {
         if (PAR_data[param,reqColPAR$id] %in% checkDBPAR$PARInDB$identifier
             || PAR_data[param,reqColPAR$name] %in% checkDBPAR$PARInDB$name) {
           ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
-          query <- paste("with update_param as (
+          query <- paste0("with update_param as (
             UPDATE observableproperty
             SET
-            identifier = '", PAR_data[param, reqColPAR$id], "',",
-            "name = '", PAR_data[param,reqColPAR$name], "'",
-            "WHERE identifier = '", PAR_data[param,reqColPAR$id], "'",
-            "OR name = '",  PAR_data[param,reqColPAR$name], "'",
+            identifier = '", PAR_data[param, reqColPAR$id], "', ",
+            "name = '", PAR_data[param,reqColPAR$name], "' ",
+            "WHERE identifier = '", PAR_data[param,reqColPAR$id], "' ",
+            "OR name = '",  PAR_data[param,reqColPAR$name], "' ",
             "RETURNING observablepropertyid
           )
           UPDATE parameter_data
-          SET",
+          SET ",
           paste0(paste0(dynamicDf[["columnid"]],
                         " = ",
                         gsub("EMPTY", "NULL", dynamicDf[["value"]])),
