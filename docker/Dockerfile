@@ -52,14 +52,16 @@ ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 ADD docker/shiny-server.sh /usr/bin/shiny-server.sh
 
 RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
-    echo "$(date): chown 1/4 (/srv/shiny-server)" &&\
+    echo "$(date): chown 1/5 (/srv/shiny-server)" &&\
     chown shiny:shiny -R /srv/shiny-server &&\
-    echo "$(date): chown 2/4 (/opt/shiny-server)" &&\
+    echo "$(date): chown 2/5 (/opt/shiny-server)" &&\
     chown shiny:shiny -R /opt/shiny-server &&\
-    echo "$(date): chown 3/4 (/var/lib/shiny-server)" &&\
+    echo "$(date): chown 3/5 (/var/lib/shiny-server)" &&\
     chown shiny:shiny -R /var/lib/shiny-server &&\
-    echo "$(date): chown 4/4 (/usr/local/lib/R)" &&\
+    echo "$(date): chown 4/5 (/usr/local/lib/R)" &&\
     chown shiny:shiny -R /usr/local/lib/R &&\
+    echo "$(date): chown 5/5 (/srv/dakamon-uploads/)" &&\
+    chown shiny:shiny -R /srv/dakamon-uploads &&\
     echo "$(date): chown done" &&\
     chmod +x /usr/bin/shiny-server.sh &&\
     R --version | head -n1 &&\
