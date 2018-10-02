@@ -281,39 +281,6 @@ queryParameter <- function(Messungen_data, db) {
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
 
-queryProbenParameterMetadata <- function(Messungen_data, db) {
-  connected <- is.null(db)
-  if (!connected) {
-    db <- connectToDB()
-  }
-  tryCatch({
-    proben <- Messungen_data[,reqColData$probeId]
-    probenQuerySection <- paste0(unique(proben), collapse = "','")
-    parameter <- Messungen_data[,reqColData$obsProp]
-    parameterQuerySection <- paste0(unique(parameter), collapse = "','")
-    probenParameterMetadataQuery <- paste0("SELECT DISTINCT
-                                        pro.identifier As probeid,
-                                        param.identifier AS paramid,
-                                        u.unit,
-                                        pp.bg,
-                                        pp.ng
-                                      FROM
-                                        probe_parameter pp
-                                      LEFT OUTER JOIN probe AS pro ON (pro.id = pp.probe_id)
-                                      LEFT OUTER JOIN observableproperty AS param ON (param.observablepropertyid = pp.parameter_id)
-                                      LEFT OUTER JOIN unit AS u ON (u.unitid = pp.pp_unit)
-                                      WHERE
-                                        pro.identifier IN ('",
-                                           probenQuerySection,
-                                      "')
-                                      AND
-                                        param.identifier IN ('",
-                                        parameterQuerySection,
-                                      "')")
-    probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
-  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
-}
-
 queryObservationCharacteristics <- function(Messungen_data, db) {
   connected <- is.null(db)
   if (!connected) {
@@ -435,7 +402,7 @@ observeEvent(input$checkDBData, {
   checkDBData$txt <- NULL
   checkDBData$err <- FALSE
   checkDBData$checked <- FALSE
-  
+
   tryCatch({
 
     # check whether the ProbeIDs exist
@@ -447,7 +414,7 @@ observeEvent(input$checkDBData, {
       checkDBData$txt <- paste("Folgende Proben fehlen in der DB: <ul><li>",
                                paste0(uniqueInCSVDataProbeId[which(is.na(matchProbeId))], collapse="</li><li>"),
                                "</li></ul>")
-      
+
       checkDBData$err <- TRUE
     }
 
@@ -468,31 +435,31 @@ observeEvent(input$checkDBData, {
 
     if (nrow(observationCharacteristics) > 0) {
       # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
-  
+
       observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
                                                                    format=RtimestampPattern,
                                                                    tz=dbTimeZoneIdentifier))
       observationCharacteristics$phentimestart <- as.numeric(strptime(observationCharacteristics$phentimestart,
-                                                                      format=RtimestampPattern, 
+                                                                      format=RtimestampPattern,
                                                                       tz=dbTimeZoneIdentifier))
-      observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend, 
-                                                                    format=RtimestampPattern, 
+      observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend,
+                                                                    format=RtimestampPattern,
                                                                     tz=dbTimeZoneIdentifier))
-  
-      inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart, 
-                                     observationCharacteristics$phentimestart, 
-                                     "/", 
+
+      inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart,
+                                     observationCharacteristics$phentimestart,
+                                     "/",
                                      observationCharacteristics$phentimeend,
                                      observationCharacteristics$paramid,
                                      observationCharacteristics$foiid,
                                      observationCharacteristics$lab,
                                      "_",
                                      observationCharacteristics$paramid)
-      
+
       inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
                  paste(inCSVData$obsIdsInCSV, collapse="', '"),
                  "')"))
-      
+
       if (nrow(inCSVData$obsIdsInDB) > 0) {
         checkDBData$txt <- paste(checkDBData$txt,
                                  paste("Folgende Messungen sind bereits in der DB: <ul><li>",
@@ -591,7 +558,7 @@ observeEvent(input$storeDBData, {
 
         progress <- Progress$new(min = 0, max = 10 + nrow(Messungen_data))
         progress$set(message = "Lade Daten in DB.", value = 0)
-        
+
         # convert value column BG, NG values in numbers and the whole column to numeric values
         #if (any(Messungen_data[,reqColData$value] == BGchar)) {
         if (any(grep(BGchar, Messungen_data[,reqColData$value]))) {
@@ -600,23 +567,23 @@ observeEvent(input$storeDBData, {
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-        
+
         if (any(grep(NGchar, Messungen_data[,reqColData$value]))) {
           column <- Messungen_data[,reqColData$value]
           column[grep(NGchar, column)] <- NGencode
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-        
+
         # TODO set NO_DATA value in case value is NA
-        
+
         if (!is.na(any(Messungen_data[,reqColData$value] == noDataValue))) {
           column <- Messungen_data[,reqColData$value]
           column[column == noDataValue] <- noDataEncode
           Messungen_data[,reqColData$value] <- column
         }
         progress$inc(1)
-        
+
         #
         # Convert "," decimal separator to system separator
         #
@@ -787,7 +754,7 @@ observeEvent(input$storeDBData, {
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           cat(file=catFile, query, "\n")
           dbExecute(db, query)
-          
+
           newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"], # Parameter ID
                           row[reqColData$value], # Wert
                           row[reqColData$uom], # Einheit
@@ -806,7 +773,7 @@ observeEvent(input$storeDBData, {
 
         sosCacheUpdate(wait=1)
         progress$inc(1)
-        
+
       })
 
       #
@@ -847,7 +814,7 @@ observeEvent(input$storeDBData, {
               tasks <- system2("powershell", args=c(paste0(processListCmd)), stdout=TRUE, wait=TRUE)
               length(grep(basename(logFile), tasks)) > 0
             }
-            
+
             importInProgress <- isFeederRunning()
             cat(file=catFile, "Import process running")
             while (importInProgress) {
