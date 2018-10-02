@@ -153,7 +153,8 @@ reqColProbe <- list(id="ID",
                     probeType="Probenahmeart",
                     labName="Labor",
                     labId="Labor_Nr",
-                    subprobe="Teilprobe_von")
+                    subprobe="Teilprobe_von",
+                    abfluss_situation="Abflusssituation")
 
 reqColData <- list(probeId = "ProbenID",
                    obsProp = "Parameter",

@@ -347,8 +347,18 @@ data <- reactive({
         as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_")))
 
 
-        query <- paste0("SELECT DISTINCT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime,
-                                         u.unit, nv.value, op.identifier as observableProperty, pp.bg, pp.ng, pd.", colStoffgruppe, " AS stgrname
+        query <- paste0("SELECT DISTINCT o.observationid, 
+                                         o.seriesid, 
+                                         o.phenomenontimestart, 
+                                         o.phenomenontimeend, 
+                                         o.resulttime,
+                                         u.unit, 
+                                         nv.value, 
+                                         op.identifier AS observableProperty, 
+                                         pro.abfluss_situation,
+                                         pp.bg, 
+                                         pp.ng, 
+                                         pd.", colStoffgruppe, " AS stgrname
                     FROM observation o
                         LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
                         LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
@@ -389,6 +399,7 @@ data <- reactive({
                 resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
                 resDfRow$Ereignisbeginn <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
                 resDfRow$Ereignisende <- strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
+                resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
                 valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
                 if (res[obs, "value"] < res[obs, "bg"]) {
                   if (input$repBG == 'BG') {
