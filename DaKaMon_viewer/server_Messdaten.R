@@ -395,7 +395,9 @@ data <- reactive({
                 resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
                 resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
                 valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
-                if (res[obs, "value"] < res[obs, "bg"]) {
+                if (res[obs, "value"] == noDataEncode) {
+                  resDfRow[valueRow] <- NA_character_
+                } else if (res[obs, "value"] < res[obs, "bg"]) {
                   if (input$repBG == 'BG') {
                     resDfRow[valueRow] <- res[obs, "bg"]
                   } else if (input$repBG == 'BG/2') {
