@@ -323,7 +323,7 @@ data <- reactive({
       postfix <- append(postfix, "Stoffgruppe")
       phenValueCount <-  phenValueCount + 1
     }
-    columnCount <- (length(input$selObsPhen) * phenValueCount) + 4
+    columnCount <- (length(input$selObsPhen) * phenValueCount) + 2
 
     db <- connectToDB()
     tryCatch({
@@ -347,17 +347,15 @@ data <- reactive({
         as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_")))
 
 
-        query <- paste0("SELECT DISTINCT o.observationid, 
-                                         o.seriesid, 
-                                         o.phenomenontimestart, 
-                                         o.phenomenontimeend, 
+        query <- paste0("SELECT DISTINCT o.observationid,
+                                         o.seriesid,
                                          o.resulttime,
-                                         u.unit, 
-                                         nv.value, 
-                                         op.identifier AS observableProperty, 
+                                         u.unit,
+                                         nv.value,
+                                         op.identifier AS observableProperty,
                                          pro.abfluss_situation,
-                                         pp.bg, 
-                                         pp.ng, 
+                                         pp.bg,
+                                         pp.ng,
                                          pd.", colStoffgruppe, " AS stgrname
                     FROM observation o
                         LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
@@ -389,16 +387,12 @@ data <- reactive({
           for (ft in 1:nrow(foiTimes)) {
             #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1]
             resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
-            colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
+            colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
 
             resDfRow$PNS_ID <- foi
             for (obs in 1:nrow(res)) {
-              if ( strftime(foiTimes[ft,"phenomenontimestart"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
-                   & strftime(foiTimes[ft,"phenomenontimeend"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
-                   & strftime(foiTimes[ft,"resulttime"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')) {
+              if (strftime(foiTimes[ft,"resulttime"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')) {
                 resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
-                resDfRow$Ereignisbeginn <- strftime(res[obs, "phenomenontimestart"], format='%d.%m.%Y %H:%M')
-                resDfRow$Ereignisende <- strftime(res[obs, "phenomenontimeend"], format='%d.%m.%Y %H:%M')
                 resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
                 valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
                 if (res[obs, "value"] < res[obs, "bg"]) {
