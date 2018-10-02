@@ -831,7 +831,7 @@ observeEvent(input$storeDBData, {
           Sys.sleep(5) # wait for log to be written
           result <- read_lines(logFile, locale = locale())
 
-          if (length(grep("Failed observations: 0.", result, value = TRUE)) == 0) {
+          if (length(grep("Failed observations: 0.", result, ignore.case = TRUE, value = TRUE)) == 0) {
             cat(file=catFile, "Errors occured during import! Consult importer logs.\n")
             content <- div("Log-Ausgabe",
               pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))
