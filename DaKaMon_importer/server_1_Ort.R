@@ -214,15 +214,16 @@ observeEvent(input$storeDBOrt, {
           }
           dynamicDf <- rbind(dynamicDf, dynamicDfRow)
         }
-        
+
         # if there are already Orte in the DB that are again in the CSV
         if (Ort_data[ort,"ID"] %in% checkDBOrt$OrtInDB$identifier) {
           query <- paste0("with update_ort as (
           UPDATE featureofinterest SET
           name = ", paste0("'", Ort_data[ort, reqColOrt$name], "'"), ",
-          geom = ", paste0("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
-                           " ", Ort_data[ort, reqColOrt$lon], ")', 4326) "),
-                          " WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
+          geom = ", paste0("ST_GeomFromText('POINT (", paste(Ort_data[ort, reqColOrt$lon],
+                                                             Ort_data[ort, reqColOrt$lat], 
+                                                    ")', 4326)")),
+                           ") WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
                           " RETURNING featureofinterestid
           )
           UPDATE ort_data SET ",
@@ -268,9 +269,9 @@ observeEvent(input$storeDBOrt, {
               VALUES (nextval('featureofinterestid_seq'), (SELECT id FROM select_type)", ", ",
                           paste0("'", Ort_data[ort, reqColOrt$id], "'"), ", ",
                           paste0("'", Ort_data[ort, reqColOrt$name], "'"), ", ",
-                          paste("ST_GeomFromText('POINT (", Ort_data[ort, reqColOrt$lat],
-                                Ort_data[ort, reqColOrt$lon], ")', 4326)) "),
-                          "RETURNING featureofinterestid as ort_id)",
+                          paste("ST_GeomFromText('POINT (", paste(Ort_data[ort, reqColOrt$lon],
+                                                                  Ort_data[ort, reqColOrt$lat], ")', 4326)")),
+                          ") RETURNING featureofinterestid as ort_id)",
                           "INSERT INTO ort_data
               (featureofinterestid, rndid, lat, lon, thematik", ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")
               SELECT ort_id, pseudo_encrypt(nextval('rndIdSeq')::int), ", Ort_data[ort, reqColOrt$lat],", ", 
