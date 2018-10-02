@@ -2,12 +2,13 @@
 
 # Tools
 
-generateLinkColumn <- function(resultSet) {
+generateLinkColumn <- function(resultSet, selectedCategory) {
   if (length(fileDownloadBaseUrl) == 0) {
     warning("Please configure 'fileDownloadBaseUrl' parameter!")
   }
   if (length(resultSet) != 0) {
-    resultSet$Link <- paste0("<a href='", paste0(fileDownloadBaseUrl, resultSet$directory, "/", resultSet$filename), "'",
+    baseUrl <- ifelse(endsWith(fileDownloadBaseUrl, "/"), fileDownloadBaseUrl, paste0(fileDownloadBaseUrl, "/"))
+    resultSet$Link <- paste0("<a href='", paste0(baseUrl, resultSet$directory, "/", selectedCategory, "/", resultSet$filename), "'",
                                 "target='_blank'>", resultSet$filename, "</a>")
     resultSet <- resultSet[, !(names(resultSet) %in% c("directory", "filename"))]
   }
@@ -59,7 +60,7 @@ getOrtReferences <- reactive({
         return(noResults())
       } else {
 
-        ortResult <- generateLinkColumn(ortResult)
+        ortResult <- generateLinkColumn(ortResult, "Ort")
         columnNames <- colNamesResult$dede[match(colnames(ortResult), colNamesResult$columnid)]
         ortNames <- names(which(sapply(columnNames, function(x) !is.na(x))))
         colnames(ortResult) <- c("RefId", "ID", ortNames, "Link")
@@ -123,7 +124,7 @@ getLiteraturReferences <- reactive({
       return(noResults())
     } else {
 
-      litRefResult <- generateLinkColumn(litRefResult)
+      litRefResult <- generateLinkColumn(litRefResult, "Literatur")
       columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
       columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
       litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
