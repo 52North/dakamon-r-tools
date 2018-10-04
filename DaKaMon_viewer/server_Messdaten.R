@@ -336,9 +336,9 @@ data <- reactive({
         if(length(selObsPropFoi$seriesid) == 0) next;
 
         # lookup observed time stamps for all series of this FoI
-        foiTimes <- dbGetQuery(db, paste0("SELECT DISTINCT phenomenontimestart, phenomenontimeend, resulttime
-                                                 FROM observation
-                                                 WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))
+        foiTimes <- dbGetQuery(db, paste0("SELECT DISTINCT
+                                          to_char(timezone('",  dbTimeZoneIdentifier,"', resulttime::timestamptz), '",  dbTimestampPattern, "') AS resulttime
+                                          FROM observation WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))
 
         obsPropSel <- obsProp()$name %in% input$selObsPhen
 
@@ -349,7 +349,7 @@ data <- reactive({
 
         query <- paste0("SELECT DISTINCT o.observationid,
                                          o.seriesid,
-                                         o.resulttime,
+                                         to_char(timezone('",  dbTimeZoneIdentifier,"', o.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resulttime,
                                          u.unit,
                                          nv.value,
                                          op.identifier AS observableProperty,
@@ -391,8 +391,8 @@ data <- reactive({
 
             resDfRow$PNS_ID <- foi
             for (obs in 1:nrow(res)) {
-              if (strftime(foiTimes[ft,"resulttime"], format='%d.%m.%Y %H:%M') == strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')) {
-                resDfRow$Probenahmedatum <- strftime(res[obs, "resulttime"], format='%d.%m.%Y %H:%M')
+              if (foiTimes[ft,"resulttime"] == res[obs, "resulttime"]) {
+                resDfRow$Probenahmedatum <- strftime(as.POSIXct(res[obs, "resulttime"], tryFormats="%d-%m-%Y %H:%M"), format='%d.%m.%Y %H:%M')
                 resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
                 valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
                 if (res[obs, "value"] == noDataEncode) {
