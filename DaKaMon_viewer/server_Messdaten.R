@@ -362,7 +362,7 @@ data <- reactive({
                         LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
                         RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
                         WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")
-                        AND pro.resulttime = o.resulttime")
+                        AND timezone('UTC', pro.resulttime::timestamptz) = o.resulttime")
 
         if (!is.null(input$selObsPhen))
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
