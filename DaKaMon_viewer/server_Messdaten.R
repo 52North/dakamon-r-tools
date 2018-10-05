@@ -5,18 +5,18 @@
 #########
 ortData <- NULL
 db <- connectToDB()
+tryCatch({
+  # load all Entwässerungssysteme from DB
+  ews <- dbGetQuery(db, paste0("SELECT DISTINCT thematik FROM ort_data"))
+  output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
 
-# load all Entwässerungssysteme from DB
-ews <- dbGetQuery(db, paste0("SELECT DISTINCT thematik FROM ort_data"))
-output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
-
-# load all super FoI from DB
-ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier
+  # load all super FoI from DB
+  ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier
                   FROM featureofinterest AS foi
                   RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid")
-# RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
-# RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
-poolReturn(db)
+  # RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.parentfeatureid
+  # RIGHT OUTER JOIN probe pro ON pro.pns_id = fr.childfeatureid WHERE foi.featureofinterestid = od.featureofinterestid")
+}, error = modalErrorHandler, finally = poolReturn(db))
 
 # if any
 if (nrow(ort) > 0) {
