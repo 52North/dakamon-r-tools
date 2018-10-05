@@ -294,6 +294,7 @@ obsProp <- reactive({
                         LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
                         RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
                        WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
+      cat(query)
       op <- rbind(op, dbGetQuery(db, query))
     }
     op
@@ -335,24 +336,18 @@ data <- reactive({
 
         if(length(selObsPropFoi$seriesid) == 0) next;
 
-        # lookup observed time stamps for all series of this FoI
-        foiTimes <- dbGetQuery(db, paste0("SELECT DISTINCT
-                                          to_char(timezone('",  dbTimeZoneIdentifier,"', resulttime::timestamptz), '",  dbTimestampPattern, "') AS resulttime
-                                          FROM observation WHERE seriesid IN ('", paste( selObsPropFoi$seriesid, collapse="', '"), "')"))
-
         obsPropSel <- obsProp()$name %in% input$selObsPhen
 
         uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
 
         as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_")))
 
-
         query <- paste0("SELECT DISTINCT o.observationid,
                                          o.seriesid,
-                                         to_char(timezone('",  dbTimeZoneIdentifier,"', o.resulttime::timestamptz), '",  dbTimestampPattern, "') AS resulttime,
                                          u.unit,
                                          nv.value,
                                          op.identifier AS observableProperty,
+                                         to_char(timezone('",  dbTimeZoneIdentifier,"', pro.resulttime::timestamptz), '", dbTimestampPattern, "') AS resulttime,
                                          pro.abfluss_situation,
                                          pp.bg,
                                          pp.ng,
@@ -366,65 +361,53 @@ data <- reactive({
                         LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
                         LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
                         RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                        WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")")
+                        WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")
+                        AND pro.resulttime = o.resulttime")
 
         if (!is.null(input$selObsPhen))
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
 
         cat(query)
-
-        # minPhenTimeStart <- foiTimes$phenomenontimestart[which.min(as.POSIXct(foiTimes$phenomenontimestart))]
-        # maxPhenTimeStart <- foiTimes$phenomenontimestart[which.max(as.POSIXct(foiTimes$phenomenontimestart))]
-        # maxPhenTimeEnd <- foiTimes$phenomenontimeend[which.max(as.POSIXct(foiTimes$phenomenontimeend))]
-        #
-        # query <- paste0(query, " AND (o.phenomenontimestart >= '", minPhenTimeStart , "')
-        #                 AND (o.phenomenontimestart <= '", maxPhenTimeStart, "')
-        #                 OR o.phenomenontimeend <= '", maxPhenTimeEnd, "'" )
-
         res <- dbGetQuery(db, query)
 
-        if(!is.null(res)) {
-          for (ft in 1:nrow(foiTimes)) {
-            #for (ft in as.character(foiTimes)) { # ft <- foiTimes[1]
+        if(length(res) != 0) {
+          for (obs in 1:nrow(res)) {
+
             resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
             colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
 
             resDfRow$PNS_ID <- foi
-            for (obs in 1:nrow(res)) {
-              if (foiTimes[ft,"resulttime"] == res[obs, "resulttime"]) {
-                resDfRow$Probenahmedatum <- strftime(as.POSIXct(res[obs, "resulttime"], tryFormats="%d-%m-%Y %H:%M"), format='%d.%m.%Y %H:%M')
-                resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
-                valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
-                if (res[obs, "value"] == noDataEncode) {
-                  resDfRow[valueRow] <- NA_character_
-                } else if (res[obs, "value"] < res[obs, "bg"]) {
-                  if (input$repBG == 'BG') {
-                    resDfRow[valueRow] <- res[obs, "bg"]
-                  } else if (input$repBG == 'BG/2') {
-                    resDfRow[valueRow] <- res[obs, "bg"]/2
-                  } else {
-                    resDfRow[valueRow] <- input$repBG
-                  }
-                } else {
-                  value <- res[obs, "value"]
-                  # TODO show NA or empty cells?
-                  resDfRow[valueRow] <- ifelse(value == noDataEncode, NA_character_, value)
-                }
-                resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
-                if (input$showBG) {
-                  resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
-                }
-                if (input$showNG) {
-                  resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
-                }
-                if (input$showSG) {
-                  resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
-                }
+            resDfRow$Probenahmedatum <- res[obs, "resulttime"]
+            resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
+            valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
+            if (res[obs, "value"] == noDataEncode) {
+              resDfRow[valueRow] <- NA_character_
+            } else if (res[obs, "value"] < res[obs, "bg"]) {
+              if (input$repBG == 'BG') {
+                resDfRow[valueRow] <- res[obs, "bg"]
+              } else if (input$repBG == 'BG/2') {
+                resDfRow[valueRow] <- res[obs, "bg"]/2
+              } else {
+                resDfRow[valueRow] <- input$repBG
               }
+            } else {
+              value <- res[obs, "value"]
+              resDfRow[valueRow] <- ifelse(value == noDataEncode, NA_character_, value)
+            }
+            resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
+            if (input$showBG) {
+              resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
+            }
+            if (input$showNG) {
+              resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+            }
+            if (input$showSG) {
+              resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
             }
 
             resDf <- rbind(resDf, resDfRow)
           }
+
         }
 
       }
@@ -467,6 +450,7 @@ output$tableDaten <- renderDT({
   if (!is.null(showTab)) {
     dt <- datatable(showTab,
               filter="top",
+              rownames=FALSE,
               options=list(paging=FALSE,dom = 'Brt',
                            language=list(url = lngJSON)),
               escape=FALSE)
@@ -476,8 +460,10 @@ output$tableDaten <- renderDT({
     numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
     numCol <- numCol[apply(matrix(showTab[,numCol] > floor(showTab[,numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
-    if (length(numCol) > 0)
+    if (length(numCol) > 0) {
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
+    }
+
     dt
   }
 })
