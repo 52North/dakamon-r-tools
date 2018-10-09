@@ -45,6 +45,14 @@ allProben <- reactive({
                                        "timezone('", dbTimeZoneIdentifier, "', pro.resulttime::timestamptz) ",
                                        ", '", dbTimestampPattern, "'",
                                        ") AS resulttime"),
+                                paste0("to_char(",
+                                       "timezone('", dbTimeZoneIdentifier, "', pro.phenomenontimestart::timestamptz) ",
+                                       ", '", dbTimestampPattern, "'",
+                                       ") AS phenomenontimestart"),
+                                paste0("to_char(",
+                                       "timezone('", dbTimeZoneIdentifier, "', pro.phenomenontimeend::timestamptz) ",
+                                       ", '", dbTimestampPattern, "'",
+                                       ") AS phenomenontimeend"),
                                 probeDataProbeMetaData)
 
     # Query alle Proben mit PNS-Identifier
@@ -141,12 +149,27 @@ allTeilproben <- reactive({
 
     # Nur Probe Spaltename
     probeDataProbeMetaData <- dbGetQuery(db, paste0("SELECT columnId FROM column_metadata WHERE prefixid IN ('probe')"))
-    probeDataProbeMetaData$columnid <- paste0("pro.", probeDataProbeMetaData$columnid)
-
-
+    excludeColumns <- c("resulttime", "phenomenontimestart", "phenomenontimeend")
+    includeColumns <- probeDataProbeMetaData$columnid[!(probeDataProbeMetaData$columnid %in% excludeColumns)]
+    probeDataProbeMetaData <- paste0("pro.", includeColumns)
+    
+    probeDataProbeMetaData <- c(paste0("to_char(",
+                                       "timezone('", dbTimeZoneIdentifier, "', pro.resulttime::timestamptz) ",
+                                       ", '", dbTimestampPattern, "'",
+                                       ") AS resulttime"),
+                                paste0("to_char(",
+                                       "timezone('", dbTimeZoneIdentifier, "', pro.phenomenontimestart::timestamptz) ",
+                                       ", '", dbTimestampPattern, "'",
+                                       ") AS phenomenontimestart"),
+                                paste0("to_char(",
+                                       "timezone('", dbTimeZoneIdentifier, "', pro.phenomenontimeend::timestamptz) ",
+                                       ", '", dbTimestampPattern, "'",
+                                       ") AS phenomenontimeend"),
+                                probeDataProbeMetaData)
+    
     # Query alle Teilproben mit PNS-Identifier und zugehöroger Mischprobe
     query <-paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, pro.subprobe, ",
-                   paste0(probeDataProbeMetaData$columnid, collapse=", "),
+                   paste0(probeDataProbeMetaData, collapse=", "),
                    " FROM probe pro
                    LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
                    WHERE pro.subprobe in ('",
