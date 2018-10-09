@@ -219,9 +219,13 @@ observeEvent(input$storeDBProbe, {
           ## UPDATE Probe via SQL ##
           query <- paste0("UPDATE probe SET ",
                           "abfluss_situation = '", Probe_data[probe, reqColProbe$situation], "', ",
-                          "subprobe = '", Probe_data[probe, reqColProbe$subprobe], "', ",  # TODO: empty -> NULL
-                          # TODO update result_time, lab, etc?
-
+                          "resulttime = to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
+                          "phenomenontimestart = to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
+                          "phenomenontimeend = to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
+                          "pns_id = (SELECT pns_id FROM query_pns), ",
+                          "lab = '", Probe_data[probe, reqColProbe$labName], "', ",
+                          "lab_id = '", Probe_data[probe, reqColProbe$labId], "', ",
+                          "subprobe = '", gsub("EMPTY", "NULL", Probe_data[probe, reqColProbe$subprobe]), "', ",
                           paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),
                           " WHERE identifier = '", Probe_data[probe, reqColProbe$id], "';")
           dbSendQuery(db, query)
@@ -243,7 +247,7 @@ observeEvent(input$storeDBProbe, {
                               "')")
           query <- paste(get_pns_id,
                         "INSERT INTO probe
-                         (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id, lab, lab_id, abfluss_situation", 
+                         (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id, lab, lab_id, abfluss_situation, subprobe", 
                             ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")",
                          paste("VALUES (nextval('probeid_seq')",
                            paste0("'", Probe_data[probe, reqColProbe$id], "'"),
@@ -254,6 +258,7 @@ observeEvent(input$storeDBProbe, {
                            paste0("'", Probe_data[probe, reqColProbe$labName], "'"),
                            paste0("'", Probe_data[probe, reqColProbe$labId], "'"),
                            paste0("'", Probe_data[probe, reqColProbe$situation], "'"),
+                           paste0("'", gsub("EMPTY", "NULL", Probe_data[probe, reqColProbe$subprobe]), "'"),
                            sep=", "
                         ),
                         ifelse(is.null(dynamicValues), "", ","),
