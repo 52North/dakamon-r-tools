@@ -218,8 +218,8 @@ observeEvent(input$storeDBProbe, {
         if (Probe_data[probe, reqColProbe$id] %in% checkDBProbe$ProbeInDB$identifier) {
           ## UPDATE Probe via SQL ##
           query <- paste0("UPDATE probe SET ",
-                          paste0(reqColProbe$situation), " = '", Probe_data[probe, reqColProbe$situation], "'",
-
+                          "abfluss_situation = '", Probe_data[probe, reqColProbe$situation], "', ",
+                          "subprobe = '", Probe_data[probe, reqColProbe$subprobe], "', ",  # TODO: empty -> NULL
                           # TODO update result_time, lab, etc?
 
                           paste0(paste0(dynamicDf[["columnid"]], " = ", gsub("EMPTY", "NULL", dynamicDf[["value"]])), collapse = ", "),

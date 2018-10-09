@@ -52,7 +52,7 @@ allProben <- reactive({
                    paste0(probeDataProbeMetaData, collapse=", "),
                    " FROM probe pro
                      LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
-                     WHERE pro.subprobe IS NULL")
+                     WHERE (pro.subprobe IS NULL OR pro.subprobe IN (''))")
 
     if (!is.null(input$probenPNS)) {
       slectedPNS <- input$probenPNS
@@ -127,7 +127,7 @@ if(!is.null(allProben)) {
   )
 }
 
-observeEvent(input$fromMischprobenToTeilproben, {
+observeEvent(input$fromProbenToTeilproben, {
   updateTabsetPanel(session, "inNavbarpage", selected = "Teilproben")
 })
 
@@ -200,8 +200,8 @@ sTeilproben <- reactive({
   }
 })
 
-observeEvent(input$fromTeilprobenToMischproben, {
-  updateTabsetPanel(session, "inNavbarpage", selected = "Mischproben")
+observeEvent(input$fromTeilprobenToProben, {
+  updateTabsetPanel(session, "inNavbarpage", selected = "Proben")
 })
 
 if(!is.null(allProben)) {
