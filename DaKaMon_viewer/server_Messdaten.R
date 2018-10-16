@@ -9,7 +9,7 @@ tryCatch({
   # load all Entwässerungssysteme from DB
   ews <- dbGetQuery(db, paste0("SELECT DISTINCT thematik FROM ort_data"))
   output$ewsSelInput <- renderUI(selectInput("ews", "Thematik", ews[,"thematik"]))
-
+  
   # load all super FoI from DB
   ort <- dbGetQuery(db, "SELECT DISTINCT foi.featureofinterestid, foi.name, foi.identifier
                   FROM featureofinterest AS foi
@@ -37,27 +37,27 @@ if (nrow(ort) > 0) {
                       paste0(ort$featureofinterestid, collapse=", "), ")
                                        AND od.thematik IN (", paste0("'", selectedThematik, "'" ,collapse=", ") ,")")
       ortData <- dbGetQuery(db, query)
-
-
+      
+      
       if (nrow(ortData) > 0)
         colnames(ortData) <- ortDataMetaData$dede[match(colnames(ortData), ortDataMetaData$columnid)]
-
+      
       ortData
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
-
+  
   output$tableOrt  <- renderDT({
     if (nrow(ortData()) > 0) {
       showTab <- ortData()[,-1]
-
+      
       showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
+      
       showHead <- paste0(showHead, "</span>")
-
+      
       if ("PLZ" %in% colnames(showTab)) {
         showTab$PLZ <- sprintf("%05i", showTab$PLZ)
       }
-
+      
       dt <- datatable(showTab, colnames = showHead,
                       filter="top",
                       options = list(paging=FALSE, dom = 'Brt',
@@ -74,7 +74,7 @@ if (nrow(ort) > 0) {
       dt
     }
   })
-
+  
   sOrt <- reactive({
     sr <- input$tableOrt_rows_selected
     if(is.null(sr)) {
@@ -83,7 +83,7 @@ if (nrow(ort) > 0) {
       sort(sr)
     }
   })
-
+  
   output$selTextOrt <- renderText({
     if (length(sOrt()) == 1) {
       paste("Zeile", sOrt(), "ist ausgewählt.")
@@ -91,7 +91,7 @@ if (nrow(ort) > 0) {
       paste("Zeilen", paste(sOrt(), collapse=", "), "sind ausgewählt.")
     }
   })
-
+  
   output$exportOrtCSVLatin1 <- downloadHandler(
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
@@ -103,7 +103,7 @@ if (nrow(ort) > 0) {
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
-
+  
   output$exportOrtCSVUtf8 <- downloadHandler(
     filename = function() paste("Ort-", Sys.Date(), ".csv", sep=""),
     content = function(file) {
@@ -115,7 +115,7 @@ if (nrow(ort) > 0) {
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-
+  
   output$exportOrtRData <- downloadHandler(
     filename = function() {
       paste("Ort-", Sys.Date(), ".RData", sep="")
@@ -144,15 +144,15 @@ if(!is.null(ortData)) {
   pnsData <- reactive({
     db <- connectToDB()
     tryCatch({
-
+      
       pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
       pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
-
+      
       pnsColColumns <- NULL
       if (nrow(pnsDataPnsMetaData) > 0 && length(grep("col*", pnsDataPnsMetaData$columnid, value = TRUE)) > 0) {
         pnsColColumns <- paste0(", pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
       }
-
+      
       pns <- dbGetQuery(db, paste0("SELECT DISTINCT  foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, lat, lon",
                                    paste0(pnsColColumns),
                                    " FROM featureofinterest foi
@@ -163,20 +163,20 @@ if(!is.null(ortData)) {
                                    paste(ortData()[sOrt(),1], collapse=", "), ")"))
       if (nrow(pns) > 0)
         colnames(pns) <- pnsDataMetaData$dede[match(colnames(pns), pnsDataMetaData$columnid)]
-
+      
       pns
     }, error = modalErrorHandler, finally = poolReturn(db))
   })
-
-
+  
+  
   output$tablePNS <- renderDT({
-
+    
     showTab <- pnsData()[,-1]
-
+    
     showHead <- paste0("<span style=\"white-space: nowrap; display: inline-block; text-align: left\">", colnames(showTab))
-
+    
     showHead <- paste0(showHead, "</span>")
-
+    
     dt <- datatable(showTab, colnames = showHead, filter="top",
                     options = list(paging=FALSE, dom = 'Brt', ordering=FALSE,
                                    language=list(url = lngJSON)),
@@ -190,7 +190,7 @@ if(!is.null(ortData)) {
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
     dt
   })
-
+  
   sPNS <- reactive({
     sr <- input$tablePNS_rows_selected
     if(length(sr) == 0) {
@@ -199,7 +199,7 @@ if(!is.null(ortData)) {
       sort(sr)
     }
   })
-
+  
   output$selTextPNS <- renderText({
     if (length(sPNS()) == 0) {
       "Keine zugehörigen Probenahmestellen vorhanden."
@@ -211,7 +211,7 @@ if(!is.null(ortData)) {
       }
     }
   })
-
+  
   output$exportPNSCSVLatin1 <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
@@ -221,7 +221,7 @@ if(!is.null(ortData)) {
                   fileEncoding = "Latin1", row.names = FALSE)
     }
   )
-
+  
   output$exportPNSCSVUtf8 <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".csv", sep="")
@@ -231,7 +231,7 @@ if(!is.null(ortData)) {
                   fileEncoding = "UTF-8", row.names = FALSE)
     }
   )
-
+  
   output$exportPNSRData <- downloadHandler(
     filename = function() {
       paste("Probenahmestelle-", Sys.Date(), ".RData", sep="")
@@ -256,10 +256,10 @@ observeEvent(input$fromPNStoMessdaten, {
 
 elemGroup <- reactive({
   db <- connectToDB()
-
+  
   tryCatch({
     res <- NULL
-
+    
     col <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
     if (nrow(col) != 0) {
       res <- dbGetQuery(db, paste0("SELECT DISTINCT ", col, " as name FROM parameter_data
@@ -278,7 +278,7 @@ output$elemGroup <- renderUI(selectInput("selElemGroup", "Stoffgruppenauswahl:",
 obsProp <- reactive({
   if (is.null(input$selElemGroup))
     return(NULL)
-
+  
   db <- connectToDB()
   tryCatch({
     colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
@@ -307,9 +307,9 @@ output$obsPhen <- renderUI(selectInput("selObsPhen", "Parameterauswahl:",
 
 data <- reactive({
   if (!is.null(input$selObsPhen)) {
-
+    
     resDf <- NULL
-
+    
     phenValueCount <- 2
     postfix <- c("Wert", "Einheit")
     if (input$showBG) {
@@ -325,23 +325,23 @@ data <- reactive({
       phenValueCount <-  phenValueCount + 1
     }
     columnCount <- (length(input$selObsPhen) * phenValueCount) + 2
-
+    
     db <- connectToDB()
     tryCatch({
       colStoffgruppe <- dbGetQuery(db, "SELECT columnid FROM column_metadata WHERE prefixid = 'param' AND dede = 'Stoffgruppe' limit 1")
-
+      
       for (foi in pnsData()[sPNS(), "ID"]) {
-
+        
         selObsPropFoi <- obsProp()[obsProp()$name %in% input$selObsPhen & obsProp()$foiid == foi,]
-
+        
         if(length(selObsPropFoi$seriesid) == 0) next;
-
+        
         obsPropSel <- obsProp()$name %in% input$selObsPhen
-
+        
         uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
-
+        
         as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_")))
-
+        
         query <- paste0("SELECT DISTINCT o.observationid,
                                          o.seriesid,
                                          u.unit,
@@ -363,21 +363,21 @@ data <- reactive({
                         LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
                         RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id AND timezone('UTC', pro.resulttime::timestamptz) = o.resulttime)
                         WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")" )
-
+        
         if (!is.null(input$selObsPhen))
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
-
+        
         cat(file=stderr(), query, "\n")
         res <- dbGetQuery(db, query)
-
-	resDf <- NULL
-
+        
+        resDf <- NULL
+        
         if(length(res) != 0) {
           for (obs in 1:nrow(res)) {
-
-	oldRow <- 0
-     if (res[obs, "proid"] %in% resDf$proId) {
-oldRow <- which(resDf$proId == res[obs, "proid"])
+            
+            oldRow <- 0
+            if (res[obs, "proid"] %in% resDf$proId) {
+              oldRow <- which(resDf$proId == res[obs, "proid"])
               resDfRow <- resDf[oldRow, , drop=F]
             } else {
               resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount + 1))
@@ -387,7 +387,7 @@ oldRow <- which(resDf$proId == res[obs, "proid"])
               resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
               resDfRow$proId <- res[obs, "proid"]
             }
-
+            
             valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
             if (res[obs, "value"] == noDataEncode) {
               resDfRow[valueRow] <- NA_character_
@@ -413,18 +413,18 @@ oldRow <- which(resDf$proId == res[obs, "proid"])
             if (input$showSG) {
               resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
             }
-
-	    if (oldRow > 0) {
-		resDf[oldRow, ] <- resDfRow
-	    } else {
+            
+            if (oldRow > 0) {
+              resDf[oldRow, ] <- resDfRow
+            } else {
               resDf <- rbind(resDf, resDfRow)
             }
           }
-
+          
         }
-
+        
       }
-
+      
       if (input$randomId) {
         dbIdMap <- dbGetQuery(db, paste0("SELECT f.identifier, od.rndid FROM ort_data od
                                          LEFT OUTER JOIN featureofinterest f ON od.featureofinterestid = f.featureofinterestid
@@ -435,21 +435,21 @@ oldRow <- which(resDf$proId == res[obs, "proid"])
                                          WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
         resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), "rndid"]
       }
-
+      
       #resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
       #colnames(resUom) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
       #resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
       #colnames(resBg) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
       #resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
       #colnames(resStgr) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-
+      
       #for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
       #  frid <- match(obsPropId, obsProp()$identifier)
       #  resUom[[obsPropId]] <- obsProp()[frid, "unit"]
       #  resBg[[obsPropId]] <- obsProp()[frid, "bg"]
       #  resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
       #}
-
+      
       list(resDf=resDf[,-(columnCount+1)])
     }, error = modalErrorHandler, finally = poolReturn(db))
   }
@@ -457,17 +457,17 @@ oldRow <- which(resDf$proId == res[obs, "proid"])
 
 output$tableDaten <- renderDT({
   input$refreshData
-
+  
   showTab <- isolate(data()[["resDf"]])
-
+  
   if (!is.null(showTab)) {
     dt <- datatable(showTab,
-              filter="top",
-              rownames=FALSE,
-              options=list(paging=FALSE,dom = 'Brt',
-                           language=list(url = lngJSON)),
-              escape=FALSE)
-
+                    filter="top",
+                    rownames=FALSE,
+                    options=list(paging=FALSE,dom = 'Brt',
+                                 language=list(url = lngJSON)),
+                    escape=FALSE)
+    
     numCol <- colnames(showTab)
     numCol <- numCol[!(numCol %in% c('PNS_ID'))]
     numCol <- numCol[which(as.logical(sapply(showTab[,numCol],is.numeric)))]
@@ -476,7 +476,7 @@ output$tableDaten <- renderDT({
     if (length(numCol) > 0) {
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
     }
-
+    
     dt
   }
 })
@@ -493,11 +493,11 @@ selData <- reactive({
 output$tableStatistik <- renderDataTable({
   if (!is.null(selData()) & input$computeStat) {
     input$refreshData
-
+    
     output$warnUnit <- renderText("Achtung: Messwerte eines Parameters können verschiedene Einheiten haben und werden nicht konvertiert.")
-
+    
     filterData <- isolate(data()$resDf[selData(),])
-
+    
     stat <- apply(filterData[,-c(1:2), drop=FALSE], 2, function(x) {
       xSum <- suppressWarnings(as.numeric(x))
       if (all(is.na(xSum))) {
@@ -509,23 +509,23 @@ output$tableStatistik <- renderDataTable({
         xSum <- c(xSum, 0, NA)
       if (length(xSum) == 7)
         xSum <- c(xSum, NA)
-
+      
       xSum
     })
-
+    
     rownames(stat) <- c("Min.","1. Qu.","Median","Mittelw.", "3. Qu.","Max.", "NA", "Anz. Fakt.")
-
+    
     dt <- datatable(stat,
                     options=list(paging=FALSE, dom = 'Brt',
                                  language=list(url = lngJSON)))
-
+    
     numCol <- colnames(stat)
     numCol <- numCol[which(apply(stat[1:6,numCol], 2, function(x) all(is.numeric(x)) ))]
     numCol <- numCol[apply(matrix(stat[1:6, numCol] > floor(stat[1:6, numCol])), 2, any)]
     numCol <- numCol[!is.na(numCol)]
     if (length(numCol) > 0)
       dt <- formatRound(dt, numCol, digits=3, dec.mark=",", mark=".")
-
+    
     dt
   }
 })
@@ -544,7 +544,7 @@ output$exportDataCSVLatin1 <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
-
+    
     write.table(df, file, sep = ";", dec = ",", na = "",
                 fileEncoding = "Latin1", row.names = FALSE)
   }
@@ -554,7 +554,7 @@ output$exportDataCSVUtf8 <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".csv", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
-
+    
     write.table(df, file, sep = ";", dec = ",", na = "",
                 fileEncoding = "UTF-8", row.names = FALSE)
   }
@@ -564,7 +564,7 @@ output$exportDataRData <- downloadHandler(
   filename = function() paste("Daten-", Sys.Date(), ".RData", sep=""),
   content = function(file) {
     df <- isolate(data()$resDf[selData(),])
-
+    
     save(df, file = file)
   }
 )
