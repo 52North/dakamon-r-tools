@@ -351,7 +351,8 @@ data <- reactive({
                                          pro.abfluss_situation,
                                          pp.bg,
                                          pp.ng,
-                                         pd.", colStoffgruppe, " AS stgrname
+                                         pd.", colStoffgruppe, " AS stgrname,
+					 pro.id AS proid
                     FROM observation o
                         LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
                         LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
@@ -360,25 +361,33 @@ data <- reactive({
                         LEFT OUTER JOIN parameter_data AS pd ON (op.observablepropertyid = pd.observablepropertyid)
                         LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
                         LEFT OUTER JOIN unit AS u ON (o.unitid = u.unitid)
-                        RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
-                        WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")
-                        AND timezone('UTC', pro.resulttime::timestamptz) = o.resulttime")
+                        RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id AND timezone('UTC', pro.resulttime::timestamptz) = o.resulttime)
+                        WHERE s.featureofinterestid IN (", paste0("'", selObsPropFoi$featureofinterestid, "'" , collapse=", "), ")" )
 
         if (!is.null(input$selObsPhen))
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
 
-        cat(query)
+        cat(file=stderr(), query, "\n")
         res <- dbGetQuery(db, query)
+
+	resDf <- NULL
 
         if(length(res) != 0) {
           for (obs in 1:nrow(res)) {
 
-            resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount))
-            colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))))
+	oldRow <- 0
+     if (res[obs, "proid"] %in% resDf$proId) {
+oldRow <- which(resDf$proId == res[obs, "proid"])
+              resDfRow <- resDf[oldRow, , drop=F]
+            } else {
+              resDfRow <- as.data.frame(matrix(NA, nrow = 1, ncol = columnCount + 1))
+              colnames(resDfRow) <- c("PNS_ID", "Probenahmedatum", as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_"))), "proId")
+              resDfRow$PNS_ID <- foi
+              resDfRow$Probenahmedatum <- res[obs, "resulttime"]
+              resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
+              resDfRow$proId <- res[obs, "proid"]
+            }
 
-            resDfRow$PNS_ID <- foi
-            resDfRow$Probenahmedatum <- res[obs, "resulttime"]
-            resDfRow$Abflusssituation <- res[obs, "abfluss_situation"]
             valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
             if (res[obs, "value"] == noDataEncode) {
               resDfRow[valueRow] <- NA_character_
@@ -405,7 +414,11 @@ data <- reactive({
               resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
             }
 
-            resDf <- rbind(resDf, resDfRow)
+	    if (oldRow > 0) {
+		resDf[oldRow, ] <- resDfRow
+	    } else {
+              resDf <- rbind(resDf, resDfRow)
+            }
           }
 
         }
@@ -437,7 +450,7 @@ data <- reactive({
       #  resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
       #}
 
-      list(resDf=resDf)
+      list(resDf=resDf[,-(columnCount+1)])
     }, error = modalErrorHandler, finally = poolReturn(db))
   }
 })
