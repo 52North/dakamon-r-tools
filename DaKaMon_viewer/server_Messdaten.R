@@ -294,7 +294,7 @@ obsProp <- reactive({
                         LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id) AND (pd.observablepropertyid = pp.parameter_id)
                         RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
                        WHERE foi.identifier = '", pnsData()[sPNS()[i],]$ID, "' AND s.firsttimestamp != '1970-01-01 00:00' AND pd.", colStoffgruppe, " IN ('", paste(elemGroup()$name[elemGroup()$name %in% input$selElemGroup], collapse="', '"), "')")
-      cat(query)
+
       op <- rbind(op, dbGetQuery(db, query))
     }
     op
@@ -340,8 +340,6 @@ data <- reactive({
         
         uObsPropSelId <- unique(obsProp()[obsPropSel, "identifier"])
         
-        as.vector(t(outer(uObsPropSelId, postfix, paste, sep="_")))
-        
         query <- paste0("SELECT DISTINCT o.observationid,
                                          o.seriesid,
                                          u.unit,
@@ -367,7 +365,6 @@ data <- reactive({
         if (!is.null(input$selObsPhen))
           query <- paste0(query, " AND op.name IN (", paste0("'", input$selObsPhen, "'" ,collapse=", ") ,")")
         
-        cat(file=stderr(), query, "\n")
         res <- dbGetQuery(db, query)
         
         resDf <- NULL
@@ -403,6 +400,7 @@ data <- reactive({
               value <- res[obs, "value"]
               resDfRow[valueRow] <- ifelse(value == noDataEncode, NA_character_, value)
             }
+            
             resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
             if (input$showBG) {
               resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
@@ -435,20 +433,6 @@ data <- reactive({
                                          WHERE f.identifier IN ('", paste(resDf$PNS_ID, collapse="', '"), "')"))
         resDf$PNS_ID <- dbIdMap[match(resDf$PNS_ID, dbIdMap$id), "rndid"]
       }
-      
-      #resUom <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-      #colnames(resUom) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-      #resBg <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-      #colnames(resBg) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-      #resStgr <-  as.data.frame(matrix(NA, nrow = 1, ncol = length(input$selObsPhen)+columnCount))
-      #colnames(resStgr) <- c("PNS_ID", "Probenahmedatum", "Ereignisbeginn", "Ereignisende", uObsPropSelId)
-      
-      #for (obsPropId in uObsPropSelId) { # obsPropId <- uObsPropSelId[1]
-      #  frid <- match(obsPropId, obsProp()$identifier)
-      #  resUom[[obsPropId]] <- obsProp()[frid, "unit"]
-      #  resBg[[obsPropId]] <- obsProp()[frid, "bg"]
-      #  resStgr[[obsPropId]] <- obsProp()[frid, "stgrname"]
-      #}
       
       list(resDf=resDf[,-(columnCount+1)])
     }, error = modalErrorHandler, finally = poolReturn(db))
