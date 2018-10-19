@@ -671,16 +671,15 @@ observeEvent(input$storeDBData, {
         features <- dbGetQuery(db, pnsQuery)
         progress$inc(1)
 
-        feedTmpConfigDirectory <- tempdir()
         #
         # Create global CSV file
         #
-        feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
+        feedCSV <- tempfile(pattern = "feed-csv-", feedTmpDirectory, fileext = ".csv")
         #
         # Create the global configuraton file
         #
         cat(file=catFile, "create feeder configuration ...\n")
-        feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
+        feedConf <- tempfile(pattern = "feed-",  feedTmpDirectory, fileext = "-config.xml")
 
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
@@ -793,7 +792,7 @@ observeEvent(input$storeDBData, {
           cat(file=catFile, paste("Config File: ", feedConf), "\n")
           cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
           cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
-          logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
+          logFile <- tempfile(pattern = "feed-",  feedTmpDirectory, fileext = ".log")
           cat(file=catFile, paste("Log File   : ", logFile), "\n")
           system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
           # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)

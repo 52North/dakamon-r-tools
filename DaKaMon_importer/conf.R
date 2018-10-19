@@ -118,6 +118,11 @@ feederImporterClass <- "org.n52.sos.importer.feeder.importer.SingleThreadSingleO
 # the next two are used, when feederImporterClass is switched to
 # feederImporterClass <- "org.n52.sos.importer.feeder.importer.SweArrayObservationWithSplitExtensionImporter"
 feederTimeoutBuffer <- 120000
+#
+# Directory storing temporal information that will be cleaned by an external script.
+# This script deletes files older than n days.
+# The path to the directory MUST NOT end with an slash!
+feedTmpDirectory <- ifelse(local, "ADJUST_ME/dakamon", "/tmp/dakamon")
 
 stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"
