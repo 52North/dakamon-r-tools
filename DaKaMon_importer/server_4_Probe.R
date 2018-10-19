@@ -218,7 +218,7 @@ observeEvent(input$storeDBProbe, {
         if (Probe_data[probe, reqColProbe$id] %in% checkDBProbe$ProbeInDB$identifier) {
           ## UPDATE Probe via SQL ##
           query <- paste0("UPDATE probe SET ",
-                          "abfluss_situation = '", Probe_data[probe, reqColProbe$situation], "', ",
+                          "abfluss_situation = '", Probe_data[probe, reqColProbe$abfluss_situation], "', ",
                           "resulttime = to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
                           "phenomenontimestart = to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
                           "phenomenontimeend = to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "', ",
@@ -257,7 +257,7 @@ observeEvent(input$storeDBProbe, {
                            "(SELECT pns_id FROM query_pns)",
                            paste0("'", Probe_data[probe, reqColProbe$labName], "'"),
                            paste0("'", Probe_data[probe, reqColProbe$labId], "'"),
-                           paste0("'", Probe_data[probe, reqColProbe$situation], "'"),
+                           paste0("'", Probe_data[probe, reqColProbe$abfluss_situation], "'"),
                            paste0("'", gsub("EMPTY", "NULL", Probe_data[probe, reqColProbe$subprobe]), "'"),
                            sep=", "
                         ),

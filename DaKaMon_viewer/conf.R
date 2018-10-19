@@ -1,6 +1,9 @@
 ## DaKaMon conf
 # common constants
 
+# max upload size
+options(shiny.maxRequestSize=10*1024^2)
+
 #
 # CSV encoding
 #
@@ -70,7 +73,7 @@ catFile <- ifelse(local,stdout(),stderr())
 # DATABASE
 #
 dbHost <- ifelse(local, "localhost", "db")
-dbPort <- "5433"
+dbPort <- "5432"
 dbUser <- "postgres"
 dbPassword <- "postgres"
 dbName <- "sos"
@@ -121,8 +124,8 @@ adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
 
 ## File Upload
-#fileUploadDir <- "ADJUST_ME"
-fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
+fileUploadDir <- "ADJUST_ME"
+#fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
 fileDownloadBaseUrl <- "ADJUST_ME"
 #fileDownloadBaseUrl <- "http://localhost"
 #fileDownloadBaseUrl <- "file:///C:/data/coding/dakamon/file_uploads/"
@@ -166,8 +169,8 @@ reqColData <- list(probeId = "ProbenID",
 reqColReferenz<- list(id = "ID")
 
 reqColLiteratur<- list(refId= "Referenz_ID",
-                      thematik = "Thematik",
-                      paramId = "Parameter",
-                      pnsId = "PNS_ID",
-                      uBegin = "Untersuchungsbeginn",
-                      uEnde = "Untersuchungsende")
+                       thematik = "Thematik",
+                       paramId = "Parameter",
+                       pnsId = "PNS_ID",
+                       uBegin = "Untersuchungsbeginn",
+                       uEnde = "Untersuchungsende")
