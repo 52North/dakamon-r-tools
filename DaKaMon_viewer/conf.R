@@ -102,10 +102,6 @@ foiType <- "http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_Samplin
 #
 feederPath <- ifelse(local, "ADJUST_ME/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
 #
-# specifiies the number of parallel performed imports during measurement upload
-#
-feedNumberOfParallelImports <- 1
-#
 # WGS84 2D Lat Lon with degree unit
 feederEpsgCode <- "4326"
 # sync with dbTimestampPattern and timestampRegExPattern
