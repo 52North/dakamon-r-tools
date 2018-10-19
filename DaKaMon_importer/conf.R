@@ -118,7 +118,7 @@ feederTimeoutBuffer <- 120000
 # Directory storing temporal information that will be cleaned by an external script.
 # This script deletes files older than n days.
 # The path to the directory MUST NOT end with an slash!
-feedTmpDirectory <- ifelse(local, "ADJUST_ME/dakamon", "/tmp/dakamon")
+feederTmpDirectory <- ifelse(local, "ADJUST_ME/dakamon", "/tmp/dakamon")
 
 stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"

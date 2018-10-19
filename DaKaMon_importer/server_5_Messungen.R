@@ -544,6 +544,14 @@ observeEvent(input$storeDBData, {
     tryCatch({
       dbWithTransaction(db, {
 
+        # check if work directory is available with write permissions and log error if not
+        if (!file.exists(feederTmpDirectory)) {
+          stop(paste0("Das Arbeitsverzeichnis '", feederTmpDirectory, "' existiert nicht. Bitte anlegen!"))
+        }
+        if (file.access(feederTmpDirectory, mode = 2) == -1) {
+          stop(paste0("Keine Schreibberechtigung für das Arbeitsverzeichnis '", feederTmpDirectory, "'. Bitte anpassen!"))
+        }
+
         if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
 
           # delete observations already in the DB
@@ -674,12 +682,12 @@ observeEvent(input$storeDBData, {
         #
         # Create global CSV file
         #
-        feedCSV <- tempfile(pattern = "feed-csv-", feedTmpDirectory, fileext = ".csv")
+        feedCSV <- tempfile(pattern = "feed-csv-", feederTmpDirectory, fileext = ".csv")
         #
         # Create the global configuraton file
         #
         cat(file=catFile, "create feeder configuration ...\n")
-        feedConf <- tempfile(pattern = "feed-",  feedTmpDirectory, fileext = "-config.xml")
+        feedConf <- tempfile(pattern = "feed-",  feederTmpDirectory, fileext = "-config.xml")
 
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
@@ -792,7 +800,7 @@ observeEvent(input$storeDBData, {
           cat(file=catFile, paste("Config File: ", feedConf), "\n")
           cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
           cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
-          logFile <- tempfile(pattern = "feed-",  feedTmpDirectory, fileext = ".log")
+          logFile <- tempfile(pattern = "feed-",  feederTmpDirectory, fileext = ".log")
           cat(file=catFile, paste("Log File   : ", logFile), "\n")
           system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
           # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
