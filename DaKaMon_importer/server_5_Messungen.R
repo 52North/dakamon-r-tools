@@ -544,6 +544,14 @@ observeEvent(input$storeDBData, {
     tryCatch({
       dbWithTransaction(db, {
 
+        # check if work directory is available with write permissions and log error if not
+        if (!file.exists(feederTmpDirectory)) {
+          stop(paste0("Das Arbeitsverzeichnis '", feederTmpDirectory, "' existiert nicht. Bitte anlegen!"))
+        }
+        if (file.access(feederTmpDirectory, mode = 2) == -1) {
+          stop(paste0("Keine Schreibberechtigung für das Arbeitsverzeichnis '", feederTmpDirectory, "'. Bitte anpassen!"))
+        }
+
         if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
 
           # delete observations already in the DB
@@ -671,16 +679,15 @@ observeEvent(input$storeDBData, {
         features <- dbGetQuery(db, pnsQuery)
         progress$inc(1)
 
-        feedTmpConfigDirectory <- tempdir()
         #
         # Create global CSV file
         #
-        feedCSV <- tempfile(pattern = "feed-csv-", feedTmpConfigDirectory, fileext = ".csv")
+        feedCSV <- tempfile(pattern = "feed-csv-", feederTmpDirectory, fileext = ".csv")
         #
         # Create the global configuraton file
         #
         cat(file=catFile, "create feeder configuration ...\n")
-        feedConf <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = "-config.xml")
+        feedConf <- tempfile(pattern = "feed-",  feederTmpDirectory, fileext = "-config.xml")
 
         writeLines(createFeederConfiguration(csvPath = feedCSV), feedConf)
         progress$inc(1)
@@ -793,7 +800,7 @@ observeEvent(input$storeDBData, {
           cat(file=catFile, paste("Config File: ", feedConf), "\n")
           cat(file=catFile, paste("Feeder Jar : ", feederPath), "\n")
           cat(file=catFile, paste("CSV File   : ", feedCSV), "\n")
-          logFile <- tempfile(pattern = "feed-",  feedTmpConfigDirectory, fileext = ".log")
+          logFile <- tempfile(pattern = "feed-",  feederTmpDirectory, fileext = ".log")
           cat(file=catFile, paste("Log File   : ", logFile), "\n")
           system2("java", args = c(paste0("-DDAKAMON_LOG_FILE=", logFile), "-jar", feederPath, "-c", feedConf), stdout = FALSE, stderr = FALSE, wait = FALSE)
           # cmd <- paste0("/usr/bin/java -DDAKAMON_LOG_FILE=", logFile, " -jar ", feederPath, " -c ", feedConf)
@@ -828,7 +835,8 @@ observeEvent(input$storeDBData, {
 
           cat(file=catFile, "Done!\n")
           progress$inc(1)
-          Sys.sleep(5) # wait for log to be written
+          # wait for log to be written
+          Sys.sleep(5)
           result <- read_lines(logFile, locale = locale())
 
           if (length(grep("Failed observations: 0.", result, ignore.case = TRUE, value = TRUE)) == 0) {
@@ -839,10 +847,6 @@ observeEvent(input$storeDBData, {
           } else {
             content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
             showModalMessage(title="Vorgang abgeschlossen", content)
-            ## TODO delete files after successful run!
-            # file.remove(logFile)
-            # file.remove(feedConf)
-            # file.remove(feedCSV)
           }
         }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
       }
