@@ -828,7 +828,8 @@ observeEvent(input$storeDBData, {
 
           cat(file=catFile, "Done!\n")
           progress$inc(1)
-          Sys.sleep(5) # wait for log to be written
+          # wait for log to be written
+          Sys.sleep(5)
           result <- read_lines(logFile, locale = locale())
 
           if (length(grep("Failed observations: 0.", result, ignore.case = TRUE, value = TRUE)) == 0) {
@@ -839,10 +840,6 @@ observeEvent(input$storeDBData, {
           } else {
             content <- "Die Messdaten wurden erfolgreich in der Datenbank angelegt."
             showModalMessage(title="Vorgang abgeschlossen", content)
-            ## TODO delete files after successful run!
-            # file.remove(logFile)
-            # file.remove(feedConf)
-            # file.remove(feedCSV)
           }
         }, error = modalErrorHandler, warning = modalErrorHandler, finally=progress$close())
       }
