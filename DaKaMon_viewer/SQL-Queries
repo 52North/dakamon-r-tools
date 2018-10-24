@@ -1,0 +1,249 @@
+# Copyright (C) 2017-2018 52°North Initiative for
+# Geospatial Open Source Software GmbH
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 as published
+# by the Free Software Foundation.
+#
+# If the program is linked with libraries which are licensed under one of
+# the following licenses, the combination of the program with the linked
+# library is not considered a "derivative work" of the program:
+#
+#     - Apache License, version 2.0
+#     - Apache Software License, version 1.0
+#     - GNU Lesser General Public License, version 3
+#     - Mozilla Public License, versions 1.0, 1.1 and 2.0
+#     - Common Development and Distribution License (CDDL), version 1.0
+#
+# Therefore the distribution of the program linked with libraries licensed
+# under the aforementioned licenses, is permitted by the copyright holders
+# if the distribution is compliant with both the GNU General Public
+# License version 2 and the aforementioned licenses.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+# Public License for more details.
+#
+
+Query all Ort
+################
+
+Alle Ort/Global Spaltennamen
+----------------------------
+ortDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort', 'global')"))
+
+Nur Ort Spaltename
+------------------
+ortDataOrtMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('ort')"))
+
+Add Prefix zu Spaltennamen
+---------------------------
+ortColColumns <- paste0("od.", grep("col*", ortDataOrtMetaData$columnid, value = TRUE))
+
+Query alle Orte
+---------------
+dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+                                    " FROM featureofinterest foi
+                                    RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid"))
+
+Query alle Orte mit Filter für featureofinterestid
+--------------------------------------------------
+dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, ", paste0(ortColColumns, collapse=", "),
+                                    " FROM featureofinterest foi
+                                    RIGHT OUTER JOIN ort_data od ON foi.featureofinterestid = od.featureofinterestid
+                                    WHERE foi.featureofinterestid IN (",
+                                        paste0(ort$featureofinterestid, collapse=", "), ")"))
+
+Query all Probenahmestelle
+##########################
+
+Alle PNS/Global Spaltennamen
+----------------------------
+pnsDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns', 'global')"))
+
+Nur PNS Spaltename
+------------------
+pnsDataPnsMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pns')"))
+
+Add Prefix zu Spaltennamen
+---------------------------
+pnsColColumns <- paste0("pns.", grep("col*", pnsDataPnsMetaData$columnid, value = TRUE))
+
+Query alle Orte
+---------------
+dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", paste0(pnsColColumns, collapse=", "),
+                      " FROM featureofinterest foi
+                      RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
+                      RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
+                      LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid"))
+
+
+Query alle Orte mit Filter für Parent-FOI
+-----------------------------------------
+dbGetQuery(db, paste0("SELECT foi.featureofinterestid, foi.identifier, foi.name, pfoi.identifier as orts_id, ", paste0(pnsColColumns, collapse=", "),
+                      " FROM featureofinterest foi
+                      RIGHT OUTER JOIN pns_data pns ON foi.featureofinterestid = pns.featureofinterestid
+                      RIGHT OUTER JOIN featurerelation fr ON foi.featureofinterestid = fr.childfeatureid
+                      LEFT OUTER JOIN featureofinterest pfoi ON pfoi.featureofinterestid = fr.parentfeatureid
+                      WHERE fr.parentfeatureid in (",
+                      paste(ortData[s(),1], collapse=", "), ")"))
+
+Query all Proben
+################
+
+Alle Probe/Global Spaltennamen
+----------------------------
+probeDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe', 'global')"))
+
+Nur Probe Spaltename
+------------------
+probeDataProbeMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('probe')"))
+
+Add Prefix zu Spaltennamen
+---------------------------
+probeColColumns <- paste0("pro.", grep("col*", probeDataProbeMetaData$columnid, value = TRUE))
+
+Query alle Proben mit PNS-Identifier
+--------------------------------------
+dbGetQuery(db, paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", paste0(probeColColumns, collapse=", "),
+                        " FROM probe pro
+                        LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id" ))
+
+Query alle Proben mit PNS-Id
+--------------------------------------
+dbGetQuery(db, "SELECT * FROM probe"))
+
+
+Query alle Proben mit Filter nach PNS
+-------------------------------------
+dbGetQuery(db, paste0("SELECT pro.id, pro.identifier, pns.identifier as pns_id, ", paste0(probeColColumns, collapse=", "),
+                        " FROM probe pro
+                        LEFT OUTER JOIN featureofinterest pns ON pns.featureofinterestid = pro.pns_id
+                        WHERE pns.featureofinterestid IN (...)" ))
+
+
+Query all Parameter
+###################
+
+Alle Parameter/Global Spaltennamen
+----------------------------
+paramDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('param', 'global')"))
+
+Nur Parameter Spaltename
+------------------
+paramDataParamMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('param')"))
+
+Add Prefix zu Spaltennamen
+---------------------------
+paramColColumns <- paste0("param.", grep("col*", paramDataParamMetaData$columnid, value = TRUE))
+
+
+Query alle Parameter
+---------------
+dbGetQuery(db, paste0("SELECT op.observablepropertyid, op.identifier, op.name, ", paste0(paramColColumns, collapse=", "),
+                                    " FROM observableproperty op
+                                    RIGHT OUTER JOIN parameter_data param ON op.observablepropertyid = param.observablepropertyid"))
+
+
+Query alle Parameter mit Filter für observablepopertyid
+-------------------------------------------------------
+dbGetQuery(db, paste0("SELECT op.observablepropertyid, op.identifier, op.name, ", paste0(paramColColumns, collapse=", "),
+                                    " FROM observableproperty op
+                                    RIGHT OUTER JOIN parameter_data param ON op.observablepropertyid = param.observablepropertyid
+                                    WHERE op.observablepropertyid IN (...), ")"))
+
+
+Query all Proben-Parameter
+##########################
+Alle Proben-Parameter/Global Spaltennamen
+-----------------------------------------
+proParaDataMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pro_para', 'global')"))
+
+Nur Proben-Parameter Spaltename
+--------------------------------
+proParaDataProParaMetaData <- dbGetQuery(db, paste0("SELECT * FROM column_metadata WHERE prefixid IN ('pro_para')"))
+
+Add Prefix zu Spaltennamen
+---------------------------
+proParaColColumns <- paste0("pro_para.", grep("col*", proParaDataproParaMetaData$columnid, value = TRUE))
+
+Query alle Proben-Parameter
+--------------------------------------
+dbGetQuery(db, "SELECT * FROM probe_parameter"))
+
+
+Query alle Proben-Parameter
+---------------------------
+dbGetQuery(db, "SELECT pp.probe_id, pp.parameter_id, pro.identifier, op.identifier, u.unit, pp.bg, pp.ng FROM probe_parameter pp
+                LEFT OUTER JOIN probe pro ON pp.probe_id = pro.id
+                LEFT OUTER JOIN observableproperty op ON op.observablepropertyid = pp.parameter_id
+                LEFT OUTER JOIN unit u ON u.unitid = pp.pp_unit"))
+
+
+
+Query all Observations
+##########################
+
+Query alle Observations mit Filter nach Ort-/PNS-/Param-/Probe-Id
+-----------------------------------------------------------------
+SELECT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime, o.unitid, nv.value
+FROM observation o
+LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+WHERE foi.featureofinterestid IN (orte)
+AND foi.featureofinterestid IN (pns)
+AND op.observablepropertyid IN (params)
+AND pro.id IN (proben)
+
+Query alle Observations mit Filter nach Ort-/PNS-/Param-/Probe-Identifier
+-------------------------------------------------------------------------
+SELECT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime, o.unitid, nv.value
+FROM observation o
+LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+WHERE foi.identifier IN (orte)
+AND foi.identifier IN (pns)
+AND op.identifier IN (params)
+AND pro.identifier IN (proben)
+
+Query alle Observations mit Filter nach Ort-/PNS-/Param-/Probe-Identifier und Time-During
+-----------------------------------------------------------------------------------------
+SELECT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime, o.unitid, nv.value
+FROM observation o
+LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+WHERE foi.identifier IN (orte)
+AND foi.identifier IN (pns)
+AND op.identifier IN (params)
+AND pro.identifier IN (proben)
+AND (o.phenomenontimestart >= '2012-01-01' AND (o.phenomenontimestart <= '2012-07-31 17:45:15.000' OR o.phenomenontimeend <= '2012-07-31 17:45:15.000' ))
+
+
+Query alle Observations mit Filter nach Ort-/PNS-/Param-/Probe-Identifier und Time-Equals
+-----------------------------------------------------------------------------------------
+SELECT o.observationid, o.seriesid, o.phenomenontimestart, o.phenomenontimeend, o.resulttime, o.unitid, nv.value
+FROM observation o
+LEFT OUTER JOIN numericvalue nv ON (o.observationid = nv.observationid)
+LEFT OUTER JOIN series AS s ON (o.seriesid = s.seriesid)
+LEFT OUTER JOIN featureofinterest AS foi ON (s.featureofinterestid = foi.featureofinterestid)
+LEFT OUTER JOIN observableproperty AS op ON (s.observablepropertyid = op.observablepropertyid)
+LEFT OUTER JOIN probe_parameter AS pp ON (op.observablepropertyid = pp.parameter_id)
+RIGHT OUTER JOIN probe AS pro ON (pp.probe_id = pro.id AND foi.featureofinterestid = pro.pns_id)
+WHERE foi.identifier IN (orte)
+AND foi.identifier IN (pns)
+AND op.identifier IN (params)
+AND pro.identifier IN (proben)
+AND (o.phenomenontimestart = o.phenomenontimeend AND o.phenomenontimestart = '2012-07-31 17:45:15.000')

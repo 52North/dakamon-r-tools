@@ -1,0 +1,9 @@
+ID;Name;Stoffgruppe;Kürzel;CAS_Nr.;Wasserlöslichkeit;Kow
+Nitrat;Nitrat;N-Verbindungen;;1;1;3
+Ammonium;Ammonium;N-Verbindungen;;2;1;2
+Blei;Blei;Schwermetalle;Pb;3;0;6
+Cadmium;Cadmium;Schwermetalle;Cd;4;0;1
+Nickel;Nickel;Schwermetalle;Ni;5;0;3
+Quecksilber;Quecksilber;Schwermetalle;Hg;6;0;4
+AngEW;Angeschlossene EW;Stammdaten;AngEW;;;
+GK;Größenklasse;Stammdaten;GK;;;

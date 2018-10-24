@@ -1,0 +1,5 @@
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Anlagentyp;Thematik;Entwässerungssystem
+KAM_BW_EPP;Kläranlage Musterdorf;Musterdorf;Scheurlesstraße;52;75301;BW;49.141572;8.925;Kläranlage;Kläranlage;MS
+KAM_NW_BHK;Musterstadt;Musterstadt;Im Rauland;;50127;NW;50.940534;6.656646;Kläranlage;Kläranlage;MS
+KAM_BY_BOB;Mustergemeinde;Mustergemeinde;Flurstraße;50;86399;BY;48.286496;10.829547;Kläranlage;Kläranlage;MS
+KAM_BW_BON;Musterflecken;Musterflecken;Trailfingerstraße;73;72108;BW;48.534804;8.875112;Kläranlage;Kläranlage;MS
