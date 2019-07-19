@@ -1,0 +1,2 @@
+ID;PNS_ID;Probenahmedatum;Ereignisbeginn;Ereignisende;Ereignisdauer;Ereignisdauereinheit;Ereignisvolumen;Ereignisvolumeneinheit;Abflusssituation;Probenahmetechnik;Probenahmeart;Probenvolumen;Probenvolumeneinheit;Labor;Labor_Nr;Teilprobe_von
+PRO-006;KAM_BW_BON_Ablauf;18-01-2018 12:00;16-01-2018 12:00;18-01-2018 12:00;2;Tage;15;m³;TW;automatischer Probenehmer;7-Tage-Mischprobe;50;l;Lab1;Lab1-123;PRO-001

@@ -25,16 +25,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-############################################################################
-#############################   File Upload    #############################
-############################################################################
-
-# Constants
-
-codeLiteratur <- "Lt"
+########################################################################## #
+#############################   File Upload    ########################### #
+########################################################################## #
 
 # Tools
-
 moveFileToProbablyNotExistingTarget <- function(from, to) {
   todir <- dirname(to)
   if (!isTRUE(file.info(todir)$isdir)) {
@@ -119,7 +114,7 @@ getSelectedRow <- reactive({
 
 getSubDir <- reactive({
   if (input$FileUploadCategory == "Literatur") {
-    codeLiteratur # "Lt" constant
+    fileUploadCodeLiteratur
   } else {
     # get sub dir (country code)
     sub(".*_(.*)_.*", "\\1", getSelectedRow())
@@ -153,9 +148,9 @@ observeEvent(input$overrideFile, {
   }
 })
 
-#################
-## File Upload ##
-#################
+#################### #
+## File Upload    ####
+#################### #
 observeEvent(input$FileUpload, {
 
   fileUploadValidation$validated <- FALSE
@@ -169,9 +164,9 @@ observeEvent(input$FileUpload, {
   fileUploadValidation$validated <- TRUE
 })
 
-##################
-## Render Table ##
-##################
+#################### #
+## Render Table   ####
+#################### #
 output$tableFileUploadReferenz <- renderDT({
   if (!is.null(input$FileUploadCategory)) {
     showTab <- getReferences()
@@ -217,10 +212,9 @@ output$FileUploadValidationOut <- renderUI({
   }
 })
 
-##########################
-## check DB consistency ##
-##########################
-
+############################# #
+## check DB consistency    ####
+############################# #
 # check if file upload already exists
 observeEvent(input$fileUploadDBCheck, {
   fileUploadDBCheck$checked <- FALSE
@@ -270,9 +264,9 @@ output$FileUploadDBConsistencyOut <- renderUI({
   }
 })
 
-########################
-## Insert File Upload ##
-########################
+########################## #
+## Insert File Upload   ####
+########################## #
 observeEvent(input$fileUploadDBStore, {
   fileUploadDBCheck$checked <- FALSE
   db <- connectToDB()
@@ -280,8 +274,7 @@ observeEvent(input$fileUploadDBStore, {
     dbWithTransaction(db, {
       selectedCategory <- input$FileUploadCategory
       selectedRow <- input$tableFileUploadReferenz_rows_selected
-      selectedReference <- getReferences()[selectedRow - 1,]
-      referenceId = selectedReference$RefId
+      referenceId <- getReferences()[selectedRow,"RefId"]
 
       fileName <- input$FileUpload$name
       targetFile <- getTargetFilePath()

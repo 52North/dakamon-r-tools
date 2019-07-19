@@ -80,7 +80,7 @@ litPubIdDf<- reactive({
   ## Publikation # z.B. alle Werte, die in Kaiser2012a ermittelt wurden, pubId wird vom KIT erstellt und mit csv hoch geladen
   db <- connectToDB()
   tryCatch({
-    query <-  paste0("SELECT DISTINCT pub.id
+    query <-  paste0("SELECT DISTINCT pub.identifier
                                 FROM literatur AS lit
                      LEFT OUTER JOIN observableproperty AS op ON (op.observablepropertyid = lit.param_id)
                      LEFT OUTER JOIN referenz AS pub ON (pub.id = lit.referenz_id) ")
@@ -104,8 +104,8 @@ litPubIdDf<- reactive({
   }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
-output$litPubIdInput <- renderUI(selectInput("litPubId", "Publikation",
-                                             litPubIdDf()$pub_id,
+output$litPubIdInput <- renderUI(selectInput("litPubIdentifier", "Publikation",
+                                             litPubIdDf()$identifier,
                                              multiple = TRUE))
 observeEvent(input$fromPubToLit, {
   updateTabsetPanel(session, "inNavbarpage",selected = "Literatur")
@@ -157,7 +157,7 @@ litDf<- reactive({
       } else {
         query <- paste0(query," AND ")
       }
-      query <- paste0(query," pub.id IN (", paste0("'", input$litPubId, "'" , collapse=", ") ,")")
+      query <- paste0(query," pub.identifier IN (", paste0("'", input$litPubIdentifier, "'" , collapse=", ") ,")")
     }
 
     # load all Literatur PubId from DB

@@ -78,7 +78,8 @@ ADD docker/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 ADD docker/shiny-server.sh /usr/bin/shiny-server.sh
 
-RUN java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
+RUN mkdir -pv /srv/dakamon-uploads &&\
+    java -jar /usr/local/52n/52n-sos-importer-feeder-bin.jar &&\
     echo "$(date): chown 1/5 (/srv/shiny-server)" &&\
     chown shiny:shiny -R /srv/shiny-server &&\
     echo "$(date): chown 2/5 (/opt/shiny-server)" &&\

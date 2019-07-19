@@ -201,7 +201,6 @@ server <- function(input, output, session) {
   source("server_Dokumente.R", local = TRUE, encoding = "UTF-8")$value
 }
 
-
 modalErrorHandler <- function(e) {
   if (!is.null(e)) {
     print(e)

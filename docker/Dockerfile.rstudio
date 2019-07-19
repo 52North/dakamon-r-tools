@@ -1,0 +1,61 @@
+################################################################################
+# Copyright (C) 2019 by 52 North                                               #
+# Initiative for Geospatial Open Source Software GmbH                          #
+#                                                                              #
+# Contact: Andreas Wytzisk                                                     #
+# 52 North Initiative for Geospatial Open Source Software GmbH                 #
+# Martin-Luther-King-Weg 24                                                    #
+# 48155 Muenster, Germany                                                      #
+# info@52north.org                                                             #
+#                                                                              #
+# This program is free software; you can redistribute and/or modify it under   #
+# the terms of the GNU General Public License version 2 as published by the    #
+# Free Software Foundation.                                                    #
+#                                                                              #
+# This program is distributed WITHOUT ANY WARRANTY; even without the implied   #
+# WARRANTY OF MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU #
+# General Public License for more details.                                     #
+#                                                                              #
+# You should have received a copy of the GNU General Public License along with #
+# this program (see gpl-2.0.txt). If not, write to the Free Software           #
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA or #
+# visit the Free Software Foundation web page, http://www.fsf.org.             #
+#                                                                              #
+# Author: Jürrens, Eike Hinderk (e.h.juerrens@52north.org)                     #
+# Created: 2019-02-27                                                          #
+# Project: DaKaMon - r-tools - visit the project web page,                     #
+#      https://github.com/52North/dakamon-r-tools/                             #
+#                                                                              #
+# Build Image: docker build \                                                  #
+#              -t dakamon-rstudio-dev:$(date +%Y.%m.%d) \                      #
+#              -f Dockerfile.rstudio .                                         #
+# Create Container: docker run \                                               #
+#                   --name=dakamon-dev \                                       #
+#                   --env PASSWORD=r \                                         #
+#                   --publish 8787:8787 \                                      #
+#                   --volume dakamon-r-tools-repo/:/home/rstudio/r-tools \     #
+#                   -d dakamon-rstudio-dev:$(date +%Y.%m.%d)                   #
+# Launch Chromium in app mode: chromium-browser \                              #
+#                   --app=http://localhost:8787/                               #
+################################################################################
+FROM rocker/geospatial:latest
+MAINTAINER "Jürrens, Eike Hinderk" e.h.juerrens@52north.org
+
+RUN install2.r --error --skipinstalled httr && \
+    install2.r --error --skipinstalled methods && \
+    install2.r --error --skipinstalled sp && \
+    install2.r --error --skipinstalled stringr && \
+    install2.r --error --skipinstalled xml2 && \
+    install2.r --error --skipinstalled devtools && \
+    install2.r --error --skipinstalled webmockr && \
+    install2.r --error --skipinstalled DT && \
+    install2.r --error --skipinstalled shinyjs && \
+    install2.r --error --skipinstalled rjson && \
+    install2.r --error --skipinstalled dplyr && \
+    install2.r --error --skipinstalled RPostgreSQL && \
+    install2.r --error --skipinstalled readr && \
+    install2.r --error --skipinstalled later && \
+    install2.r --error --skipinstalled pool && \
+    rm -rf /tmp/downloaded_packages && \
+    rm -rf /tmp/repos_*.rds && \
+    rm -rf /var/lib/apt/lists/*

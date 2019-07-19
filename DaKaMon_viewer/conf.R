@@ -154,6 +154,7 @@ adminConf <- authenticate("dakamon-administrator", adminPwd)
 ## File Upload
 fileUploadDir <- "ADJUST_ME"
 #fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
+fileUploadCodeLiteratur <- "Lt"
 fileDownloadBaseUrl <- "ADJUST_ME"
 #fileDownloadBaseUrl <- "http://localhost"
 #fileDownloadBaseUrl <- "file:///C:/data/coding/dakamon/file_uploads/"

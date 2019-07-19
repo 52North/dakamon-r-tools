@@ -41,7 +41,9 @@ generateLinkColumn <- function(resultSet, selectedCategory) {
   }
   return(resultSet)
 }
-
+#
+# getOrtReferences ----
+#
 getOrtReferences <- reactive({
   db <- connectToDB()
   tryCatch({
@@ -99,73 +101,79 @@ getOrtReferences <- reactive({
     }
   }, error = modalErrorHandler, finally = poolReturn(db))
 })
-
+#
+# getLiteraturReferences ----
+#
 getLiteraturReferences <- reactive({
+  db <- connectToDB()
+  tryCatch({
 
-  noResults <- function() {
-    data.frame(RefId=character(), ID=character(), Link=character(),
-               Thematik=character(), Untersuchungsbeginn=character(), Untersuchungsende=character())
-  }
 
-  docsQuery <- "SELECT * FROM file_upload f JOIN file_upload_literatur o ON f.id = o.file_upload_id"
-  docsResult <- dbGetQuery(db, docsQuery)
+    noResults <- function() {
+      data.frame(RefId=character(), ID=character(), Link=character(),
+                 Thematik=character(), Untersuchungsbeginn=character(), Untersuchungsende=character())
+    }
 
-  if (length(docsResult) == 0) {
-    return(noResults())
-  } else {
+    docsQuery <- "SELECT * FROM file_upload f JOIN file_upload_literatur o ON f.id = o.file_upload_id"
+    docsResult <- dbGetQuery(db, docsQuery)
 
-    colNamesResultRef <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
-                                              "WHERE prefixid = 'ref' AND columnid like 'col%'"))
-    aliasesRef <- paste0("ref_", colNamesResultRef$columnid)
-    columnsRef <- paste0("ref.", colNamesResultRef$columnid, " as ", aliasesRef)
-    dynamicColumnsRef <- ifelse(length(colNamesResultRef$columnid) > 0 , paste(", ", paste(columnsRef, collapse = ",")), "")
+    if (length(docsResult) == 0) {
+      return(noResults())
+    } else {
 
-    colNamesResultLit <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
-                                              "WHERE prefixid = 'lit' AND columnid like 'col%'"))
-    aliasesLit <- paste0("lit_", colNamesResultLit$columnid)
-    columnsLit <- paste0("lit.", colNamesResultLit$columnid, " as ", aliasesLit)
-    dynamicColumnsLit <- ifelse(length(colNamesResultLit$columnid) > 0 , paste(", ", paste(columnsLit, collapse = ",")), "")
+      colNamesResultRef <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
+                                                "WHERE prefixid = 'ref' AND columnid like 'col%'"))
+      aliasesRef <- paste0("ref_", colNamesResultRef$columnid)
+      columnsRef <- paste0("ref.", colNamesResultRef$columnid, " as ", aliasesRef)
+      dynamicColumnsRef <- ifelse(length(colNamesResultRef$columnid) > 0 , paste(", ", paste(columnsRef, collapse = ",")), "")
 
-    dynamicColumns <- c(dynamicColumnsRef, dynamicColumnsLit)
-    litRefQuery <- paste("WITH upload AS (
+      colNamesResultLit <- dbGetQuery(db, paste("SELECT columnid, dede FROM column_metadata",
+                                                "WHERE prefixid = 'lit' AND columnid like 'col%'"))
+      aliasesLit <- paste0("lit_", colNamesResultLit$columnid)
+      columnsLit <- paste0("lit.", colNamesResultLit$columnid, " as ", aliasesLit)
+      dynamicColumnsLit <- ifelse(length(colNamesResultLit$columnid) > 0 , paste(", ", paste(columnsLit, collapse = ",")), "")
+
+      dynamicColumns <- c(dynamicColumnsRef, dynamicColumnsLit)
+      litRefQuery <- paste("WITH upload AS (
                            SELECT u.file_name, u.directory, l.literatur_id
                            FROM file_upload u
                            LEFT JOIN file_upload_literatur l ON l.file_upload_id = u.id
                            WHERE file_upload_id IN (",
-                             paste(docsResult$id, collapse = ','),
+                           paste(docsResult$id, collapse = ','),
                            ")
                           ) ",
-                         "SELECT ref.id, ref.identifier,
+                           "SELECT ref.id, ref.identifier,
                           u.file_name AS filename, u.directory,
                           lit.thematik, lit.untersuchungsbeginn, lit.untersuchungsende",
-                          dynamicColumns,
-                         "FROM referenz ref
+                           dynamicColumns,
+                           "FROM referenz ref
                           LEFT JOIN literatur lit on lit.referenz_id = ref.id
                           LEFT JOIN upload u on u.literatur_id = lit.id
                           WHERE u.literatur_id IN (",
-                            paste(docsResult$literatur_id, collapse = ','),
-                          ")")
-    litRefResult <- dbGetQuery(db, litRefQuery)
+                           paste(docsResult$literatur_id, collapse = ','),
+                           ")")
+      cat(paste0("\n\nLiteratur-Query:\n", litRefQuery))
+      litRefResult <- dbGetQuery(db, litRefQuery)
 
-    if (length(litRefResult) == 0) {
-      return(noResults())
-    } else {
+      if (length(litRefResult) == 0) {
+        return(noResults())
+      } else {
 
-      litRefResult <- generateLinkColumn(litRefResult, "Literatur")
-      columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
-      columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
-      litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
-                       names(which(sapply(columnNamesLit, function(x) !is.na(x)))))
+        litRefResult <- generateLinkColumn(litRefResult, "Literatur")
+        columnNamesRef <- colNamesResultRef$dede[match(colnames(litRefResult), paste0("ref_", colNamesResultRef$columnid))]
+        columnNamesLit <- colNamesResultLit$dede[match(colnames(litRefResult), colNamesResultLit$columnid)]
+        litRefNames <- c(names(which(sapply(columnNamesRef, function(x) !is.na(x)))),
+                         names(which(sapply(columnNamesLit, function(x) !is.na(x)))))
 
-      # order of non dynamic column names must match SELECT
-      colnames(litRefResult) <- c("RefId", "ID", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames, "Link")
+        # order of non dynamic column names must match SELECT
+        colnames(litRefResult) <- c("RefId", "ID", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames, "Link")
 
-      # re-order columns
-      litRefResult <- litRefResult[,c("RefId", "ID", "Link", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames)]
+        # re-order columns
+        litRefResult <- litRefResult[,c("RefId", "ID", "Link", "Thematik", "Untersuchungsbeginn", "Untersuchungsende", litRefNames)]
+        return(litRefResult)
+      }
     }
-
-    return(litRefResult)
-  }
+  }, error = modalErrorHandler, finally = poolReturn(db))
 })
 
 # /Tools
