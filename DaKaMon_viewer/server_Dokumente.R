@@ -107,8 +107,6 @@ getOrtReferences <- reactive({
 getLiteraturReferences <- reactive({
   db <- connectToDB()
   tryCatch({
-
-
     noResults <- function() {
       data.frame(RefId=character(), ID=character(), Link=character(),
                  Thematik=character(), Untersuchungsbeginn=character(), Untersuchungsende=character())
@@ -152,7 +150,6 @@ getLiteraturReferences <- reactive({
                           WHERE u.literatur_id IN (",
                            paste(docsResult$literatur_id, collapse = ','),
                            ")")
-      cat(paste0("\n\nLiteratur-Query:\n", litRefQuery))
       litRefResult <- dbGetQuery(db, litRefQuery)
 
       if (length(litRefResult) == 0) {
