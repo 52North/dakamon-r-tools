@@ -61,8 +61,13 @@ connectToDB <- function() {
 ## /tools
 
 ui <-  navbarPage("Datenansicht", id="inNavbarpage",
+                  ################# #
+                  #### Messdaten ####
+                  ################# #
                   navbarMenu("Messdaten",
-                             ## Ort
+                             ########### #
+                             #### Ort ####
+                             ########### #
                              tabPanel("Ort(e) auswählen",
                                       uiOutput("ewsSelInput"),
                                       DTOutput('tableOrt'),
@@ -76,7 +81,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       downloadButton("exportOrtRData", "Export als RData-Datei."),
                                       br(),
                                       actionButton("fromOrtToPNS", "Weiter...")),
-                             ## PNS
+                             ########### #
+                             #### PNS ####
+                             ########### #
                              tabPanel(
                                "Probenahmestelle(n) auswählen",
                                DTOutput('tablePNS'),
@@ -90,7 +97,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                downloadButton("exportPNSRData", "Export als RData-Datei."),
                                br(),
                                actionButton("fromPNStoMessdaten", "Weiter...")),
-                             ## Messdaten
+                             ########################## #
+                             #### Messdaten anzeigen ####
+                             ########################## #
                              tabPanel("Messdaten anzeigen",
                                       sidebarLayout(
                                         sidebarPanel(
@@ -136,12 +145,18 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                           ))
 
                                       ))),
+                  ########################## #
+                  #### Parameter anzeigen ####
+                  ########################## #
                   tabPanel("Parameter anzeigen",
                            uiOutput("paramElemGroupInput"),
                            DTOutput("tableParameter"),
                            downloadButton("exportParCSVLatin1", "Export als csv-Datei (Latin1)."),
                            downloadButton("exportParCSVUtf8", "Export als csv-Datei (UTF-8)."),
                            downloadButton("exportParRData", "Export als RData-Datei.")),
+                  ####################### #
+                  #### Proben anzeigen ####
+                  ####################### #
                   navbarMenu("Proben anzeigen",
                              tabPanel("Proben",
                                       uiOutput("probenPNSInput"),
@@ -158,6 +173,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       downloadButton("exportTeilprobeRData", "Export als RData-Datei."),
                                       br(),
                                       actionButton("fromTeilprobenToProben", "Zurück zur Probenauswahl ..."))),
+                  ###################### #
+                  #### Literaturdaten ####
+                  ###################### #
                   navbarMenu("Literaturdaten",
                              tabPanel("Parameter",
                                       uiOutput("litParamInput"),
@@ -179,6 +197,9 @@ ui <-  navbarPage("Datenansicht", id="inNavbarpage",
                                       downloadButton("exportLitCSVLatin1", "Export als csv-Datei (Latin1)."),
                                       downloadButton("exportLitCSVUtf8", "Export als csv-Datei (UTF-8)."),
                                       downloadButton("exportLitRData", "Export als RData-Datei."))),
+                  ################# #
+                  #### Dokumente ####
+                  ################# #
                   navbarMenu("Dokumente",
                              tabPanel("Ort",
                                       DTOutput("documentTableOrt"),
