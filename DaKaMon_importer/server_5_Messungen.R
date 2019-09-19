@@ -303,9 +303,13 @@ queryParameter <- function(Messungen_data, db) {
                                       WHERE
                                         name IN ('",
                                       parameterQuerySection,
+                                      "')
+                                      OR
+                                        identifier IN ('",
+                                        parameterQuerySection,
                                       "')")
-    observedproperties <- dbGetQuery(db, observedpropertiesQuery)
     if(local) cat(file=catFile, observedpropertiesQuery, "\n")
+    observedproperties <- dbGetQuery(db, observedpropertiesQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
 
@@ -379,7 +383,7 @@ observeEvent(input$dataCsvFile, {
   }
 
   ################################# #
-  ## validation of data csv-file ####
+  ## Validation of data csv-file ####
   ################################# #
   # ID
   # Parameter
@@ -520,7 +524,7 @@ output$dataDBConsistencyOut <- renderUI({ #
 
 
 ##################### #
-## print datatable ####
+## Print datatable ####
 ##################### #
 
 output$tableData <- renderDataTable({
@@ -557,7 +561,7 @@ output$tableData <- renderDataTable({
 
 
 ###################### #
-## store data in DB ####
+## Store data in DB ####
 ###################### #
 # for each FoI in the uploaded csv
 #   - build lab_config.xml from CSV
@@ -867,7 +871,7 @@ observeEvent(input$storeDBData, {
           Sys.sleep(5)
           result <- read_lines(logFile, locale = locale())
 
-          if (length(grep("Failed observations: 0.", result, ignore.case = TRUE, value = TRUE)) == 0) {
+          if (length(grep("; failed: 0.", result, ignore.case = TRUE, value = TRUE)) == 0) {
             cat(file=catFile, "Errors occured during import! Consult importer logs.\n")
             content <- div("Log-Ausgabe",
               pre(style='overflow-y: scroll; max-height: 200px; font-family: monospace; font-size: 75%', paste0(result, collapse = "\n")))

@@ -37,11 +37,14 @@ library(readr)
 
 source("conf.R")
 
-## UI
-
+########## #
+#### UI ####
+########## #
 ui <- navbarPage("Datenimport",
                  navbarMenu("Messdaten",
-                            ## Ort
+                            ########### #
+                            #### Ort ####
+                            ########### #
                             tabPanel(dataStep1$title,
                                      useShinyjs(),
                                      div(class="row",div(class="col-sm-12",h3(style=tabTitleStyle,class="tab-title", dataStep1$title))),
@@ -61,8 +64,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableOrt'),
                                          width = mainPanelWidth)
                                      )),
-
-                            ## Probenahmestelle (PNS)
+                            ############################## #
+                            #### Probenahmestelle (PNS) ####
+                            ############################## #
                             tabPanel(dataStep2$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep2$title),
@@ -82,8 +86,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tablePNS'),
                                          width = mainPanelWidth)
                                      )),
-
-                            ## Parameter (PAR)
+                            ####################### #
+                            #### Parameter (PAR) ####
+                            ####################### #
                             tabPanel(dataStep3$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep3$title),
@@ -103,8 +108,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tablePAR'),
                                          width = mainPanelWidth)
                                      )),
-
-                            ## Probe
+                            ############# #
+                            #### Probe ####
+                            ############# #
                             tabPanel(dataStep4$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep4$title),
@@ -124,8 +130,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableProbe'),
                                          width = mainPanelWidth)
                                      )),
-
-                            ##  Messungen hochladen
+                            ########################### #
+                            #### Messungen hochladen ####
+                            ########################### #
                             tabPanel(dataStep5$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", dataStep5$title),
@@ -151,12 +158,14 @@ ui <- navbarPage("Datenimport",
                                          width = mainPanelWidth)
                                      ))),
 
-                 ######################
-                 ### Literaturdaten ###
-                 ######################
+                 ###################### #
+                 #### Literaturdaten ####
+                 ###################### #
 
                  navbarMenu("Literaturdaten",
-                            ## Referenz (Ref)
+                            ###################### #
+                            #### Referenz (Ref) ####
+                            ###################### #
                             tabPanel(litStep1$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", litStep1$title),
@@ -176,7 +185,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableReferenz'),
                                          width = mainPanelWidth)
                                      )),
-
+                            ################################ #
+                            #### Literaturdaten hochladen ####
+                            ################################ #
                             tabPanel(litStep2$title,
                                      useShinyjs(),
                                      h3(style=tabTitleStyle,class="tab-title", litStep2$title),
@@ -195,8 +206,9 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(dataTableOutput('tableLiteratur'),
                                                  width = mainPanelWidth)
                                      ))),
-
-                 ## Dateien
+                 ################ #
+                 #### Dateien ####
+                 ############### #
                  tabPanel(filesTab$title,
                           useShinyjs(),
                           h3(style=tabTitleStyle,class="tab-title", filesTab$title),
