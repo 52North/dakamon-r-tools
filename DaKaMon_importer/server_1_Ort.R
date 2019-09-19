@@ -25,9 +25,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-################################################################################
+############################################################################## #
 #############################   Upload des Ortes   #############################
-################################################################################
+############################################################################## #
 
 # storage of variables that might change through the GUI
 inCSVOrt <- reactiveValues()
@@ -82,9 +82,9 @@ output$OrtValidationOut <- renderUI({
   }
 })
 
-##########################
-## check DB consistency ##
-##########################
+############################ #
+#### Check DB consistency ####
+############################ #
 
 # find existing Orte
 
@@ -158,9 +158,9 @@ output$tableOrt <- renderDataTable({
   }
 })
 
-############################
-## Insert/Update Features ##
-############################
+############################## #
+#### Insert/Update Features ####
+############################## #
 
 observeEvent(input$storeDBOrt, {
   checkDBOrt$checked <- FALSE

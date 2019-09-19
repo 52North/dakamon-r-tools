@@ -277,7 +277,7 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                         pro.identifier IN ('",
                                   probenQuerySection,
                                   "')")
-    cat(file=catFile, probenMetadataQuery, "\n")
+    if(local) cat(file=catFile, probenMetadataQuery, "\n")
     probenMetadata <- dbGetQuery(db, probenMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -305,6 +305,7 @@ queryParameter <- function(Messungen_data, db) {
                                       parameterQuerySection,
                                       "')")
     observedproperties <- dbGetQuery(db, observedpropertiesQuery)
+    if(local) cat(file=catFile, observedpropertiesQuery, "\n")
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
 
@@ -339,7 +340,7 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
                                             param.name IN ('",
                                            parameterQuerySection,
                                            "')")
-    cat(file=catFile, probenParameterMetadataQuery, "\n")
+    if(local) cat(file=catFile, probenParameterMetadataQuery, "\n")
     probenParameterMetadata <- dbGetQuery(db, probenParameterMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
@@ -786,7 +787,7 @@ observeEvent(input$storeDBData, {
                               ", ng = ", ifelse (is.null(row[reqColData$ng]) || is.na(row[reqColData$ng]) || row[reqColData$ng] == '', "NULL", row[reqColData$ng]),
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
-          cat(file=catFile, query, "\n")
+          if(local) cat(file=catFile, query, "\n")
           dbExecute(db, query)
 
           newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"], # Parameter ID
