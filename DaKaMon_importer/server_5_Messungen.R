@@ -25,9 +25,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-################################################################################
+############################################################################## #
 ###########################   Upload der Messungen   ###########################
-################################################################################
+############################################################################## #
 dataSeparator <- colSep
 dataDecimalSeparator <- decSep
 ## tools
@@ -377,9 +377,9 @@ observeEvent(input$dataCsvFile, {
     inCSVData$headAsChar <- colnames(inCSVData$df)
   }
 
-  #################################
-  ## validation of data csv-file ##
-  #################################
+  ################################# #
+  ## validation of data csv-file ####
+  ################################# #
   # ID
   # Parameter
   # Wert
@@ -417,8 +417,8 @@ output$dataValidationOut <- renderUI({
   }
 })
 
-########################
-## DB consistency checks
+########################### #
+## DB consistency checks ####
 # check whether the ProbeIDs exist
 # check whether the Parameter exist
 # check whether the combination of ProbeId and Parameter already corresponds to some time series data
@@ -518,9 +518,9 @@ output$dataDBConsistencyOut <- renderUI({ #
 })
 
 
-#####################
-## print datatable ##
-#####################
+##################### #
+## print datatable ####
+##################### #
 
 output$tableData <- renderDataTable({
   if (!is.null(inCSVData$df)) {
@@ -555,9 +555,9 @@ output$tableData <- renderDataTable({
 })
 
 
-######################
-## store data in DB ##
-######################
+###################### #
+## store data in DB ####
+###################### #
 # for each FoI in the uploaded csv
 #   - build lab_config.xml from CSV
 #   - paste text blocks per column in parallel

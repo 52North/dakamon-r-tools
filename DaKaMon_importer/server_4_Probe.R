@@ -25,9 +25,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-################################################################################
+############################################################################## #
 ############################   Upload der Probe   ##############################
-################################################################################
+############################################################################## #
 
 # storage of variables that might change through the GUI
 inCSVProbe <- reactiveValues()
@@ -37,6 +37,9 @@ checkDBProbe <- reactiveValues(checked = FALSE)
 sepProbe <- colSep
 decProbe <- decSep
 
+################################## #
+## validation of Probe csv-file ####
+################################## #
 observeEvent(input$csvFileProbe, {
   valiProbe$validated <- FALSE
   checkDBProbe$checked <- FALSE
@@ -49,7 +52,6 @@ observeEvent(input$csvFileProbe, {
 
   inCSVProbe$headAsChar <- colnames(inCSVProbe$df)
 
-  ## validation of Probe csv-file
   # look for required column names
   # check whether columns have unique names
 
@@ -84,9 +86,9 @@ output$ProbeValidationOut <- renderUI({
 })
 
 
-##########################
-## check DB consistency ##
-##########################
+########################## #
+## check DB consistency ####
+########################## #
 
 # find existing Proben; check whether the PNSID exists
 
@@ -139,8 +141,9 @@ output$ProbeDBConsistencyOut <- renderUI({
   }
 })
 
-
-# plot table with CSV
+######################### #
+## plot table with CSV ####
+######################### #
 output$tableProbe <- renderDataTable({
   if (!is.null(inCSVProbe$df)) {
     showTab <- inCSVProbe$df
@@ -170,9 +173,9 @@ output$tableProbe <- renderDataTable({
 })
 
 
-#####################
-## Insert Probe ##
-#####################
+################## #
+## Insert Probe ####
+################## #
 
 observeEvent(input$storeDBProbe, {
   checkDBProbe$checked <- FALSE

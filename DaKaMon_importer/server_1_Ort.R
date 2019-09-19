@@ -249,8 +249,8 @@ observeEvent(input$storeDBOrt, {
           name = ", paste0("'", Ort_data[ort, reqColOrt$name], "'"), ",
           geom = ", paste0("ST_GeomFromText('POINT (", paste(Ort_data[ort, reqColOrt$lon],
                                                              Ort_data[ort, reqColOrt$lat],
-                                                    ")', 4326)")),
-                           ") WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
+                                                    ")', 4326) ")),
+                           "WHERE identifier = ", paste0("'", Ort_data[ort, reqColOrt$id], "'"),
                           " RETURNING featureofinterestid
           )
           UPDATE ort_data SET ",
