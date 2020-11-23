@@ -260,7 +260,7 @@ queryProbenMetadata <- function(Messungen_data, db) {
     # FROM probe
     # WHERE probe.identifier IN ('PRO-001','PRO-002','PRO-003','PRO-004','PRO-005')
     #
-    proben <- Messungen_data[,reqColData$probeI]
+    proben <- Messungen_data[,reqColData$probeId]
     probenQuerySection <- paste0(unique(proben), collapse = "','")
     probenMetadataQuery <- paste0("SELECT DISTINCT
                                         pro.identifier AS probeid,
@@ -275,8 +275,8 @@ queryProbenMetadata <- function(Messungen_data, db) {
                                       LEFT OUTER JOIN featureofinterest AS foi ON (foi.featureofinterestid = pro.pns_id)
                                       WHERE
                                         pro.identifier IN ('",
-                                  probenQuerySection,
-                                  "')")
+                                        probenQuerySection,
+                                        "')")
     if(local) cat(file=catFile, probenMetadataQuery, "\n")
     probenMetadata <- dbGetQuery(db, probenMetadataQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
