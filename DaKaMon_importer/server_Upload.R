@@ -148,9 +148,9 @@ observeEvent(input$overrideFile, {
   }
 })
 
-#################### #
-## File Upload    ####
-#################### #
+#################
+## File Upload ##
+#################
 observeEvent(input$FileUpload, {
 
   fileUploadValidation$validated <- FALSE
@@ -164,9 +164,9 @@ observeEvent(input$FileUpload, {
   fileUploadValidation$validated <- TRUE
 })
 
-#################### #
-## Render Table   ####
-#################### #
+##################
+## Render Table ##
+##################
 output$tableFileUploadReferenz <- renderDT({
   if (!is.null(input$FileUploadCategory)) {
     showTab <- getReferences()
@@ -212,9 +212,10 @@ output$FileUploadValidationOut <- renderUI({
   }
 })
 
-############################# #
-## check DB consistency    ####
-############################# #
+##########################
+## check DB consistency ##
+##########################
+
 # check if file upload already exists
 observeEvent(input$fileUploadDBCheck, {
   fileUploadDBCheck$checked <- FALSE
@@ -264,9 +265,9 @@ output$FileUploadDBConsistencyOut <- renderUI({
   }
 })
 
-########################## #
-## Insert File Upload   ####
-########################## #
+########################
+## Insert File Upload ##
+########################
 observeEvent(input$fileUploadDBStore, {
   fileUploadDBCheck$checked <- FALSE
   db <- connectToDB()
