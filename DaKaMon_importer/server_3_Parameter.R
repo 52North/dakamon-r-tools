@@ -60,6 +60,18 @@ observeEvent(input$csvFilePAR, {
     if (!(reqColName %in% inCSVPAR$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
+  #
+  # validate identifier
+  #
+  if (length(grep(identifierRegex, inCSVPAR$df[,reqColPAR$id], perl=TRUE)) != length(unique(inCSVPAR$df[,reqColPAR$id]))) {
+    txt <- paste0(txt, "<li>Die ID darf nur aus folgenden Zeichen bestehen: a-z, A-Z, 0-9, -, _ und muss mit einem Buchstaben oder einer Zahl beginnen:<ul>", sep="")
+    for (id in inCSVPAR$df[,reqColPAR$id]) {
+      if (length(grep(identifierRegex, id, perl=TRUE)) == 0) {
+        txt <- paste0(txt, "<li>", id, "</li>", sep = "")
+      }
+    }
+    txt <- paste0(txt, "</ul></li>")
+  }
 
   if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar)) {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")

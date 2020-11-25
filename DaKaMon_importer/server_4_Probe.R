@@ -68,6 +68,19 @@ observeEvent(input$csvFileProbe, {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
   }
 
+  #
+  # validate identifier
+  #
+  if (length(grep(identifierRegex, inCSVProbe$df[,reqColProbe$id], perl=TRUE)) != length(unique(inCSVProbe$df[,reqColProbe$id]))) {
+    txt <- paste0(txt, "<li>Die ID darf nur aus folgenden Zeichen bestehen: a-z, A-Z, 0-9, -, _ und muss mit einem Buchstaben oder einer Zahl beginnen:<ul>", sep="")
+    for (id in inCSVProbe$df[,reqColProbe$id]) {
+      if (length(grep(identifierRegex, id, perl=TRUE)) == 0) {
+        txt <- paste0(txt, "<li>", id, "</li>", sep = "")
+      }
+    }
+    txt <- paste0(txt, "</ul></li>")
+  }
+
   valiProbe$txt <- txt
   valiProbe$validated <- TRUE
 })

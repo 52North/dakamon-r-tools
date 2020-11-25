@@ -65,6 +65,19 @@ observeEvent(input$csvFileOrt, {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
   }
 
+  #
+  # validate identifier
+  #
+  if (length(grep(identifierRegex, inCSVOrt$df[,reqColOrt$id], perl=TRUE)) != length(unique(inCSVOrt$df[,reqColOrt$id]))) {
+    txt <- paste0(txt, "<li>Die ID darf nur aus folgenden Zeichen bestehen: a-z, A-Z, 0-9, -, _ und muss mit einem Buchstaben oder einer Zahl beginnen:<ul>", sep="")
+    for (id in inCSVOrt$df[,reqColOrt$id]) {
+      if (length(grep(identifierRegex, id, perl=TRUE)) == 0) {
+        txt <- paste0(txt, "<li>", id, "</li>", sep = "")
+      }
+    }
+    txt <- paste0(txt, "</ul></li>")
+  }
+
   valiOrt$txt <- txt
 
   valiOrt$validated <- TRUE
