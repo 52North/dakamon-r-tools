@@ -60,6 +60,11 @@ observeEvent(input$csvFilePAR, {
     if (!(reqColName %in% inCSVPAR$headAsChar))
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
+
+  if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar)) {
+    txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
+  }
+
   #
   # validate identifier
   #
@@ -71,10 +76,6 @@ observeEvent(input$csvFilePAR, {
       }
     }
     txt <- paste0(txt, "</ul></li>")
-  }
-
-  if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar)) {
-    txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
   }
 
   valiPAR$txt <- txt
