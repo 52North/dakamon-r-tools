@@ -580,7 +580,11 @@ observeEvent(input$storeDBData, {
       dbWithTransaction(db, {
 
         # check if work directory is available with write permissions and log error if not
-        if (!file.exists(feederTmpDirectory)) {
+        # first try to create it!
+        if (!dir.exists(feederTmpDirectory)) {
+          dir.create(feederTmpDirectory)
+        }
+        if (!dir.exists(feederTmpDirectory)) {
           stop(paste0("Das Arbeitsverzeichnis '", feederTmpDirectory, "' existiert nicht. Bitte anlegen!"))
         }
         if (file.access(feederTmpDirectory, mode = 2) == -1) {
