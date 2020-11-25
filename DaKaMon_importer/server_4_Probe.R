@@ -52,6 +52,7 @@ observeEvent(input$csvFileProbe, {
 
   inCSVProbe$headAsChar <- colnames(inCSVProbe$df)
 
+  ## validation of Probe csv-file
   # look for required column names
   # check whether columns have unique names
 
@@ -63,8 +64,9 @@ observeEvent(input$csvFileProbe, {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
 
-  if(length(unique(inCSVProbe$headAsChar)) != length(inCSVProbe$headAsChar))
+  if(length(unique(inCSVProbe$headAsChar)) != length(inCSVProbe$headAsChar)) {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
+  }
 
   valiProbe$txt <- txt
   valiProbe$validated <- TRUE

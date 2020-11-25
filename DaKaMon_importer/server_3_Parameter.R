@@ -25,9 +25,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-################################################################################
+############################################################################## #
 ########################   Upload der Parameter (PAR)   ########################
-################################################################################
+############################################################################## #
 
 # storage of variables that might change through the GUI
 inCSVPAR <- reactiveValues()
@@ -61,8 +61,9 @@ observeEvent(input$csvFilePAR, {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
 
-  if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar))
+  if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar)) {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
+  }
 
   valiPAR$txt <- txt
   valiPAR$validated <- TRUE
@@ -84,9 +85,9 @@ output$PARValidationOut <- renderUI({
 })
 
 
-##########################
-## check DB consistency ##
-##########################
+########################## #
+## check DB consistency ####
+########################## #
 
 # find existing Parameters
 
@@ -164,9 +165,9 @@ output$tablePAR <- renderDataTable({
 })
 
 
-###########################################
-## Insert Parameter/ObservableProperties ##
-###########################################
+########################################### #
+## Insert Parameter/ObservableProperties ####
+########################################### #
 
 observeEvent(input$storeDBParameter, {
   checkDBPAR$checked <- FALSE
@@ -233,7 +234,7 @@ observeEvent(input$storeDBParameter, {
         # if there are already PARe in the DB that are again in the CSV
         if (PAR_data[param,reqColPAR$id] %in% checkDBPAR$PARInDB$identifier
             || PAR_data[param,reqColPAR$name] %in% checkDBPAR$PARInDB$name) {
-          ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ##
+          ## UPDATE PAR via SQL, returns the id (pkid) of the updated parameter ####
           query <- paste0("with update_param as (
             UPDATE observableproperty
             SET
@@ -252,7 +253,7 @@ observeEvent(input$storeDBParameter, {
           " WHERE observablepropertyid = (SELECT observablepropertyid FROM update_param);")
           dbSendQuery(db, query)
         } else {
-          ## INSERT PAR and data via SQL ##
+          ## INSERT PAR and data via SQL ####
           dynamicColumns = paste0(paramColumnMappings[, 1], collapse = ", ")
           dynamicValues = paste0(gsub("EMPTY", "NULL", dynamicDf[["value"]]), collapse = ", ")
           insertParams = paste0("(

@@ -25,14 +25,17 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-## DaKaMon conf
-# common constants
-
+################## #
+## DaKaMon conf ####
+################## #
+#
+# common constants ####
+#
 # max upload size
 options(shiny.maxRequestSize=10*1024^2)
 
 #
-# CSV encoding
+# CSV encoding ####
 #
 # column Separator
 colSep <- ";"
@@ -49,7 +52,7 @@ mainPanelWidth <- 9
 
 
 #
-# I18N
+# I18N ####
 #
 # language
 lngJSON <- "http://cdn.datatables.net/plug-ins/1.10.11/i18n/German.json"
@@ -66,7 +69,7 @@ filesTab  <- list(title = "Dateien hochladen")
 csvInfo <- paste0("Die CSV-Datei muss \"", colSep, "\" als Spaltentrennzeichen und \"", decSep, "\" als Dezimaltrennzeichen verwenden und in \"", csvEncode, "\" enkodiert sein.")
 
 #
-# DETECTION LIMIT
+# DETECTION LIMIT ####
 #
 BGencode <- 0
 BGchar <- "BG"
@@ -74,7 +77,7 @@ BGchar <- "BG"
 BGlabel <- "Bestimmungsgrenze"
 
 #
-# LOWER DETECTION LIMIT
+# LOWER DETECTION LIMIT ####
 #
 NGencode <- -1
 NGchar <- "NG"
@@ -82,7 +85,7 @@ NGchar <- "NG"
 NGlabel <- "Nachweisgrenze"
 
 #
-# mapping of NO_DATA values
+# mapping of NO_DATA values ####
 #
 # missing data value in CSV
 noDataValue <- ""
@@ -97,7 +100,7 @@ SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:
 catFile <- ifelse(local,stdout(),stderr())
 
 #
-# DATABASE
+# DATABASE ####
 #
 dbHost <- ifelse(local, "localhost", "db")
 dbPort <- "5432"
@@ -111,7 +114,7 @@ dbTimestampPattern <- "DD.MM.YYYY HH24:MI"
 RtimestampPattern <- "%d.%m.%Y %H:%M"
 
 #
-# TIMESTAMPS
+# TIMESTAMPS ####
 #
 # Documentation:
 # - https://cran.r-project.org/web/packages/stringr/vignettes/regular-expressions.html
@@ -125,7 +128,7 @@ verbose <- local
 foiType <- "http://www.opengis.net/def/samplingFeatureType/OGC-OM/2.0/SF_SamplingPoint"
 
 #
-# FEEDER
+# FEEDER ####
 #
 feederPath <- ifelse(local, "ADJUST_ME/52n-sos-importer-feeder-bin.jar", "/usr/local/52n/52n-sos-importer-feeder-bin.jar")
 #
@@ -151,7 +154,7 @@ stndTime <- "T12:00:00+00:00"
 adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
 
-## File Upload
+## File Upload ####
 fileUploadDir <- "ADJUST_ME"
 #fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
 fileUploadCodeLiteratur <- "Lt"
@@ -159,7 +162,7 @@ fileDownloadBaseUrl <- "ADJUST_ME"
 #fileDownloadBaseUrl <- "http://localhost"
 #fileDownloadBaseUrl <- "file:///C:/data/coding/dakamon/file_uploads/"
 
-## DB="GUI/CSV"
+## DB="GUI/CSV" ####
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",

@@ -25,9 +25,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
 # Public License for more details.
 #
-################################################################################
+############################################################################## #
 #####################   Upload der Probenahmestelle (PNS)   ####################
-################################################################################
+############################################################################## #
 
 # storage of variables that might change through the GUI
 inCSVPNS <- reactiveValues()
@@ -61,8 +61,9 @@ observeEvent(input$csvFilePNS, {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
 
-  if(length(unique(inCSVPNS$headAsChar)) != length(inCSVPNS$headAsChar))
+  if(length(unique(inCSVPNS$headAsChar)) != length(inCSVPNS$headAsChar)) {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
+  }
 
   valiPNS$txt <- txt
   valiPNS$validated <- TRUE
@@ -82,9 +83,9 @@ output$PNSValidationOut <- renderUI({
   }
 })
 
-##########################
-## check DB consistency ##
-##########################
+########################## #
+## check DB consistency ####
+########################## #
 
 # find existing PNSe
 
@@ -172,9 +173,9 @@ output$tablePNS <- renderDataTable({
 })
 
 
-#############################
-## Insert Probenamestellen ##
-#############################
+############################# #
+## Insert Probenamestellen ####
+############################# #
 
 observeEvent(input$storeDBPNS, {
   checkDBPNS$checked <- FALSE

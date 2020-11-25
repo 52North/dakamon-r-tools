@@ -61,8 +61,9 @@ observeEvent(input$csvFileOrt, {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
   }
 
-  if(length(unique(inCSVOrt$headAsChar)) != length(inCSVOrt$headAsChar))
+  if(length(unique(inCSVOrt$headAsChar)) != length(inCSVOrt$headAsChar)) {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
+  }
 
   valiOrt$txt <- txt
 

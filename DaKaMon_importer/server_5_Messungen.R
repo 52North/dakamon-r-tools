@@ -402,8 +402,9 @@ observeEvent(input$dataCsvFile, {
     txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein.</li>")
 
   # check whether each parameter in the csv is reported only once per ProID
-  if (length(unique(paste0(inCSVData$df[[reqColData$probeId]], inCSVData$df[[reqColData$obsProp]]))) != nrow(inCSVData$df))
+  if (length(unique(paste0(inCSVData$df[[reqColData$probeId]], inCSVData$df[[reqColData$obsProp]]))) != nrow(inCSVData$df)) {
     txt <- paste0(txt, "<li>Jeder Parameter darf nur einmal je Probe vorkommen.</li>")
+  }
 
   valiData$txt <- txt
   valiData$validated <- TRUE
@@ -424,6 +425,7 @@ output$dataValidationOut <- renderUI({
 
 ########################### #
 ## DB consistency checks ####
+########################### #
 # check whether the ProbeIDs exist
 # check whether the Parameter exist
 # check whether the combination of ProbeId and Parameter already corresponds to some time series data
@@ -794,17 +796,18 @@ observeEvent(input$storeDBData, {
           if(local) cat(file=catFile, query, "\n")
           dbExecute(db, query)
 
-          newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"], # Parameter ID
-                          row[reqColData$value], # Wert
-                          row[reqColData$uom], # Einheit
+
+          newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"],                                                # Parameter ID
+                          row[reqColData$value],                                                                                                                        # Wert
+                          row[reqColData$uom],                                                                                                                          # Einheit
                           paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",
-                                 observedproperties[min(which(is.element(observedproperties$name, row[reqColData$obsProp]))),"identifier"]), # SensorId
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"], # resultTime
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"], # phenTimeStart
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"], # phenTimeEnd
+                                 observedproperties[min(which(is.element(observedproperties$name, row[reqColData$obsProp]))),"identifier"]),                            # SensorId
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"],                                                     # resultTime
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"],                                                  # phenTimeStart
+                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"],                                                    # phenTimeEnd
                           features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"], # Lat
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"])  # Lon
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"],        # Lat
+                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"])        # Lon
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
           progress$inc(1)
