@@ -398,8 +398,9 @@ observeEvent(input$dataCsvFile, {
       txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColName, "' angeben.</li>")
   }
 
-  if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar))
+  if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar)) {
     txt <- paste0(txt, "<li>Spaltennamen müssen eindeutig sein.</li>")
+  }
 
   # check whether each parameter in the csv is reported only once per ProID
   if (length(unique(paste0(inCSVData$df[[reqColData$probeId]], inCSVData$df[[reqColData$obsProp]]))) != nrow(inCSVData$df)) {
@@ -794,8 +795,8 @@ observeEvent(input$storeDBData, {
                           " WHERE probe_parameter.probe_id = (SELECT probe_id FROM query_probe_id)
                         AND probe_parameter.parameter_id = (SELECT para_id FROM query_parameter_id);")
           if(local) cat(file=catFile, query, "\n")
-          dbExecute(db, query)
 
+          dbExecute(db, query)
 
           newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"],                                                # Parameter ID
                           row[reqColData$value],                                                                                                                        # Wert

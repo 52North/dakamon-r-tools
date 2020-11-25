@@ -65,6 +65,7 @@ observeEvent(input$csvFilePNS, {
     txt <- paste0(txt, "<li>Bitte nur eindeutige Spaltennamen verwenden.</li>")
   }
 
+
   #
   # validate identifier
   #
