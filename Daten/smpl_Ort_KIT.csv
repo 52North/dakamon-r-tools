@@ -1,0 +1,10 @@
+ID;Name;Ort;Straße;Hausnummer;PLZ;Bundesland;lat;lon;Thematik;Angeschlossenen_EW;GK;System;Jahresabwassermenge_in_kubikmeter;Jahresschmutzwassermenge_in_kubikmeter;behandelte_Niederschlagsmenge_in_kubikmeter;Fremdwasseranteil_in_prozent;Ausbaugröße_EW;angeschlossene_Einwohnergleichwerte_EGW;mechanische_Abwasserreinigung;biologische_Abwasserreinigung;Nitrifikation;Denitrifikation;P_Elimination;Filtration;Anteil_Mischsystem_in_prozent;Anteil_Trennsystem_in_prozent;mittleres_Schlammalter_in_d
+KAM_BY_BOB;Bobingen;Bobingen;Flurstraße;50;86399;BY;48,286496;10,829547;Kläranlage;16000;1 bis 3;MS;1689800;1270500;419300;16;28000;;ja;;;;ja;nein;55;;15
+KAM_BW_BON;Bondorf-Hailfingen;Rottenburg-Hailfingen;Trailfingerstraße;73;72108;BW;48,534804;8,875112;Kläranlage;7180;4a;MS;1026032;570043;455989;49;9000;;ja;;;;ja;nein;72;;8 bis 20
+KAM_SL_BRE;Brebach;Saarbrücken;Saargemünder Straße;20;66130;SL;49,210257;7,029439;Kläranlage;81400;4b;MS;12695725;7958000;4737725;56,2;135000;;ja;;;;ja;nein;>95;;15
+KAM_HB_HBR;Bremen-Seehausen;Bremen;Seehauser Landstraße;99;28197;HB;53,114704;8,712631;Kläranlage;585000;5;MS;42986442;34901990;8084452;10;1000000;;ja;;;;ja;nein;62;;10,1 und 16,9
+KAM_SN_CHM;Chemnitz-Heinersdorf;Chemnitz;Heinersdorfer Straße;42;9114;SN;50,875033;12,899282;Kläranlage;249000;5b;MS;28166336;18368625;9797711;22;400000;;ja;;;;ja;nein;72,2;;22,8
+KAM_HE_DAR;Darmstadt-Eberstadt;Darmstadt;Pfungstädterstraße;196;64297;HE;49,813901;8,620816;Kläranlage;30712;4a;MS;2208616;1373742;834874;26;50000;;ja;;;;ja;nein;95;;12,4
+KAM_ST_DES;Dessau;Dessau-Roßlau;Kornhausstraße;147;6846;ST;51,856587;12,215265;Kläranlage;82940;5b;MS;6272800;549043;5723757;37,19;145000;;ja;;;;ja;nein;59;;27
+KAM_BY_DON;Donauwörth;Donauwörth;Im Weichselwörth;1;86609;BY;48,710889;10,796233;Kläranlage;28433;4a;MS;2516000;1781000;735000;18;64000;;ja;;;;ja;nein;22;;12
+KAM_NW_DMD;Dortmund-Deusen;Dortmund;Deusener Straße;128;44369;NW;51,53937;7,425283;Kläranlage;140000;4b;MS;52411843;37393690;15018153;35;705000;;ja;;;;ja;nein;91;;10
