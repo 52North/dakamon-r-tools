@@ -27,13 +27,13 @@ See https://github.com/52north/dakamon for more details.
   - Add [NOTICE.md](NOTICE.md)
   - Add [LICENSE.md](LICENSE.md)
   - Publish to 52North github organisation
-  - [Complete diff](./compare/v2.0...v2.1)
+  - [Complete diff](../../compare/v2.0...v2.1)
 
 - 2.0 - 19.10.2018
 
   - Refactoring
   - All required features implemented
-  - [Complete diff](./compare/v1.0...v2.0)
+  - [Complete diff](../../compare/v1.0...v2.0)
 
 - 1.0 - 16.06.2018
 
