@@ -142,6 +142,7 @@ selectedProben <- reactive({
     sort(sr)
   }
 })
+
 ##################### #
 #### Export Proben ####
 ##################### #
@@ -234,6 +235,7 @@ allTeilproben <- reactive({
     allPro
   }, error = modalErrorHandler, finally = poolReturn(db))
 })
+
 ######################### #
 #### Render Teilproben ####
 ######################### #
@@ -268,6 +270,7 @@ selectedTeilProben <- reactive({
 observeEvent(input$fromTeilprobenToProben, {
   updateTabsetPanel(session, "inNavbarpage", selected = "Proben")
 })
+
 ######################### #
 #### Export Teilproben ####
 ######################### #

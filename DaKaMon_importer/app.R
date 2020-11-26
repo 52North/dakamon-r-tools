@@ -157,11 +157,9 @@ ui <- navbarPage("Datenimport",
                                          dataTableOutput('tableData'),
                                          width = mainPanelWidth)
                                      ))),
-
                  ###################### #
                  #### Literaturdaten ####
                  ###################### #
-
                  navbarMenu("Literaturdaten",
                             ###################### #
                             #### Referenz (Ref) ####
@@ -206,7 +204,7 @@ ui <- navbarPage("Datenimport",
                                        mainPanel(dataTableOutput('tableLiteratur'),
                                                  width = mainPanelWidth)
                                      ))),
-                 ################ #
+                 ############### #
                  #### Dateien ####
                  ############### #
                  tabPanel(filesTab$title,

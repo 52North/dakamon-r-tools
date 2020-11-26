@@ -141,9 +141,9 @@ output$OrtDBConsistencyOut <- renderUI({
   }
 })
 
-
-# plot table with CSV
-
+########################### #
+#### Plot table with CSV ####
+########################### #
 output$tableOrt <- renderDataTable({
   if (!is.null(inCSVOrt$df)) {
     showTab <- inCSVOrt$df
@@ -175,7 +175,6 @@ output$tableOrt <- renderDataTable({
 ############################## #
 #### Insert/Update Features ####
 ############################## #
-
 observeEvent(input$storeDBOrt, {
   checkDBOrt$checked <- FALSE
   db <- connectToDB()

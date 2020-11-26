@@ -302,12 +302,12 @@ queryParameter <- function(Messungen_data, db) {
                                         observableproperty
                                       WHERE
                                         name IN ('",
-                                      parameterQuerySection,
+                                        parameterQuerySection,
                                       "')
                                       OR
                                         identifier IN ('",
-                                        parameterQuerySection,
-                                      "')")
+                                          parameterQuerySection,
+                                        "')")
     if(local) cat(file=catFile, observedpropertiesQuery, "\n")
     observedproperties <- dbGetQuery(db, observedpropertiesQuery)
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))

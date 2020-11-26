@@ -52,7 +52,6 @@ observeEvent(input$csvFileProbe, {
 
   inCSVProbe$headAsChar <- colnames(inCSVProbe$df)
 
-  ## validation of Probe csv-file
   # look for required column names
   # check whether columns have unique names
 
@@ -104,9 +103,7 @@ output$ProbeValidationOut <- renderUI({
 ########################## #
 ## Check DB consistency ####
 ########################## #
-
 # find existing Proben; check whether the PNSID exists
-
 observeEvent(input$checkDBProbe, {
   db <- connectToDB()
   tryCatch({
@@ -191,7 +188,6 @@ output$tableProbe <- renderDataTable({
 ################## #
 ## Insert Probe ####
 ################## #
-
 observeEvent(input$storeDBProbe, {
   checkDBProbe$checked <- FALSE
   db <- connectToDB()
@@ -258,6 +254,7 @@ observeEvent(input$storeDBProbe, {
           }
           dynamicDf <- rbind(dynamicDf, dynamicDfRow)
         }
+
         get_pns_id <- paste0("WITH query_pns AS (
                               SELECT featureofinterestid AS pns_id
                               FROM featureofinterest
@@ -293,24 +290,24 @@ observeEvent(input$storeDBProbe, {
           }
 
           insertProbeQuery <- paste(get_pns_id,
-                                    "INSERT INTO probe
-                         (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id, lab, lab_id, abfluss_situation, subprobe",
-                                    ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")",
-                                    paste("VALUES (nextval('probeid_seq')",
-                                          paste0("'", Probe_data[probe, reqColProbe$id], "'"),
-                                          paste0("to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
-                                          paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
-                                          paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
-                                          "(SELECT pns_id FROM query_pns)",
-                                          paste0("'", Probe_data[probe, reqColProbe$labName], "'"),
-                                          paste0("'", Probe_data[probe, reqColProbe$labId], "'"),
-                                          paste0("'", Probe_data[probe, reqColProbe$abfluss_situation], "'"),
-                                          paste0("'", gsub("EMPTY", "NULL", Probe_data[probe, reqColProbe$subprobe]), "'"),
-                                          sep=", "
-                                    ),
-                                    ifelse(is.null(dynamicValues), "", ","),
-                                    dynamicValues,
-                                    ");")
+                        "INSERT INTO probe
+                           (id, identifier, resulttime, phenomenontimestart, phenomenontimeend, pns_id, lab, lab_id, abfluss_situation, subprobe",
+                         ifelse(is.null(dynamicColumns), "", ","), dynamicColumns, ")",
+                         paste("VALUES (nextval('probeid_seq')",
+                           paste0("'", Probe_data[probe, reqColProbe$id], "'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$colDate], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeBegin], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
+                           paste0("to_timestamp('", Probe_data[probe, reqColProbe$eventTimeEnd], "', '", dbTimestampPattern, "')::timestamp at time zone '", dbTimeZoneIdentifier, "'"),
+                         "(SELECT pns_id FROM query_pns)",
+                           paste0("'", Probe_data[probe, reqColProbe$labName], "'"),
+                           paste0("'", Probe_data[probe, reqColProbe$labId], "'"),
+                           paste0("'", Probe_data[probe, reqColProbe$abfluss_situation], "'"),
+                           paste0("'", gsub("EMPTY", "NULL", Probe_data[probe, reqColProbe$subprobe]), "'"),
+                           sep=", "
+                          ),
+                        ifelse(is.null(dynamicValues), "", ","),
+                        dynamicValues,
+                        ");")
           if(local) cat(file=catFile, insertProbeQuery, "\n")
           dbSendQuery(db, insertProbeQuery)
         }
