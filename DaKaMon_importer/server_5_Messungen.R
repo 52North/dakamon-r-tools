@@ -394,8 +394,12 @@ observeEvent(input$dataCsvFile, {
 
   txt <- NULL
   for (reqColName in reqColData) {
-    if (!(reqColName %in% inCSVData$headAsChar))
+    if (!(reqColName %in% inCSVData$headAsChar)) {
       txt <- paste0(txt, "<li>Bitte eine Spalte '", reqColName, "' angeben.</li>")
+    }
+    if (length(inCSVData$df[,reqColName][inCSVData$df[,reqColName] != ""]) != nrow(inCSVData$df)) {
+      txt <- paste0(txt, "<li><u>Jede</u> Messung benötigt einen Eintrag in der Spalte '", reqColName, "'.</li>")
+    }
   }
 
   if(length(unique(inCSVData$headAsChar)) != length(inCSVData$headAsChar)) {

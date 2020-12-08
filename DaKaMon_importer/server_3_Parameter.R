@@ -68,10 +68,10 @@ observeEvent(input$csvFilePAR, {
   #
   # validate identifier
   #
-  if (length(grep(identifierRegex, inCSVPAR$df[,reqColPAR$id], perl=TRUE)) != length(unique(inCSVPAR$df[,reqColPAR$id]))) {
+  if (length(grep(identifierRegex, inCSVPAR$df[,reqColPAR$id])) != length(unique(inCSVPAR$df[,reqColPAR$id]))) {
     txt <- paste0(txt, "<li>Die ID darf nur aus folgenden Zeichen bestehen: a-z, A-Z, 0-9, -, _ und muss mit einem Buchstaben oder einer Zahl beginnen:<ul>", sep="")
     for (id in inCSVPAR$df[,reqColPAR$id]) {
-      if (length(grep(identifierRegex, id, perl=TRUE)) == 0) {
+      if (length(grep(identifierRegex, id)) == 0) {
         txt <- paste0(txt, "<li>", id, "</li>", sep = "")
       }
     }

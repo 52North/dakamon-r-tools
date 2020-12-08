@@ -51,7 +51,7 @@ sideBarWidth <- 3
 mainPanelWidth <- 9
 
 # regular expression to ensure that identifier start with character or number and contain only chars, numbers, - or _
-identifierRegex <- "^[a-zA-Z0-9][a-zA-Z0-9\\-_]$"
+identifierRegex <- "^[a-zA-Z0-9][a-zA-Z0-9_\\-]*$"
 
 
 #
