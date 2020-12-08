@@ -57,8 +57,12 @@ observeEvent(input$csvFileOrt, {
   if (!(reqColOrt$id %in% inCSVOrt$headAsChar) || length(unique(inCSVOrt$df[,reqColOrt$id])) != length(inCSVOrt$df[,reqColOrt$id]))
     txt <- paste0(txt, "<li>Jeder Ort benötigt eine persistente und eindeutige ID in der Spalte '", reqColOrt$id, "'.</li>")
   for (reqColName in reqColOrt[-1]) {
-    if (!(reqColName %in% inCSVOrt$headAsChar))
+    if (!(reqColName %in% inCSVOrt$headAsChar)) {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
+    }
+    if (length(inCSVOrt$df[,reqColName][inCSVOrt$df[,reqColName] != ""]) != nrow(inCSVOrt$df)) {
+      txt <- paste0(txt, "<li><u>Jeder</u> Ort benötigt einen Eintrag in der Spalte '", reqColName, "'.</li>")
+    }
   }
 
   if(length(unique(inCSVOrt$headAsChar)) != length(inCSVOrt$headAsChar)) {

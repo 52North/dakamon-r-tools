@@ -57,8 +57,12 @@ observeEvent(input$csvFilePAR, {
   if (!(reqColPAR$id %in% inCSVPAR$headAsChar) || length(unique(inCSVPAR$df[,reqColPAR$id])) != length(inCSVPAR$df[,reqColPAR$id]))
     txt <- paste0(txt, "<li>Jeder Parameter benötigt eine persistente und eindeutige ID in der Spalte'", reqColPAR$id, "'.</li>")
   for (reqColName in reqColPAR[-1]) {
-    if (!(reqColName %in% inCSVPAR$headAsChar))
+    if (!(reqColName %in% inCSVPAR$headAsChar)) {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
+    }
+    if (length(inCSVPAR$df[,reqColName][inCSVPAR$df[,reqColName] != ""]) != nrow(inCSVPAR$df)) {
+      txt <- paste0(txt, "<li><u>Jeder</u> Parameter benötigt einen Eintrag in der Spalte '", reqColName, "'.</li>")
+    }
   }
 
   if(length(unique(inCSVPAR$headAsChar)) != length(inCSVPAR$headAsChar)) {

@@ -57,8 +57,12 @@ observeEvent(input$csvFilePNS, {
   if (!(reqColPNS$id %in% inCSVPNS$headAsChar) || length(unique(inCSVPNS$df[,reqColPNS$id])) != length(inCSVPNS$df[,reqColPNS$id]))
     txt <- paste0(txt, "<li>Jede Probenahmestelle benötigt eine persistente und eindeutige ID in der Spalte'", reqColPNS$id, "'.</li>")
   for (reqColName in reqColPNS[-1]) {
-    if (!(reqColName %in% inCSVPNS$headAsChar))
+    if (!(reqColName %in% inCSVPNS$headAsChar)) {
       txt <- paste0(txt, "<li>Bitte die Spalte '", reqColName, "' ergänzen.</li>", sep="")
+    }
+    if (length(inCSVPNS$df[,reqColName][inCSVPNS$df[,reqColName] != ""]) != nrow(inCSVPNS$df)) {
+      txt <- paste0(txt, "<li><u>Jede</u> Probenahmestelle benötigt einen Eintrag in der Spalte '", reqColName, "'.</li>")
+    }
   }
 
   if(length(unique(inCSVPNS$headAsChar)) != length(inCSVPNS$headAsChar)) {
