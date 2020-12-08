@@ -72,6 +72,19 @@ observeEvent(input$csvFileProbe, {
   }
 
   #
+  # validate lab name as valid identifier
+  #
+  if (length(grep(identifierRegex, inCSVProbe$df[,reqColProbe$labName])) != length(inCSVProbe$df[,reqColProbe$labName])) {
+    txt <- paste0(txt, "<li>Der Laborname darf nur aus folgenden Zeichen bestehen: a-z, A-Z, 0-9, -, _ und muss mit einem Buchstaben oder einer Zahl beginnen:<ul>", sep="")
+    for (id in inCSVProbe$df[,reqColProbe$labName]) {
+      if (length(grep(identifierRegex, id)) == 0) {
+        txt <- paste0(txt, "<li>", id, "</li>", sep = "")
+      }
+    }
+    txt <- paste0(txt, "</ul></li>")
+  }
+
+  #
   # validate identifier
   #
   if (length(grep(identifierRegex, inCSVProbe$df[,reqColProbe$id])) != length(unique(inCSVProbe$df[,reqColProbe$id]))) {
