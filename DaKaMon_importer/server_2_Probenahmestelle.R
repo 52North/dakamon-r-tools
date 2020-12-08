@@ -102,7 +102,7 @@ output$PNSValidationOut <- renderUI({
 })
 
 ########################## #
-## check DB consistency ####
+## Check DB consistency ####
 ########################## #
 
 # find existing PNSe

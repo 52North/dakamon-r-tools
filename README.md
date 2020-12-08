@@ -13,6 +13,13 @@ See https://github.com/52north/dakamon for more details.
 
 ## Version - changelog
 
+- 2.2 - 08.12.2020
+
+   - Improve identifier validation
+   - Check required columns for empty cells
+   - Check probe$labName for identifier validity
+  - [Complete diff](../../compare/v2.1...v2.2)
+
 - 2.1 - 26.11.2020
 
   - Identifier validation
