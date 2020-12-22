@@ -415,7 +415,7 @@ data <- reactive({
             valueRow <- paste(res[obs, "observableproperty"], "Wert", sep="_")
             if (res[obs, "value"] == noDataEncode) {
               resDfRow[valueRow] <- NA_character_
-            } else if (res[obs, "value"] < res[obs, "bg"]) {
+            } else if (res[obs, "value"] < ifelse(is.na(res[obs, "bg"]),-Inf,res[obs, "bg"])) {
               if (input$repBG == 'BG') {
                 resDfRow[valueRow] <- res[obs, "bg"]
               } else if (input$repBG == 'BG/2') {
@@ -428,15 +428,15 @@ data <- reactive({
               resDfRow[valueRow] <- ifelse(value == noDataEncode, NA_character_, value)
             }
 
-            resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- res[obs, "unit"]
+            resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- ifelse(is.na(res[obs, "unit"]),"NA",res[obs, "unit"])
             if (input$showBG) {
-              resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- res[obs, "bg"]
+              resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- ifelse(is.na(res[obs, "bg"]),"NA",res[obs, "bg"])
             }
             if (input$showNG) {
-              resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- res[obs, "ng"]
+              resDfRow[paste(res[obs, "observableproperty"], "NG", sep="_")] <- ifelse(is.na(res[obs, "ng"]),"NA",res[obs, "ng"])
             }
             if (input$showSG) {
-              resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- res[obs, "stgrname"]
+              resDfRow[paste(res[obs, "observableproperty"], "Stoffgruppe", sep="_")] <- ifelse(is.na(res[obs, "stgrname"]),"NA",res[obs, "stgrname"])
             }
 
             if (oldRow > 0) {
