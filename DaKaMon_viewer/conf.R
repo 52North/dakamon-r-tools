@@ -113,7 +113,7 @@ dbName <- "sos"
 # Documentation: https://www.postgresql.org/docs/9.6/static/functions-formatting.html#FUNCTIONS-FORMATTING-DATETIME-TABLE
 # sync with feederTimestampPattern and feederTimestampPattern
 dbTimestampPattern <- "DD.MM.YYYY HH24:MI"
-# R time samp pattern as returned by the DB after to_char ^
+# R timestamp pattern as returned by the DB after to_char ^
 RtimestampPattern <- "%d.%m.%Y %H:%M"
 
 #
