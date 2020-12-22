@@ -349,6 +349,37 @@ queryObservationCharacteristics <- function(Messungen_data, db) {
   }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
 }
 
+createAndHashIdentifier <- function(observationCharacteristics, db) {
+  connected <- is.null(db)
+  if (!connected) {
+    db <- connectToDB()
+  }
+  tryCatch({
+    ids <- c()
+    rows <- c()
+    for (row in 1:nrow(observationCharacteristics)) {
+      rawIdentifier <- paste0(observationCharacteristics[row, "resulttime"],
+                              observationCharacteristics[row, "phentimestart"],
+                              "/",
+                              observationCharacteristics[row, "phentimeend"],
+                              observationCharacteristics[row, "paramid"],
+                              observationCharacteristics[row, "foiid"],
+                              observationCharacteristics[row, "lab"],
+                              "_",
+                              observationCharacteristics[row, "paramid"])
+
+      trimmedIdentifier <- substr(x = rawIdentifier, start = 1, stop = min(250, nchar(rawIdentifier)))
+      bytes <- openssl::sha256(x = trimmedIdentifier)
+      tuples <- substring(bytes, seq(1, nchar(bytes)-1, 2), seq(2, nchar(bytes), 2))
+      identifier <- paste0(tuples, collapse = ":")
+      ids <- c(ids, identifier)
+      rows <- c(rows, row)
+    }
+
+    return(data.frame("rows" = rows, "ids" = ids, stringsAsFactors = FALSE))
+  }, error = modalErrorHandler, finally = if (!connected) poolReturn(db))
+}
+
 
 # queryObservationInDB <- function(identifier, db) {
 #   connected <- is.null(db)
@@ -473,7 +504,6 @@ observeEvent(input$checkDBData, {
     observationCharacteristics <- queryObservationCharacteristics(inCSVData$df, db)
 
     if (nrow(observationCharacteristics) > 0) {
-      # 15319152001516017600/1516190400BleiKAM_BW_EPP_PSLab1-123_Blei
 
       observationCharacteristics$resulttime <- as.numeric(strptime(observationCharacteristics$resulttime,
                                                                    format=RtimestampPattern,
@@ -484,33 +514,26 @@ observeEvent(input$checkDBData, {
       observationCharacteristics$phentimeend <- as.numeric(strptime(observationCharacteristics$phentimeend,
                                                                     format=RtimestampPattern,
                                                                     tz=dbTimeZoneIdentifier))
+      identifiers <- createAndHashIdentifier(observationCharacteristics, db)
 
+      inCSVData$obsIdsInCSV <- identifiers[,"ids"]
 
-      rawIdentifier <- paste0(observationCharacteristics$resulttime,
-                           observationCharacteristics$phentimestart,
-                           "/",
-                           observationCharacteristics$phentimeend,
-                           observationCharacteristics$paramid,
-                           observationCharacteristics$foiid,
-                           observationCharacteristics$lab,
-                           "_",
-                           observationCharacteristics$paramid)
-
-      trimmedIdentifier <- substr(x = rawIdentifier, start = 1, stop = min(250, nchar(rawIdentifier)))
-      bytes <- openssl::sha256(x = trimmedIdentifier)
-      tuples <- substring(bytes, seq(1, nchar(bytes)-1, 2), seq(2, nchar(bytes), 2))
-      identifier <- paste0(tuples, collapse = ":")
-
-      inCSVData$obsIdsInCSV <- identifier
-
-      inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
+      tmp <- dbGetQuery(db, paste0("SELECT observationid, identifier FROM observation WHERE identifier IN ('",
                  paste(inCSVData$obsIdsInCSV, collapse="', '"),
                  "')"))
 
-      if (nrow(inCSVData$obsIdsInDB) > 0) {
+      inCSVData$obsIdsInDB <- tmp$observationid
+
+      inCSVData$rowsWithAlreadyPresentObservations <- identifiers[tmp$identifier == identifiers$ids, "rows"]
+
+      #
+      # hier wird die Datenbank-ID ausgeloggt. Sinnvoll? Wird die später verwendet? Was soll ausgeloggt werden? Die Anzahl vielleicht?
+      #
+      #stop(paste0("Hier weiter arbeiten ins server_5_Messungen.R:516"))
+      if (length(inCSVData$obsIdsInDB) > 0) {
         checkDBData$txt <- paste(checkDBData$txt,
-                                 paste("Folgende Messungen sind bereits in der DB: <ul><li>",
-                                       paste0(inCSVData$obsIdsInDB, collapse="</li><li>"),
+                                 paste("Die Messungen in den folgenden Zeilen sind bereits in der DB: <ul><li>",
+                                       paste0(inCSVData$rowsWithAlreadyPresentObservations, collapse="</li><li>"),
                                        "</li></ul>"))
       }
     }
@@ -560,14 +583,12 @@ output$tableData <- renderDataTable({
 
     # if DB consistency has been checked, apply colors
     if (checkDBData$checked) {
-      if (any(inCSVData$obsInDB > 0)) {
-        cat(file=catFile, inCSVData$obsInDB, "\n")
-        for (colDf in 4:ncol(inCSVData$df)) {
-          rowClrs <- c("white", "yellow", "red", "blue")[inCSVData$obsInDB[,colDf-3]+1]
+      rowColors <- rep("white", nrow(showTab))
 
-          showDT <- formatStyle(showDT, colDf, "ID",
-                                backgroundColor = styleEqual(showTab$ID, rowClrs))
-        }
+      if (length(inCSVData$obsIdsInDB) > 0) {
+        rowColors[inCSVData$rowsWithAlreadyPresentObservations] <- "red"
+        showDT <- formatStyle(showDT, "ProbenID", target="row",
+                              backgroundColor = styleEqual(showTab$ProbenID, rowColors))
       }
     }
     showDT
