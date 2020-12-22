@@ -34,6 +34,7 @@ library(rjson)
 library(RPostgreSQL)
 library(pool)
 library(readr)
+library(openssl)
 
 source("conf.R")
 

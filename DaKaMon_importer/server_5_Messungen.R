@@ -485,15 +485,23 @@ observeEvent(input$checkDBData, {
                                                                     format=RtimestampPattern,
                                                                     tz=dbTimeZoneIdentifier))
 
-      inCSVData$obsIdsInCSV <- paste0(observationCharacteristics$phentimestart,
-                                     observationCharacteristics$phentimestart,
-                                     "/",
-                                     observationCharacteristics$phentimeend,
-                                     observationCharacteristics$paramid,
-                                     observationCharacteristics$foiid,
-                                     observationCharacteristics$lab,
-                                     "_",
-                                     observationCharacteristics$paramid)
+
+      rawIdentifier <- paste0(observationCharacteristics$resulttime,
+                           observationCharacteristics$phentimestart,
+                           "/",
+                           observationCharacteristics$phentimeend,
+                           observationCharacteristics$paramid,
+                           observationCharacteristics$foiid,
+                           observationCharacteristics$lab,
+                           "_",
+                           observationCharacteristics$paramid)
+
+      trimmedIdentifier <- substr(x = rawIdentifier, start = 1, stop = min(250, nchar(rawIdentifier)))
+      bytes <- openssl::sha256(x = trimmedIdentifier)
+      tuples <- substring(bytes, seq(1, nchar(bytes)-1, 2), seq(2, nchar(bytes), 2))
+      identifier <- paste0(tuples, collapse = ":")
+
+      inCSVData$obsIdsInCSV <- identifier
 
       inCSVData$obsIdsInDB <- dbGetQuery(db, paste0("SELECT observationid AS obsid FROM observation WHERE identifier IN ('",
                  paste(inCSVData$obsIdsInCSV, collapse="', '"),
