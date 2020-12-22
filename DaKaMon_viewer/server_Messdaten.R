@@ -429,6 +429,10 @@ data <- reactive({
             }
 
             resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- ifelse(is.na(res[obs, "unit"]),"NA",res[obs, "unit"])
+            if (tolower(resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")]) == "percent" ||
+                tolower(resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")]) == "prozent") {
+              resDfRow[paste(res[obs, "observableproperty"], "Einheit", sep="_")] <- "%"
+            }
             if (input$showBG) {
               resDfRow[paste(res[obs, "observableproperty"], "BG", sep="_")] <- ifelse(is.na(res[obs, "bg"]),"NA",res[obs, "bg"])
             }
