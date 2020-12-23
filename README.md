@@ -13,11 +13,24 @@ See https://github.com/52north/dakamon for more details.
 
 ## Version - changelog
 
+- 2.3 - 23.12.2020
+
+  - Fix decimal separator bug
+  - Clean-up configuration files
+  - Fix failing measurement overwriting
+  - Minor comment updates
+  - Improve feedback on already present measurements
+  - Fix typo in comment in conf.R
+  - Add workaround for problems with unit "%"
+  - Fix error when adding values for parameter without BG and NG
+  - Fix not matching identifier
+  - [Complete diff](../../compare/v2.2...v2.3)
+
 - 2.2 - 08.12.2020
 
-   - Improve identifier validation
-   - Check required columns for empty cells
-   - Check probe$labName for identifier validity
+  - Improve identifier validation
+  - Check required columns for empty cells
+  - Check probe$labName for identifier validity
   - [Complete diff](../../compare/v2.1...v2.2)
 
 - 2.1 - 26.11.2020
@@ -34,13 +47,11 @@ See https://github.com/52north/dakamon for more details.
   - Add [NOTICE.md](NOTICE.md)
   - Add [LICENSE.md](LICENSE.md)
   - Publish to 52North github organisation
-  - [Complete diff](../../compare/v2.0...v2.1)
 
 - 2.0 - 19.10.2018
 
   - Refactoring
   - All required features implemented
-  - [Complete diff](../../compare/v1.0...v2.0)
 
 - 1.0 - 16.06.2018
 
