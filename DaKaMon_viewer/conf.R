@@ -97,8 +97,6 @@ noDataEncode <- -999
 noDataLabel <- "NO_DATA"
 
 local <- interactive()
-# SOSWebApp MUST end with "/"
-SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 
 catFile <- ifelse(local,stdout(),stderr())
 
@@ -154,10 +152,18 @@ feederTimeoutBuffer <- 120000
 feederTmpDirectory <- ifelse(local, "ADJUST_ME/dakamon", "/tmp/dakamon")
 
 stndTime <- "T12:00:00+00:00"
+
+#
+# SOS ####
+#
+# SOSWebApp MUST end with "/"
+SOSWebApp <- ifelse(local, "http://localhost:8080/52n-sos-webapp/", "http://sos:8080/52n-sos-webapp/")
 adminPwd <- "p"
 adminConf <- authenticate("dakamon-administrator", adminPwd)
 
-## File Upload ####
+#
+# File Upload ####
+#
 fileUploadDir <- "ADJUST_ME"
 #fileUploadDir <- "c:/data/coding/dakamon/file_uploads/"
 fileUploadCodeLiteratur <- "Lt"
@@ -165,7 +171,9 @@ fileDownloadBaseUrl <- "ADJUST_ME"
 #fileDownloadBaseUrl <- "http://localhost"
 #fileDownloadBaseUrl <- "file:///C:/data/coding/dakamon/file_uploads/"
 
-## DB="GUI/CSV" ####
+#
+# DB="GUI/CSV" ####
+#
 reqColOrt <- list(id="ID", # KAM-EPP
                   name="Name",
                   lat="lat",
