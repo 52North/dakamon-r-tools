@@ -98,7 +98,7 @@ noDataLabel <- "NO_DATA"
 
 local <- interactive()
 
-catFile <- ifelse(local,stdout(),stderr())
+catFile <- ifelse(local, stdout(), stderr())
 
 #
 # DATABASE ####
@@ -149,7 +149,7 @@ feederTimeoutBuffer <- 120000
 # Directory storing temporal information that will be cleaned by an external script.
 # This script deletes files older than n days.
 # The path to the directory MUST NOT end with an slash!
-feederTmpDirectory <- ifelse(local, "ADJUST_ME/dakamon", "/tmp/dakamon")
+feederTmpDirectory <- ifelse(local, "/tmp/dakamon", "/tmp/dakamon")
 
 stndTime <- "T12:00:00+00:00"
 

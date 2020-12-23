@@ -526,10 +526,6 @@ observeEvent(input$checkDBData, {
 
       inCSVData$rowsWithAlreadyPresentObservations <- identifiers[tmp$identifier == identifiers$ids, "rows"]
 
-      #
-      # hier wird die Datenbank-ID ausgeloggt. Sinnvoll? Wird die später verwendet? Was soll ausgeloggt werden? Die Anzahl vielleicht?
-      #
-      #stop(paste0("Hier weiter arbeiten ins server_5_Messungen.R:516"))
       if (length(inCSVData$obsIdsInDB) > 0) {
         checkDBData$txt <- paste(checkDBData$txt,
                                  paste("Die Messungen in den folgenden Zeilen sind bereits in der DB: <ul><li>",
