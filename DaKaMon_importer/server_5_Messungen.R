@@ -59,7 +59,7 @@ sosDeleteObservationsByIdentifier <- function(observationIdentifiers, wait = 0.5
   POST(paste0(SOSWebApp, "service"),
        body =  paste0("<?xml version=\"1.0\" encoding=\"UTF-8\"?>
            <sosdo:DeleteObservation
-         xmlns:sosdo=\"http://www.opengis.net/sosdo/1.0\" version=\"2.0.0\" service=\"SOS\"><sosdo:observation>",
+         xmlns:sosdo=\"http://www.opengis.net/sosdo/2.0\" version=\"2.0.0\" service=\"SOS\"><sosdo:observation>",
            paste(observationIdentifiers, collapse = "</sosdo:observation><sosdo:observation>"),
            "</sosdo:observation></sosdo:DeleteObservation>"),
        content_type_xml(), accept_json())
@@ -522,6 +522,8 @@ observeEvent(input$checkDBData, {
 
       inCSVData$obsIdsInDB <- tmp$observationid
 
+      inCSVData$obsIdentifierInDB <- tmp$identifier
+
       inCSVData$rowsWithAlreadyPresentObservations <- identifiers[tmp$identifier == identifiers$ids, "rows"]
 
       #
@@ -622,12 +624,12 @@ observeEvent(input$storeDBData, {
           stop(paste0("Keine Schreibberechtigung für das Arbeitsverzeichnis '", feederTmpDirectory, "'. Bitte anpassen!"))
         }
 
-        if (input$dataOW & !is.null(inCSVData$obsIdsInDB)) {
+        if (input$dataOW & !is.null(inCSVData$obsIdentifierInDB)) {
 
           # delete observations already in the DB
           progress <- Progress$new()
           progress$set(message = "Bereite DB vor.", value = 0)
-          sosDeleteObservationsByIdentifier(inCSVData$obsIdsInDB)
+          sosDeleteObservationsByIdentifier(inCSVData$obsIdentifierInDB)
           sosDeleteDeletedObservations()
           progress$close()
         }
