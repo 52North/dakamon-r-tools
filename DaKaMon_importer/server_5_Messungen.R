@@ -399,7 +399,15 @@ inCSVData <- reactiveValues()
 valiData <- reactiveValues(validated = FALSE)
 checkDBData <- reactiveValues(checked = FALSE)
 
-
+################################# #
+## Validation of data csv-file ####
+################################# #
+# ID
+# Parameter
+# Wert
+# Einheit
+# BG
+# NG
 observeEvent(input$dataCsvFile, {
   valiData$validated <- FALSE
   checkDBData$checked <- FALSE
@@ -412,16 +420,6 @@ observeEvent(input$dataCsvFile, {
                              fileEncoding = input$dataFileEnc)
     inCSVData$headAsChar <- colnames(inCSVData$df)
   }
-
-  ################################# #
-  ## Validation of data csv-file ####
-  ################################# #
-  # ID
-  # Parameter
-  # Wert
-  # Einheit
-  # BG
-  # NG
 
   txt <- NULL
   for (reqColName in reqColData) {
