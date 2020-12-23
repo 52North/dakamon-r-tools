@@ -765,7 +765,17 @@ observeEvent(input$storeDBData, {
         progress$inc(1)
 
         cat(file=catFile, "prepare import data\n")
-        feedDataContent <- matrix(c("Parameter", "Wert", "Einheit", "sensor-id", "resultTime", "phenStart", "phenEnd", "foiIdentifier", "lat", "lon"), nrow=1, ncol=10)
+        feedDataContent <- data.frame(
+          "Parameter"     = character(0),
+          "Wert"          = numeric(0),
+          "Einheit"       = character(0),
+          "sensor-id"     = character(0),
+          "resultTime"    = character(0),
+          "phenStart"     = character(0),
+          "phenEnd"       = character(0),
+          "foiIdentifier" = character(0),
+          "lat"           = numeric(0),
+          "lon"           = numeric(0))
         for (i in 1:nrow(Messungen_data)) { # i <- 1
           row <- Messungen_data[i,]
 
@@ -834,18 +844,19 @@ observeEvent(input$storeDBData, {
           if(local) cat(file=catFile, query, "\n")
 
           dbExecute(db, query)
-
-          newDataRow <- c(observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"],                                                # Parameter ID
-                          row[reqColData$value],                                                                                                                        # Wert
-                          row[reqColData$uom],                                                                                                                          # Einheit
-                          paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",
-                                 observedproperties[min(which(is.element(observedproperties$name, row[reqColData$obsProp]))),"identifier"]),                            # SensorId
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"],                                                     # resultTime
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"],                                                  # phenTimeStart
-                          probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"],                                                    # phenTimeEnd
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"], # foiIdentifier
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"],        # Lat
-                          features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"])        # Lon
+          newDataRow <- data.frame(
+            "Parameter"      = observedproperties[is.element(observedproperties$name, row[reqColData$obsProp]),"identifier"],                                                     # Parameter ID
+            "Wert"           = as.numeric(row[reqColData$value]),                                                                                                                 # Wert
+            "Einheit"        = row[reqColData$uom],                                                                                                                               # Einheit
+            "sensor-id"      = paste0(probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"sensorid"],"_",                                                 #
+                               observedproperties[min(which(is.element(observedproperties$name, row[reqColData$obsProp]))),"identifier"]),                                        # SensorId
+            "resultTime"     = probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"resulttime"],                                                          # resultTime
+            "phenStart"      = probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimestart"],                                                       # phenTimeStart
+            "phenEnd"        = probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"phentimeend"],                                                         # phenTimeEnd
+            "foiIdentifier"  = features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_identifier"],      # foiIdentifier
+            "lat"            = as.numeric(features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lat"]), # Lat
+            "lon"            = as.numeric(features[is.element(features$pns_id, probenMetadata[is.element(probenMetadata$probeid, row[reqColData$probeId]),"pns_id"]),"pns_lon"]), # Lon
+            stringsAsFactors = FALSE)
           feedDataContent <- rbind(feedDataContent, newDataRow)
 
           progress$inc(1)
@@ -860,7 +871,7 @@ observeEvent(input$storeDBData, {
       # write global csv file
       #
       cat(file=catFile, paste("writing import data to: ", feedCSV), "\n")
-      write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE, col.names = FALSE)
+      write.table(feedDataContent, file = feedCSV, sep = colSep, dec = decSep, fileEncoding = "UTF-8", row.names = FALSE)
       cat(file=catFile, "Done!\n")
       progress$inc(1)
 
